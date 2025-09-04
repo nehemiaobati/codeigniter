@@ -6,6 +6,11 @@ class Home extends BaseController
 {
     public function index(): string
     {
-        return view('landing_page');
+        $data = [
+            'pageTitle' => 'Welcome to Our Custom Landing Page!',
+            'heroTitle' => 'Build Your Dreams with Us',
+            'heroSubtitle' => 'We provide innovative solutions to help you succeed.',
+        ];
+        return view('landing_page', $data);
     }
 }

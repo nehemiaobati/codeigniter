@@ -1,0 +1,267 @@
+Summary of Actionable Changes for Authentication Implementation:
+
+1.  **Database Migration:**
+    *   **File:** `app/Database/Migrations/2025-09-03-181841_CreateUsersTable.php`
+    *   **Action:** Created a new migration file and defined the schema for the `users` table.
+    *   **Code Snippet (up() method):**
+        ```php
+        public function up()
+        {
+            $this->forge->addField([
+                'id' => [
+                    'type'           => 'INT',
+                    'constraint'     => 11,
+                    'unsigned'       => true,
+                    'auto_increment' => true,
+                ],
+                'email' => [
+                    'type'       => 'VARCHAR',
+                    'constraint' => '255',
+                    'unique'     => true,
+                ],
+                'password' => [
+                    'type'       => 'VARCHAR',
+                    'constraint' => '255',
+                ],
+                'created_at' => [
+                    'type' => 'DATETIME',
+                    'null' => true,
+                ],
+                'updated_at' => [
+                    'type' => 'DATETIME',
+                    'null' => true,
+                ],
+            ]);
+            $this->forge->addKey('id', true);
+            $this->forge->createTable('users');
+        }
+
+        public function down()
+        {
+            $this->forge->dropTable('users');
+        }
+        ```
+
+2.  **User Model and Entity:**
+    *   **Files:** `app/Models/User.php` and `app/Entities/User.php`
+    *   **Action:** Generated a `User` model and entity. The model was configured with `allowedFields` and `useTimestamps`.
+    *   **Code Snippet (app/Models/User.php):**
+        ```php
+        namespace App\Models;
+
+        use CodeIgniter\Model;
+
+        class User extends Model
+        {
+            protected $table            = 'users';
+            protected $primaryKey       = 'id';
+            protected $useAutoIncrement = true;
+            protected $returnType       = \App\Entities\User::class;
+            protected $useSoftDeletes   = false;
+            protected $protectFields    = true;
+            protected $allowedFields    = ['email', 'password'];
+
+            // Dates
+            protected $useTimestamps = true;
+            protected $dateFormat    = 'datetime';
+            protected $createdField  = 'created_at';
+            protected $updatedField  = 'updated_at';
+            protected $deletedField  = 'deleted_at';
+        }
+        ```
+
+3.  **Authentication Controller:**
+    *   **File:** `app/Controllers/Auth.php`
+    *   **Action:** Created an `Auth` controller with methods for user registration, login, authentication, and logout.
+    *   **Code Snippet (app/Controllers/Auth.php - key methods):**
+        ```php
+        namespace App\Controllers;
+
+        use App\Controllers\BaseController;
+        use CodeIgniter\HTTP\ResponseInterface;
+        use App\Models\User;
+
+        class Auth extends BaseController
+        {
+            protected $session;
+
+            public function __construct()
+            {
+                $this->session = \Config\Services::session();
+            }
+
+            public function register()
+            {
+                helper(['form']);
+                $data = [];
+                return view('auth/register', $data);
+            }
+
+            public function store()
+            {
+                helper(['form']);
+                $rules = [
+                    'email' => 'required|valid_email|is_unique[users.email]',
+                    'password' => 'required|min_length[8]|max_length[255]',
+                    'confirmpassword' => 'matches[password]',
+                ];
+
+                if (! $this->validate($rules)) {
+                    return view('auth/register', [
+                        'validation' => $this->validator,
+                    ]);
+                }
+
+                $userModel = new User();
+                $data = [
+                    'email'    => $this->request->getVar('email'),
+                    'password' => password_hash($this->request->getVar('password'), PASSWORD_DEFAULT),
+                ];
+                $userModel->save($data);
+
+                return redirect()->to('/login')->with('success', 'Registration Successful');
+            }
+
+            public function authenticate()
+            {
+                helper(['form']);
+                $rules = [
+                    'email'    => 'required|valid_email',
+                    'password' => 'required|min_length[8]|max_length[255]',
+                ];
+
+                if (! $this->validate($rules)) {
+                    return view('auth/login', [
+                        'validation' => $this->validator,
+                    ]);
+                }
+
+                $userModel = new User();
+                $email = $this->request->getVar('email');
+                $password = $this->request->getVar('password');
+
+                $user = $userModel->where('email', $email)->first();
+
+                if (! $user || ! password_verify($password, $user->password)) {
+                    return redirect()->back()->withInput()->with('error', 'Invalid login credentials.');
+                }
+
+                $this->session->set([
+                    'isLoggedIn' => true,
+                    'userId'     => $user->id,
+                    'userEmail'  => $user->email,
+                ]);
+
+                return redirect()->to('/dashboard')->with('success', 'Login Successful');
+            }
+
+            public function logout()
+            {
+                $this->session->destroy();
+                return redirect()->to('/login')->with('success', 'Logged out successfully.');
+            }
+        }
+        ```
+
+4.  **Authentication Views:**
+    *   **Files:** `app/Views/auth/register.php` and `app/Views/auth/login.php`
+    *   **Action:** Created two new view files containing HTML forms for user registration and login.
+    *   **Code Snippet (app/Views/auth/register.php - form section):**
+        ```html
+        <form action="/register/store" method="post">
+            <?= csrf_field() ?>
+            <div class="mb-3">
+                <label for="email" class="form-label">Email address</label>
+                <input type="email" class="form-control" id="email" name="email" value="<?= old('email') ?>">
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" name="password">
+            </div>
+            <div class="mb-3">
+                <label for="confirmpassword" class="form-label">Confirm Password</label>
+                <input type="password" class="form-control" id="confirmpassword" name="confirmpassword">
+            </div>
+            <button type="submit" class="btn btn-primary">Register</button>
+            <p class="mt-3">Already have an account? <a href="/login">Login here</a></p>
+        </form>
+        ```
+    *   **Code Snippet (app/Views/auth/login.php - form section):**
+        ```html
+        <form action="/login/authenticate" method="post">
+            <?= csrf_field() ?>
+            <div class="mb-3">
+                <label for="email" class="form-label">Email address</label>
+                <input type="email" class="form-control" id="email" name="email" value="<?= old('email') ?>">
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" name="password">
+            </div>
+            <button type="submit" class="btn btn-primary">Login</button>
+            <p class="mt-3">Don't have an account? <a href="/register">Register here</a></p>
+        </form>
+        ```
+
+5.  **Routes Configuration:**
+    *   **File:** `app/Config/Routes.php`
+    *   **Action:** Added authentication routes and modified the default route.
+    *   **Code Snippet (app/Config/Routes.php - relevant routes):**
+        ```php
+        $routes->get('/', static function () {
+            if (session()->get('isLoggedIn')) {
+                return redirect()->to('/dashboard');
+            }
+
+            return redirect()->to('/login');
+        });
+
+        $routes->get('register', 'Auth::register');
+        $routes->post('register/store', 'Auth::store');
+        $routes->get('login', 'Auth::login');
+        $routes->post('login/authenticate', 'Auth::authenticate');
+        $routes->get('logout', 'Auth::logout');
+        $routes->get('dashboard', 'Home::index'); // Placeholder for dashboard
+        ```
+
+6.  **Authentication Filter:**
+    *   **Files:** `app/Filters/AuthFilter.php` and `app/Config/Filters.php`
+    *   **Action:** Created `AuthFilter` logic and registered it.
+    *   **Code Snippet (app/Filters/AuthFilter.php - before method):**
+        ```php
+        public function before(RequestInterface $request, $arguments = null)
+        {
+            if (! session()->get('isLoggedIn')) {
+                return redirect()->to('/login');
+            }
+        }
+        ```
+    *   **Code Snippet (app/Config/Filters.php - aliases and filters arrays):**
+        ```php
+        public array $aliases = [
+            // ... other aliases
+            'auth'          => \App\Filters\AuthFilter::class,
+        ];
+
+        public array $filters = [
+            'auth' => ['before' => ['dashboard']],
+        ];
+        ```
+
+7.  **Landing Page Update:**
+    *   **File:** `app/Views/landing_page.php`
+    *   **Action:** Modified the navigation in the header.
+    *   **Code Snippet (app/Views/landing_page.php - navigation section):**
+        ```html
+        <nav>
+            <ul>
+                <?php if (session()->get('isLoggedIn')): ?>
+                    <li>Hello, <?= esc(session()->get('userEmail')) ?></li>
+                    <li><a href="/dashboard">Dashboard</a></li>
+                    <li><a href="/logout">Logout</a></li>
+                <?php else: ?>
+                    <li><a href="/login">Login</a></li>
+                    <li><a href="/register">Register</a></li>
+                <?php endif; ?>
+            </ul>
+        </nav>
