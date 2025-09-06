@@ -29,4 +29,13 @@ class Services extends BaseService
      *     return new \CodeIgniter\Example();
      * }
      */
+
+    public static function paystackService($getShared = true): \App\Libraries\PaystackService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('paystackService');
+        }
+
+        return new \App\Libraries\PaystackService();
+    }
 }

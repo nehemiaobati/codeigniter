@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Controllers;
 
@@ -8,21 +8,14 @@ use App\Models\User;
 
 class Auth extends BaseController
 {
-    protected $session;
-
-    public function __construct()
-    {
-        $this->session = \Config\Services::session();
-    }
-
-    public function register()
+    public function register(): string
     {
         helper(['form']);
         $data = [];
         return view('auth/register', $data);
     }
 
-    public function store()
+    public function store(): ResponseInterface
     {
         helper(['form']);
         $rules = [
@@ -46,17 +39,17 @@ class Auth extends BaseController
         ];
         $userModel->save($data);
 
-        return redirect()->to('/login')->with('success', 'Registration Successful');
+        return redirect()->to(url_to('login'))->with('success', 'Registration Successful');
     }
 
-    public function login()
+    public function login(): string
     {
         helper(['form']);
         $data = [];
         return view('auth/login', $data);
     }
 
-    public function authenticate()
+    public function authenticate(): ResponseInterface
     {
         helper(['form']);
         $rules = [
@@ -87,12 +80,21 @@ class Auth extends BaseController
             'username'   => $user->username, // Add username to session
         ]);
 
-        return redirect()->to('/dashboard')->with('success', 'Login Successful');
+        return redirect()->to(url_to('dashboard'))->with('success', 'Login Successful');
     }
 
-    public function logout()
+    public function logout(): ResponseInterface
     {
         $this->session->destroy();
-        return redirect()->to('/login')->with('success', 'Logged out successfully.');
+        return redirect()->to(url_to('login'))->with('success', 'Logged out successfully.');
+    }
+
+    public function landing(): string
+    {
+        if ($this->session->get('isLoggedIn')) {
+            return redirect()->to(url_to('dashboard'));
+        }
+
+        return view('landing_page');
     }
 }

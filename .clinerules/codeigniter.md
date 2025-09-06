@@ -105,6 +105,21 @@ CodeIgniter 4 Production Deployment Rules & Workflow
                 ];
                 
             
+       Routing (app/Config/Routes.php): Always define named routes using the `['as' => 'route_name']` parameter for all application routes. When generating URLs within controllers, views, or other parts of the application, use `url_to('route_name')` instead of hardcoding URIs or relying on controller/method strings. This practice ensures that URLs remain consistent and functional even if the underlying URI paths or controller methods change, improving maintainability and reducing errors.
+           Context:
+                ```php
+                // app/Config/Routes.php
+                $routes->get('products', 'ProductController::index', ['as' => 'product.list']);
+                $routes->get('products/(:num)', 'ProductController::show/$1', ['as' => 'product.show']);
+
+                // In a controller or view:
+                // To link to the product list:
+                $linkToList = url_to('product.list');
+
+                // To link to a specific product with ID 123:
+                $linkToProduct = url_to('product.show', 123);
+                ```
+            
        Helpers (app/Helpers/): Contain stateless, procedural helper functions. (See: [Helpers Guide](https://codeigniter.com/userguide/general/helpers.html))
        Language (app/Language/): Store language-specific strings for internationalization. (See: [Localization Guide](https://codeigniter.com/userguide/outgoing/localization.html))
        Libraries (app/Libraries/): House custom classes that provide reusable application logic. For better scalability and testability, these should be managed as Services. (See: [Services Guide](https://codeigniter.com/userguide/concepts/services.html))

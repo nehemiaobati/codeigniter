@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Controllers;
 
@@ -13,4 +13,5 @@ class Home extends BaseController
         ];
         return view('landing_page', $data);
     }
+
 }

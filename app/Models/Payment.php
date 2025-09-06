@@ -4,15 +4,15 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class User extends Model
+class Payment extends Model
 {
-    protected $table            = 'users';
+    protected $table            = 'payments';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
-    protected $returnType       = \App\Entities\User::class;
+    protected $returnType       = \App\Entities\Payment::class;
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['email', 'password', 'username'];
+    protected $allowedFields    = ['user_id', 'email', 'amount', 'reference', 'status', 'paystack_response'];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
