@@ -11,7 +11,7 @@ class Home extends BaseController
             'heroTitle' => 'Build Your Dreams with Us',
             'heroSubtitle' => 'We provide innovative solutions to help you succeed.',
         ];
-        return view('landing_page', $data);
+        return view('home/landing_page', $data);
     }
 
 }

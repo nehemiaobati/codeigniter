@@ -95,6 +95,6 @@ class Auth extends BaseController
             return redirect()->to(url_to('dashboard'));
         }
 
-        return view('landing_page');
+        return view('home/landing_page');
     }
 }
