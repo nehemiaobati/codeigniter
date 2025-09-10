@@ -166,30 +166,34 @@ class CryptoService
     }
 
     /**
-     * A generic function to make a cURL request and decode the JSON response.
+     * A generic function to make an API request using CodeIgniter's CURLRequest.
      */
-    private function makeApiRequest($url)
+    private function makeApiRequest(string $url): array
     {
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'My-PHP-Crypto-Checker/1.0');
-        $response = curl_exec($ch);
+        $client = \Config\Services::curlrequest();
 
-        if ($response === false) {
-            // Log the error or handle it appropriately
-            log_message('error', 'cURL Error: ' . curl_error($ch));
-            curl_close($ch);
-            return ['error' => 'API request failed: ' . curl_error($ch)];
-        }
-        curl_close($ch);
+        try {
+            $response = $client->get($url, [
+                'headers' => [
+                    'User-Agent' => 'My-PHP-Crypto-Checker/1.0',
+                ],
+                'timeout' => 10, // Set a timeout for the request
+            ]);
 
-        $data = json_decode($response, true);
-        if ($data === null) {
-            // Log the error or handle it appropriately
-            log_message('error', 'Failed to decode JSON response from API: ' . $response);
-            return ['error' => 'Failed to decode API response.'];
+            $data = json_decode($response->getBody(), true);
+
+            if ($data === null) {
+                log_message('error', 'Failed to decode JSON response from API: ' . $response->getBody());
+                return ['error' => 'Failed to decode API response.'];
+            }
+
+            return $data;
+        } catch (\CodeIgniter\HTTP\Exceptions\HTTPException $e) {
+            log_message('error', 'Crypto API HTTP Error: ' . $e->getMessage());
+            return ['error' => 'API request failed: ' . $e->getMessage()];
+        } catch (\Exception $e) {
+            log_message('error', 'Crypto API Error: ' . $e->getMessage());
+            return ['error' => 'An unexpected error occurred during API request: ' . $e->getMessage()];
         }
-        return $data;
     }
 }

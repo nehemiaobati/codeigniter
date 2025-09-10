@@ -38,4 +38,13 @@ class Services extends BaseService
 
         return new \App\Libraries\PaystackService();
     }
+
+    public static function cryptoService($getShared = true): \App\Libraries\CryptoService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('cryptoService');
+        }
+
+        return new \App\Libraries\CryptoService();
+    }
 }
