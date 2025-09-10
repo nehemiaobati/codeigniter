@@ -26,4 +26,10 @@ $routes->group('/', ['filter' => 'auth'], static function ($routes) {
         $routes->post('initiate', 'Payments::initiate', ['as' => 'payment.initiate']);
         $routes->get('verify', 'Payments::verify', ['as' => 'payment.verify']);
     });
+
+    // Crypto Routes
+    $routes->group('crypto', static function ($routes) {
+        $routes->get('/', 'Crypto::index', ['as' => 'crypto.index']);
+        $routes->post('query', 'Crypto::query', ['as' => 'crypto.query']);
+    });
 });

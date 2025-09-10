@@ -1,8 +1,9 @@
 <?= $this->extend('layouts/default') ?>
 
 <?= $this->section('content') ?>
-    <div class="card shadow-lg p-4" style="width: 100%; max-width: 400px;">
-        <h1 class="card-title text-center text-primary mb-4">Make a Payment</h1>
+    <div class="d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 150px);"> <!-- Adjust min-height based on header/footer height -->
+        <div class="card shadow-lg p-4" style="width: 100%; max-width: 400px;">
+            <h1 class="card-title text-center text-primary mb-4">Make a Payment</h1>
 
         <?php if (session()->getFlashdata('errors')): ?>
             <div class="alert alert-danger" role="alert">
@@ -31,16 +32,6 @@
             </div>
             <button type="submit" class="btn btn-primary w-100 mt-3">Pay Now</button>
         <?= form_close() ?>
+        </div>
     </div>
-<?= $this->endSection() ?>
-
-<?= $this->section('styles') ?>
-<style>
-    body {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-    }
-</style>
 <?= $this->endSection() ?>

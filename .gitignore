@@ -3,3 +3,4 @@
 .env
 /writable/
 /vendor/
+crypto.php

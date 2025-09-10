@@ -26,9 +26,9 @@ class Database extends Config
      */
     public array $default = [
         'DSN'          => '',
-        'hostname'     => '34.121.22.239',
-        'username'     => 'tradedb',
-        'password'     => '1234567788',
+        'hostname'     => '127.0.0.1',
+        'username'     => 'phpmyadmin',
+        'password'     => '12345678',
         'database'     => 'server_codeigniter',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',

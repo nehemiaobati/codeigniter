@@ -1,25 +1,6 @@
 <?= $this->extend('layouts/default') ?>
 
 <?= $this->section('content') ?>
-    <header class="bg-white shadow-sm py-3">
-        <div class="container d-flex justify-content-between align-items-center">
-            <div class="logo fs-4 fw-bold text-primary">MySite</div>
-            <nav>
-                <ul class="nav">
-                    <?php if (session()->get('isLoggedIn')): ?>
-                        <li class="nav-item text-dark me-3">Hello, <?= esc(session()->get('username')) ?></li>
-                        <li class="nav-item"><a class="nav-link text-secondary" href="<?= url_to('dashboard') ?>">Dashboard</a></li>
-                        <li class="nav-item"><a class="nav-link text-secondary" href="<?= url_to('payment.index') ?>">Make Payment</a></li>
-                        <li class="nav-item"><a class="nav-link text-secondary" href="<?= url_to('logout') ?>">Logout</a></li>
-                    <?php else: ?>
-                        <li class="nav-item"><a class="nav-link text-secondary" href="<?= url_to('login') ?>">Login</a></li>
-                        <li class="nav-item"><a class="nav-link text-secondary" href="<?= url_to('register') ?>">Register</a></li>
-                    <?php endif; ?>
-                </ul>
-            </nav>
-        </div>
-    </header>
-
     <div class="container">
         <section class="hero bg-primary text-white text-center p-5 mt-4 rounded shadow-lg">
             <h1 class="display-3 mb-3"><?= esc($heroTitle ?? 'Build Your Dreams with Us') ?></h1>
@@ -144,10 +125,4 @@
             </div>
         </section>
     </div>
-
-    <footer class="bg-dark text-white text-center py-4 mt-5">
-        <div class="container">
-            <p class="mb-0">&copy; <?= date('Y') ?> MySite. All rights reserved.</p>
-        </div>
-    </footer>
 <?= $this->endSection() ?>
