@@ -26,9 +26,11 @@ class Auth extends BaseController
         ];
 
         if (! $this->validate($rules)) {
-            return view('auth/register', [
+            $response = $this->response;
+            $response->setBody(view('auth/register', [
                 'validation' => $this->validator,
-            ]);
+            ]));
+            return $response;
         }
 
         $userModel = new User();
@@ -58,9 +60,11 @@ class Auth extends BaseController
         ];
 
         if (! $this->validate($rules)) {
-            return view('auth/login', [
+            $response = $this->response;
+            $response->setBody(view('auth/login', [
                 'validation' => $this->validator,
-            ]);
+            ]));
+            return $response;
         }
 
         $userModel = new User();
@@ -89,12 +93,14 @@ class Auth extends BaseController
         return redirect()->to(url_to('login'))->with('success', 'Logged out successfully.');
     }
 
-    public function landing(): string
+    public function landing(): ResponseInterface
     {
         if ($this->session->get('isLoggedIn')) {
             return redirect()->to(url_to('dashboard'));
         }
 
-        return view('home/landing_page');
+        $response = $this->response;
+        $response->setBody(view('home/landing_page'));
+        return $response;
     }
 }

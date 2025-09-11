@@ -2,6 +2,25 @@
 
 <?= $this->section('content') ?>
     <div class="container">
+                <?php if (session()->getFlashdata('success')): ?>
+                    <div class="alert alert-success mt-4" role="alert">
+                        <?= esc(session()->getFlashdata('success')) ?>
+                    </div>
+                <?php endif; ?>
+                <?php if (session()->getFlashdata('error')): ?>
+                    <div class="alert alert-danger mt-4" role="alert">
+                        <?= esc(session()->getFlashdata('error')) ?>
+                    </div>
+                <?php endif; ?>
+                <?php if (session()->getFlashdata('errors')): ?>
+                    <div class="alert alert-danger mt-4" role="alert">
+                        <ul class="list-unstyled mb-0">
+                            <?php foreach (session()->getFlashdata('errors') as $error): ?>
+                                <li><?= esc($error) ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
         <section class="hero bg-primary text-white text-center p-5 mt-4 rounded shadow-lg">
             <h1 class="display-3 mb-3"><?= esc($heroTitle ?? 'Build Your Dreams with Us') ?></h1>
             <p class="fs-5 mb-4"><?= esc($heroSubtitle ?? 'We provide innovative solutions to help you succeed.') ?></p>
@@ -83,25 +102,6 @@
 
             <div class="card shadow-sm border-0 p-4 mt-5">
                 <h3 class="card-title text-primary fs-3 mb-4">Send us a message</h3>
-                <?php if (session()->getFlashdata('success')): ?>
-                    <div class="alert alert-success" role="alert">
-                        <?= esc(session()->getFlashdata('success')) ?>
-                    </div>
-                <?php endif; ?>
-                <?php if (session()->getFlashdata('error')): ?>
-                    <div class="alert alert-danger" role="alert">
-                        <?= esc(session()->getFlashdata('error')) ?>
-                    </div>
-                <?php endif; ?>
-                <?php if (session()->getFlashdata('errors')): ?>
-                    <div class="alert alert-danger" role="alert">
-                        <ul class="list-unstyled mb-0">
-                            <?php foreach (session()->getFlashdata('errors') as $error): ?>
-                                <li><?= esc($error) ?></li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </div>
-                <?php endif; ?>
                 <form action="<?= url_to('contact.send') ?>" method="post">
                     <?= csrf_field() ?>
                     <div class="mb-3 text-start">
