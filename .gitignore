@@ -1,0 +1,7 @@
+/system/
+/tests/
+/writable/
+/vendor/
+.env
+crypto.php
+.DS_Store
