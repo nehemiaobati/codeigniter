@@ -16,7 +16,7 @@ $routes->group('', static function ($routes) {
 });
 
 // Authenticated Routes
-$routes->group('/', ['filter' => 'auth'], static function ($routes) {
+$routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->get('logout', 'Auth::logout', ['as' => 'logout']);
     $routes->get('home', 'Home::index', ['as' => 'home']);
     
