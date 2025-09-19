@@ -24,13 +24,13 @@
         <?= form_open(url_to('payment.initiate')) ?>
             <div class="mb-3">
                 <label for="email" class="form-label">Email</label>
-                <input type="email" class="form-control" id="email" name="email" value="<?= esc(old('email', $email)) ?>" required>
+                <input type="email" class="form-control form-input-focus" id="email" name="email" value="<?= esc(old('email', $email)) ?>" required>
             </div>
             <div class="mb-3">
                 <label for="amount" class="form-label">Amount (KES)</label>
-                <input type="number" class="form-control" id="amount" name="amount" value="<?= esc(old('amount')) ?>" min="100" required>
+                <input type="number" class="form-control form-input-focus" id="amount" name="amount" value="<?= esc(old('amount')) ?>" min="100" required>
             </div>
-            <button type="submit" class="btn btn-primary w-100 mt-3">Pay Now</button>
+            <button type="submit" class="btn btn-primary w-100 mt-3 btn-hover-effect">Pay Now</button>
         <?= form_close() ?>
         </div>
     </div>

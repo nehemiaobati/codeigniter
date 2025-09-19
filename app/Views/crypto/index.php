@@ -23,7 +23,7 @@
                         <?= csrf_field() ?>
                         <div class="mb-3">
                             <label for="asset" class="form-label">Cryptocurrency Asset</label>
-                            <select class="form-control" id="asset" name="asset" required>
+                            <select class="form-control form-input-focus" id="asset" name="asset" required>
                                 <option value="">Select Asset</option>
                                 <option value="btc" <?= old('asset') == 'btc' ? 'selected' : '' ?>>Bitcoin (BTC)</option>
                                 <option value="ltc" <?= old('asset') == 'ltc' ? 'selected' : '' ?>>Litecoin (LTC)</option>
@@ -31,7 +31,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="query_type" class="form-label">Query Type</label>
-                            <select class="form-control" id="query_type" name="query_type" required>
+                            <select class="form-control form-input-focus" id="query_type" name="query_type" required>
                                 <option value="">Select Query Type</option>
                                 <option value="balance" <?= old('query_type') == 'balance' ? 'selected' : '' ?>>Balance</option>
                                 <option value="tx" <?= old('query_type') == 'tx' ? 'selected' : '' ?>>Transactions</option>
@@ -39,18 +39,18 @@
                         </div>
                         <div class="mb-3">
                             <label for="address" class="form-label">Wallet Address</label>
-                            <input type="text" class="form-control" id="address" name="address" value="<?= old('address') ?>" required>
+                            <input type="text" class="form-control form-input-focus" id="address" name="address" value="<?= old('address') ?>" required>
                         </div>
                         <div class="mb-3" id="limit-field" style="display: <?= old('query_type') == 'tx' ? 'block' : 'none' ?>;">
                             <label for="limit" class="form-label">Number of Transactions (for 'Transactions' query)</label>
                             <input type="number" class="form-control" id="limit" name="limit" value="<?= old('limit') ?>" min="1" max="50">
                         </div>
-                        <button type="submit" class="btn btn-primary">Query Crypto</button>
+                        <button type="submit" class="btn btn-primary btn-hover-effect">Query Crypto</button>
                     </form>
 
                     <?php if (session()->getFlashdata('result')): ?>
                         <div class="mt-4 p-3 border rounded bg-light">
-                            <h4>Query Result:</h4>
+                            <h4 class="mb-3">Query Result:</h4>
                             <?php $result = session()->getFlashdata('result'); ?>
                             <p><strong>Asset:</strong> <?= esc($result['asset'] ?? 'N/A') ?></p>
                             <p><strong>Address:</strong> <?= esc($result['address'] ?? 'N/A') ?></p>
@@ -59,7 +59,7 @@
                             <?php if (isset($result['balance'])): ?>
                                 <p><strong>Balance:</strong> <?= esc($result['balance']) ?></p>
                             <?php elseif (isset($result['transactions'])): ?>
-                                <h5>Transactions:</h5>
+                                <h5 class="mb-3">Transactions:</h5>
                                 <?php if (!empty($result['transactions'])): ?>
                                     <div class="accordion" id="transactionsAccordion">
                                         <?php foreach ($result['transactions'] as $index => $tx): ?>

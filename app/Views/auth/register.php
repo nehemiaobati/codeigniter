@@ -18,21 +18,21 @@
                             <?= csrf_field() ?>
                             <div class="mb-3">
                                 <label for="username" class="form-label">Username</label>
-                                <input type="text" class="form-control" id="username" name="username" value="<?= esc(old('username')) ?>" required>
+                                <input type="text" class="form-control form-input-focus" id="username" name="username" value="<?= esc(old('username')) ?>" required>
                             </div>
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email address</label>
-                                <input type="email" class="form-control" id="email" name="email" value="<?= esc(old('email')) ?>" required>
+                                <input type="email" class="form-control form-input-focus" id="email" name="email" value="<?= esc(old('email')) ?>" required>
                             </div>
                             <div class="mb-3">
                                 <label for="password" class="form-label">Password</label>
-                                <input type="password" class="form-control" id="password" name="password" required>
+                                <input type="password" class="form-control form-input-focus" id="password" name="password" required>
                             </div>
                             <div class="mb-3">
                                 <label for="confirmpassword" class="form-label">Confirm Password</label>
-                                <input type="password" class="form-control" id="confirmpassword" name="confirmpassword" required>
+                                <input type="password" class="form-control form-input-focus" id="confirmpassword" name="confirmpassword" required>
                             </div>
-                            <button type="submit" class="btn btn-primary w-100">Register</button>
+                            <button type="submit" class="btn btn-primary w-100 btn-hover-effect">Register</button>
                             <p class="mt-3 text-center">Already have an account? <a href="<?= url_to('login') ?>">Login here</a></p>
                         </form>
                     </div>

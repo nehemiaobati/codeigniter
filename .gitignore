@@ -3,5 +3,13 @@
 /writable/
 /vendor/
 .env
-crypto.php
 .DS_Store
+
+# These files are redundant for pure static HTML instances and can be ignored.
+# public/index.html
+# public/assets
+# public/portfolio.html
+
+public/index.html
+public/assets
+public/portfolio.html
