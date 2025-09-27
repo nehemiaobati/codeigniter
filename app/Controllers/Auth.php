@@ -82,6 +82,7 @@ class Auth extends BaseController
             'userId'     => $user->id,
             'userEmail'  => $user->email,
             'username'   => $user->username, // Add username to session
+            'member_since' =>$user->created_at, // Set member_since from created_at timestamp as string
         ]);
 
         return redirect()->to(url_to('home'))->with('success', 'Login Successful');

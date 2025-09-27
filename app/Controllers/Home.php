@@ -9,6 +9,8 @@ class Home extends BaseController
         $data = [
             'pageTitle' => 'Welcome, ' . session()->get('username'),
             'username'  => session()->get('username'),
+            'email'     => session()->get('userEmail'), // Corrected to match session key
+            'member_since' => session()->get('member_since'), // Assuming 'member_since' is in session
         ];
         return view('home/welcome_user', $data);
     }
