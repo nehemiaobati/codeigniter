@@ -2,12 +2,19 @@
 
 namespace App\Controllers;
 
+helper('form');
+
 use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\Email\Email;
 
 class Contact extends BaseController
 {
+    public function form()
+    {
+        return view('contact/form');
+    }
+
     public function send()
     {
         $rules = [

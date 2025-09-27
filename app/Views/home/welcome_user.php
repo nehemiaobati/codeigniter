@@ -1,39 +1,45 @@
 <?= $this->extend('layouts/default') ?>
 
 <?= $this->section('content') ?>
-<div class="container mt-5">
+<div class="container my-5">
     <div class="row justify-content-center">
-        <div class="col-md-10">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">Welcome, <?= esc($username) ?>!</h4>
+        <div class="col-lg-8">
+
+            <?php if (session()->getFlashdata('success')): ?>
+                <div class="alert alert-success" role="alert">
+                    <?= esc(session()->getFlashdata('success')) ?>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <h5>Account Summary</h5>
-                            <p><strong>Email:</strong> <?= esc($email ?? 'user@example.com') ?></p>
-                            <p><strong>Member Since:</strong> <?= esc($member_since ?? 'January 1, 2024') ?></p>
-                            <p><strong>Membership:</strong> <span class="badge bg-success">Premium</span></p>
-                        </div>
-                        <div class="col-md-8">
-                            <h5>Quick Actions</h5>
-                            <a href="#" class="btn btn-primary">View Profile</a>
-                            <a href="#" class="btn btn-secondary">Account Settings</a>
-                            <a href="#" class="btn btn-info">View Payments</a>
-                            <hr>
-                            <h5>Recent Activity</h5>
-                            <ul class="list-group">
-                                <li class="list-group-item">Logged in successfully.</li>
-                                <li class="list-group-item">Updated profile picture.</li>
-                                <li class="list-group-item">Made a new payment.</li>
+            <?php endif; ?>
+
+            <div class="card border-0 shadow-lg text-center">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">User Dashboard</h3>
+                </div>
+                <div class="card-body p-5">
+                    <h4 class="card-title">Welcome back, <?= esc($username ?? 'User') ?>!</h4>
+                    <p class="card-text text-muted">Your Web Development Solution is ready to be activated.</p>
+                    
+                    <div class="card my-4">
+                        <div class="card-body text-start">
+                            <h5 class="card-title text-primary">Account Information</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item"><strong>Email:</strong> <?= esc($email ?? 'N/A') ?></li>
+                                <li class="list-group-item"><strong>Member Since:</strong> <?= esc($member_since ? date('F d, Y', strtotime($member_since)) : 'N/A') ?></li>
+                                <li class="list-group-item"><strong>Service Status:</strong> <span class="badge bg-warning text-dark">Payment Required</span></li>
                             </ul>
                         </div>
                     </div>
-                    <hr>
-                    <p class="mb-0">If you have any questions, feel free to reach out to our support team.</p>
+
+                    <p class="mt-4">Complete your purchase to unlock all features and launch your project.</p>
+                    <a href="<?= url_to('payment.index') ?>" class="btn btn-primary btn-lg mt-2 px-5 btn-hover-effect">
+                        Purchase Service
+                    </a>
+                </div>
+                <div class="card-footer text-muted">
+                    Need help? <a href="<?= url_to('contact.form') ?>">Contact Support</a>
                 </div>
             </div>
+
         </div>
     </div>
 </div>

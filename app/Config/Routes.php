@@ -12,6 +12,7 @@ $routes->group('', static function ($routes) {
     $routes->post('register/store', 'Auth::store', ['as' => 'register.store']);
     $routes->get('login', 'Auth::login', ['as' => 'login']);
     $routes->post('login/authenticate', 'Auth::authenticate', ['as' => 'login.authenticate']);
+    $routes->get('contact', 'Contact::form', ['as' => 'contact.form']);
     $routes->post('contact/send', 'Contact::send', ['as' => 'contact.send']);
 });
 

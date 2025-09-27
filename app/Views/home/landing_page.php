@@ -1,128 +1,87 @@
 <?= $this->extend('layouts/default') ?>
 
 <?= $this->section('content') ?>
-    <div class="container">
-                <?php if (session()->getFlashdata('success')): ?>
-                    <div class="alert alert-success mt-4" role="alert">
-                        <?= esc(session()->getFlashdata('success')) ?>
-                    </div>
-                <?php endif; ?>
-                <?php if (session()->getFlashdata('error')): ?>
-                    <div class="alert alert-danger mt-4" role="alert">
-                        <?= esc(session()->getFlashdata('error')) ?>
-                    </div>
-                <?php endif; ?>
-                <?php if (session()->getFlashdata('errors')): ?>
-                    <div class="alert alert-danger mt-4" role="alert">
-                        <ul class="list-unstyled mb-0">
-                            <?php foreach (session()->getFlashdata('errors') as $error): ?>
-                                <li><?= esc($error) ?></li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </div>
-                <?php endif; ?>
-        <section class="hero bg-primary text-white text-center p-5 mt-4 rounded shadow-lg">
-            <h1 class="display-3 mb-3"><?= esc($heroTitle ?? 'Build Your Dreams with Us') ?></h1>
-            <p class="fs-5 mb-4"><?= esc($heroSubtitle ?? 'We provide innovative solutions to help you succeed.') ?></p>
-            <a href="#features" class="btn btn-light btn-lg fw-bold">Learn More</a>
-        </section>
+<div class="container py-5">
 
-        <section id="features" class="py-5 text-center">
-            <h2 class="display-4 mb-5 text-primary">Our Features</h2>
-            <div class="row row-cols-1 row-cols-md-3 g-4">
-                <div class="col">
-                    <div class="card h-100 shadow-sm border-0">
-                        <div class="card-body p-4">
-                            <h3 class="card-title text-primary fs-4 mb-3">Feature One</h3>
-                            <p class="card-text text-muted">Description of the first amazing feature that sets us apart from the competition.</p>
-                        </div>
-                    </div>
+    <!-- Hero Section -->
+    <section class="hero text-center mb-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h1 class="display-3 fw-bold mb-3"><?= esc($heroTitle ?? 'Professional Web Development Solutions') ?></h1>
+                <p class="lead text-muted mb-4"><?= esc($heroSubtitle ?? 'We build fast, reliable, and scalable web applications tailored to your business needs.') ?></p>
+                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                    <a href="<?= url_to('register') ?>" class="btn btn-primary btn-lg px-4 gap-3 btn-hover-effect">Get Started</a>
+                    <a href="#features" class="btn btn-outline-secondary btn-lg px-4 btn-hover-effect">Learn More</a>
                 </div>
-                <div class="col">
-                    <div class="card h-100 shadow-sm border-0">
-                        <div class="card-body p-4">
-                            <h3 class="card-title text-primary fs-4 mb-3">Feature Two</h3>
-                            <p class="card-text text-muted">Description of the second key feature, designed to enhance user experience.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-5 text-center">
+        <h2 class="display-5 fw-bold mb-5 text-primary">Why Choose Us?</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm border-0 card-hoverable">
+                    <div class="card-body p-4">
+                        <div class="feature-icon bg-primary bg-gradient text-white rounded-3 mb-3 mx-auto" style="width: 3rem; height: 3rem; line-height: 3rem; font-size: 1.5rem;">
+                            <i class="bi bi-code-slash"></i>
                         </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card h-100 shadow-sm border-0">
-                        <div class="card-body p-4">
-                            <h3 class="card-title text-primary fs-4 mb-3">Feature Three</h3>
-                            <p class="card-text text-muted">Description of the third powerful feature, offering advanced capabilities.</p>
-                        </div>
+                        <h3 class="fs-4 fw-bold">Custom Development</h3>
+                        <p class="text-muted">Tailored solutions that perfectly match your specifications and business goals.</p>
                     </div>
                 </div>
             </div>
-        </section>
-
-        <section id="about" class="py-5 text-center">
-            <h2 class="display-4 mb-5 text-primary">About Us</h2>
-            <div class="row row-cols-1 row-cols-md-2 g-4">
-                <div class="col">
-                    <div class="card h-100 shadow-sm border-0">
-                        <div class="card-body p-4">
-                            <h3 class="card-title text-primary fs-4 mb-3">Our Mission</h3>
-                            <p class="card-text text-muted">To empower businesses and individuals with cutting-edge technology and unparalleled support.</p>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm border-0 card-hoverable">
+                    <div class="card-body p-4">
+                        <div class="feature-icon bg-primary bg-gradient text-white rounded-3 mb-3 mx-auto" style="width: 3rem; height: 3rem; line-height: 3rem; font-size: 1.5rem;">
+                            <i class="bi bi-phone"></i>
                         </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card h-100 shadow-sm border-0">
-                        <div class="card-body p-4">
-                            <h3 class="card-title text-primary fs-4 mb-3">Our Vision</h3>
-                            <p class="card-text text-muted">To be the leading provider of innovative solutions, driving progress and creating value.</p>
-                        </div>
+                        <h3 class="fs-4 fw-bold">Responsive Design</h3>
+                        <p class="text-muted">Flawless performance and appearance on all devices, from desktops to smartphones.</p>
                     </div>
                 </div>
             </div>
-        </section>
-
-        <section id="contact" class="py-5 text-center">
-            <h2 class="display-4 mb-5 text-primary">Contact Us</h2>
-            <div class="row row-cols-1 row-cols-md-2 g-4 mb-5">
-                <div class="col">
-                    <div class="card h-100 shadow-sm border-0">
-                        <div class="card-body p-4">
-                            <h3 class="card-title text-primary fs-4 mb-3">Email</h3>
-                            <p class="card-text text-muted">info@mysite.com</p>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm border-0 card-hoverable">
+                    <div class="card-body p-4">
+                        <div class="feature-icon bg-primary bg-gradient text-white rounded-3 mb-3 mx-auto" style="width: 3rem; height: 3rem; line-height: 3rem; font-size: 1.5rem;">
+                            <i class="bi bi-shield-check"></i>
                         </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card h-100 shadow-sm border-0">
-                        <div class="card-body p-4">
-                            <h3 class="card-title text-primary fs-4 mb-3">Phone</h3>
-                            <p class="card-text text-muted">+1 (123) 456-7890</p>
-                        </div>
+                        <h3 class="fs-4 fw-bold">Secure & Scalable</h3>
+                        <p class="text-muted">Built with security best practices and ready to grow with your business.</p>
                     </div>
                 </div>
             </div>
+        </div>
+    </section>
 
-            <div class="card shadow-sm border-0 p-4 mt-5">
-                <h3 class="card-title text-primary fs-3 mb-4">Send us a message</h3>
-                <form action="<?= url_to('contact.send') ?>" method="post">
-                    <?= csrf_field() ?>
-                    <div class="mb-3 text-start">
-                        <label for="name" class="form-label">Name:</label>
-                        <input type="text" class="form-control" id="name" name="name" value="<?= esc(old('name')) ?>" required>
-                    </div>
-                    <div class="mb-3 text-start">
-                        <label for="email" class="form-label">Email:</label>
-                        <input type="email" class="form-control" id="email" name="email" value="<?= esc(old('email')) ?>" required>
-                    </div>
-                    <div class="mb-3 text-start">
-                        <label for="subject" class="form-label">Subject:</label>
-                        <input type="text" class="form-control" id="subject" name="subject" value="<?= esc(old('subject')) ?>" required>
-                    </div>
-                    <div class="mb-3 text-start">
-                        <label for="message" class="form-label">Message:</label>
-                        <textarea class="form-control" id="message" name="message" rows="5" required><?= esc(old('message')) ?></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-lg w-100 mt-3">Send Message</button>
-                </form>
+    <!-- About Section -->
+    <section id="about" class="py-5">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h2 class="display-5 fw-bold text-primary">About Our Company</h2>
+                <p class="text-muted">We are a team of dedicated developers passionate about creating high-quality web solutions. Our mission is to transform your ideas into reality with clean, efficient, and maintainable code. We believe in building long-term partnerships with our clients, providing continuous support and value.</p>
             </div>
-        </section>
-    </div>
+            <div class="col-md-6 text-center">
+                <img src="https://via.placeholder.com/500x300.png?text=Our+Team" class="img-fluid rounded-3 shadow" alt="About Us Image">
+            </div>
+        </div>
+    </section>
+    
+    <!-- CTA Section -->
+    <section id="cta" class="py-5 my-5 bg-primary text-white text-center rounded-3 shadow">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h2 class="display-5 fw-bold mb-3">Ready to Start Your Project?</h2>
+                <p class="lead mb-4">Let's build something amazing together. Register for an account or log in to get started.</p>
+                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                    <a href="<?= url_to('register') ?>" class="btn btn-light btn-lg px-4 fw-bold btn-hover-effect">Register Now</a>
+                    <a href="<?= url_to('login') ?>" class="btn btn-outline-light btn-lg px-4 btn-hover-effect">Login</a>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
 <?= $this->endSection() ?>
