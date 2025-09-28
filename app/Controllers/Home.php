@@ -30,7 +30,7 @@ class Home extends BaseController
             'pageTitle' => 'Welcome, ' . session()->get('username'),
             'username'  => session()->get('username'),
             'email'     => session()->get('userEmail'), // Corrected to match session key
-            'member_since' => session()->get('member_since'), // Assuming 'member_since' is in session
+            'member_since' => $user->created_at ?? null, // Get from user object if available
             'balance'   => $balance, // Pass balance to the view
         ];
         return view('home/welcome_user', $data);

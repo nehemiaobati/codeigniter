@@ -16,22 +16,22 @@
                     <div class="card my-4 text-start">
                         <div class="card-body">
                             <h5 class="card-title text-primary mb-3">Account Information</h5>
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <ul class="list-group list-group-flush" style="overflow-x: auto;">
+                                <li class="list-group-item d-flex justify-content-between align-items-center" style="white-space: nowrap;">
                                     <strong>Email:</strong>
                                     <span><?= esc($email ?? 'N/A') ?></span>
                                 </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <li class="list-group-item d-flex justify-content-between align-items-center" style="white-space: nowrap;">
                                     <strong>Member Since:</strong>
                                     <span><?= esc($member_since ? date('F d, Y', strtotime($member_since)) : 'N/A') ?></span>
                                 </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <li class="list-group-item d-flex justify-content-between align-items-center" style="white-space: nowrap;">
                                     <strong>Current Balance:</strong>
-                                    <span>$<?= esc(number_format((float)($balance ?? 0.00), 2)) ?></span>
+                                    <span>$<?= esc(number_format((float)($balance ?? 0), 2)) ?></span>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <strong>Service Status:</strong>
-                                    <?php if (isset($balance) && (float)$balance > 0): ?>
+                                    <?php if (isset($balance) && (float)$balance > 0.0): ?>
                                         <span class="badge bg-success">Active</span>
                                     <?php else: ?>
                                         <span class="badge bg-warning text-dark">Payment Required</span>
