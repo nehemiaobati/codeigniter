@@ -2,15 +2,36 @@
 
 namespace App\Controllers;
 
+use App\Models\User;
+
 class Home extends BaseController
 {
+    protected $userModel; // Declare UserModel property
+
+    public function __construct()
+    {
+        $this->userModel = new User(); // Instantiate UserModel
+    }
+
     public function index(): string
     {
+        $userId = session()->get('userId'); // Get user ID from session
+        $user = null;
+        $balance = '0.00'; // Default balance
+
+        if ($userId) {
+            $user = $this->userModel->find($userId);
+            if ($user && isset($user->balance)) {
+                $balance = $user->balance;
+            }
+        }
+
         $data = [
             'pageTitle' => 'Welcome, ' . session()->get('username'),
             'username'  => session()->get('username'),
             'email'     => session()->get('userEmail'), // Corrected to match session key
             'member_since' => session()->get('member_since'), // Assuming 'member_since' is in session
+            'balance'   => $balance, // Pass balance to the view
         ];
         return view('home/welcome_user', $data);
     }

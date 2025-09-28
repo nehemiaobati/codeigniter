@@ -25,7 +25,15 @@
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item"><strong>Email:</strong> <?= esc($email ?? 'N/A') ?></li>
                                 <li class="list-group-item"><strong>Member Since:</strong> <?= esc($member_since ? date('F d, Y', strtotime($member_since)) : 'N/A') ?></li>
-                                <li class="list-group-item"><strong>Service Status:</strong> <span class="badge bg-warning text-dark">Payment Required</span></li>
+                                <li class="list-group-item"><strong>Current Balance:</strong> <?= esc(number_format($balance ?? '0.00', 2)) ?></li>
+                                <li class="list-group-item">
+                                    <strong>Service Status:</strong>
+                                    <?php if (isset($balance) && floatval($balance) > 0.00): ?>
+                                        <span class="badge bg-success">Service Active</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-warning text-dark">Payment Required</span>
+                                    <?php endif; ?>
+                                </li>
                             </ul>
                         </div>
                     </div>

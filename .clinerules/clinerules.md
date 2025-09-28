@@ -7,7 +7,7 @@ CodeIgniter 4 Production Deployment Rules & Workflow
 3.  Adhere to Architectural Principles: All modifications must respect the CodeIgniter 4 file structure and its separation of concerns.
        Configuration (app/Config/): Manage all core application settings in their respective configuration files. Access values using the config() function.
        Controllers (app/Controllers/): Keep controllers lean and focused on request/response flow. Delegate all business logic to Models or Libraries/Services.
-       Models (app/Models/): Manage all database interactions through Models, Query Builder, or Entities. Never place direct database queries in Controllers.
+       Models (app/Models/): Manage all database interactions through Models, Query Builder, or Entities. Never place direct database queries in Controllers. Import all models using a `use` statement and instantiate them with their short class name (e.g., `new User()`) rather than a fully qualified namespace.
        Views (app/Views/): Handle presentation with minimal PHP. Escape all dynamic data with esc() to prevent XSS attacks. Use View Layouts for page structure and View Cells for reusable components. An entire view file's content must not be wrapped in <![CDATA[...]]> tags.
        Database (app/Database/): Manage all schema changes through Migration files and initial data with Seeder files.
        Filters (app/Filters/): Use filters only for cross-cutting concerns like security (CSRF), authentication, or rate limiting.

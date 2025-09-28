@@ -5,17 +5,20 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use App\Libraries\PaystackService;
 use App\Models\Payment;
+use App\Models\User;
 use CodeIgniter\HTTP\RedirectResponse;
 
 class Payments extends BaseController
 {
     protected $paymentModel;
     protected $paystackService;
+    protected $userModel; // Declare userModel property
 
     public function __construct()
     {
         $this->paymentModel    = new Payment();
         $this->paystackService = \Config\Services::paystackService();
+        $this->userModel       = new User(); // Instantiate UserModel
         helper(['form', 'url']);
     }
 
@@ -89,10 +92,26 @@ class Payments extends BaseController
         $response = $this->paystackService->verifyTransaction($paystackReference);
 
         if ($response['status'] === true && $response['data']['status'] === 'success') {
+            // Update payment status
             $this->paymentModel->update($payment->id, [
                 'status'            => 'success',
                 'paystack_response' => json_encode($response['data']),
             ]);
+
+            // Accumulate balance
+            if ($payment->user_id) { // Ensure user_id is available
+                $user = $this->userModel->find($payment->user_id); // Find the user
+
+                if ($user) {
+                    // Use the entity to update balance
+                    // Ensure balance is treated as a string for bcadd
+                    $currentBalance = is_string($user->balance) ? $user->balance : (string) $user->balance;
+                    $paymentAmount = is_string($payment->amount) ? $payment->amount : (string) $payment->amount;
+                    
+                    $user->balance = bcadd($currentBalance ?? '0.00', $paymentAmount, 2);
+                    $this->userModel->save($user); // Save the updated user
+                }
+            }
 
             return redirect()->to(url_to('payment.index'))->with('success', 'Payment successful!');
         }

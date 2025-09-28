@@ -37,6 +37,12 @@ class CreateUsersTableWithUsername extends Migration
                 'type' => 'DATETIME',
                 'null' => true,
             ],
+            'balance' => [
+                'type' => 'DECIMAL',
+                'constraint' => '10,2',
+                'default' => '0.00',
+                'null' => false,
+            ],
         ]);
         $this->forge->addKey('id', true);
         $this->forge->createTable('users');
