@@ -49,7 +49,7 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav ms-auto text-end">
+                    <ul class="navbar-nav ms-auto text-start">
                         <?php if (session()->get('isLoggedIn')): ?>
                             <li class="nav-item text-dark me-3 fw-bold d-lg-flex align-items-center">Hello, <?= esc(session()->get('username')) ?></li>
                             <li class="nav-item"><a class="nav-link text-secondary" href="<?= url_to('home') ?>">Home</a></li>

@@ -26,10 +26,10 @@ class Database extends Config
      */
     public array $default = [
         'DSN'          => '',
-        'hostname'     => '127.0.0.1',
-        'username'     => '',
-        'password'     => '',
-        'database'     => '',
+        'hostname'     => 'db.fr-pari1.bengt.wasmernet.com',
+        'username'     => '85c787837cd780004d4c31bdddac',
+        'password'     => '068d85c7-8783-7ebd-8000-ae2805b8e6a4',
+        'database'     => 'Wasmer_codeiigniter',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
         'pConnect'     => false,
@@ -41,7 +41,7 @@ class Database extends Config
         'compress'     => false,
         'strictOn'     => false,
         'failover'     => [],
-        'port'         => 3306,
+        'port'         => 10272,
         'numberNative' => false,
         'foundRows'    => false,
         'dateFormat'   => [
