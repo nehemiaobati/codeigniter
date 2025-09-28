@@ -6,45 +6,52 @@
         <div class="col-lg-8">
 
             <div class="card border-0 shadow-lg">
-                <div class="card-header bg-primary text-white text-center">
+                <div class="card-header bg-dark text-white text-center">
                     <h3 class="mb-0">User Dashboard</h3>
                 </div>
-                <div class="card-body p-5 text-center">
-                    <h4 class="card-title mb-3">Welcome back, <?= esc($username ?? 'User') ?>!</h4>
-                    <p class="card-text text-muted">Your Web Development Solution is ready to be activated.</p>
+                <div class="card-body p-5">
+                    <h4 class="card-title text-center mb-4">Welcome, <?= esc($username ?? 'User') ?>!</h4>
                     
-                    <div class="card my-4 text-start">
+                    <div class="card my-4 text-start shadow-sm">
+                        <div class="card-header">
+                           <h5 class="mb-0 text-primary">Account Information</h5>
+                        </div>
                         <div class="card-body">
-                            <h5 class="card-title text-primary mb-3">Account Information</h5>
-                            <ul class="list-group list-group-flush" style="overflow-x: auto;">
-                                <li class="list-group-item d-flex justify-content-between align-items-center" style="white-space: nowrap;">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
+                                    <strong>Username:</strong>
+                                    <span class="text-muted"><?= esc($username ?? 'N/A') ?></span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
                                     <strong>Email:</strong>
-                                    <span><?= esc($email ?? 'N/A') ?></span>
+                                    <span class="text-muted"><?= esc($email ?? 'N/A') ?></span>
                                 </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center" style="white-space: nowrap;">
+                                <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
                                     <strong>Member Since:</strong>
-                                    <span><?= esc($member_since ? date('F d, Y', strtotime($member_since)) : 'N/A') ?></span>
+                                    <span class="text-muted"><?= esc($member_since ? date('F d, Y', strtotime($member_since)) : 'N/A') ?></span>
                                 </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center" style="white-space: nowrap;">
+                                <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
                                     <strong>Current Balance:</strong>
-                                    <span>$<?= esc(number_format((float)($balance ?? 0), 2)) ?></span>
+                                    <span class="fw-bold fs-5 text-success">$<?= esc(number_format((float)($balance ?? 0), 2)) ?></span>
                                 </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
                                     <strong>Service Status:</strong>
-                                    <?php if (isset($balance) && (float)$balance > 0.0): ?>
-                                        <span class="badge bg-success">Active</span>
+                                    <?php if (isset($balance) && (float)$balance > 0): ?>
+                                        <span class="badge bg-success rounded-pill">Active</span>
                                     <?php else: ?>
-                                        <span class="badge bg-warning text-dark">Payment Required</span>
+                                        <span class="badge bg-danger rounded-pill">Payment Required</span>
                                     <?php endif; ?>
                                 </li>
                             </ul>
                         </div>
                     </div>
 
-                    <p class="mt-4">Complete your purchase to unlock all features and launch your project.</p>
-                    <a href="<?= url_to('payment.index') ?>" class="btn btn-primary btn-lg mt-2 px-5 btn-hover-effect">
-                        Make a Payment
-                    </a>
+                    <div class="text-center mt-4">
+                        <p class="text-muted">To use the Crypto Service, you must have an active balance. Add funds to your account now.</p>
+                        <a href="<?= url_to('payment.index') ?>" class="btn btn-primary btn-lg mt-2 px-5 btn-hover-effect">
+                            Make a Payment
+                        </a>
+                    </div>
                 </div>
                 <div class="card-footer text-center text-muted">
                     Need help? <a href="<?= url_to('contact.form') ?>">Contact Support</a>
