@@ -24,7 +24,7 @@
             <div class="col-md-4">
                 <div class="card h-100 shadow-sm border-0 card-hoverable">
                     <div class="card-body p-4">
-                        <div class="feature-icon bg-primary bg-gradient text-white rounded-3 mb-3 mx-auto" style="width: 3rem; height: 3rem; line-height: 3rem; font-size: 1.5rem;">
+                        <div class="feature-icon bg-primary bg-gradient text-white rounded-3 mb-3 mx-auto d-flex align-items-center justify-content-center" style="width: 3rem; height: 3rem; font-size: 1.5rem;">
                             <i class="bi bi-code-slash"></i>
                         </div>
                         <h3 class="fs-4 fw-bold">Custom Development</h3>
@@ -35,7 +35,7 @@
             <div class="col-md-4">
                 <div class="card h-100 shadow-sm border-0 card-hoverable">
                     <div class="card-body p-4">
-                        <div class="feature-icon bg-primary bg-gradient text-white rounded-3 mb-3 mx-auto" style="width: 3rem; height: 3rem; line-height: 3rem; font-size: 1.5rem;">
+                        <div class="feature-icon bg-primary bg-gradient text-white rounded-3 mb-3 mx-auto d-flex align-items-center justify-content-center" style="width: 3rem; height: 3rem; font-size: 1.5rem;">
                             <i class="bi bi-phone"></i>
                         </div>
                         <h3 class="fs-4 fw-bold">Responsive Design</h3>
@@ -46,7 +46,7 @@
             <div class="col-md-4">
                 <div class="card h-100 shadow-sm border-0 card-hoverable">
                     <div class="card-body p-4">
-                        <div class="feature-icon bg-primary bg-gradient text-white rounded-3 mb-3 mx-auto" style="width: 3rem; height: 3rem; line-height: 3rem; font-size: 1.5rem;">
+                        <div class="feature-icon bg-primary bg-gradient text-white rounded-3 mb-3 mx-auto d-flex align-items-center justify-content-center" style="width: 3rem; height: 3rem; font-size: 1.5rem;">
                             <i class="bi bi-shield-check"></i>
                         </div>
                         <h3 class="fs-4 fw-bold">Secure & Scalable</h3>

@@ -44,7 +44,7 @@
     <header class="sticky-top">
         <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3">
             <div class="container">
-                <a class="navbar-brand fs-4 fw-bold text-primary" href="<?= url_to('welcome') ?>">MySite</a>
+                <a class="navbar-brand fs-4 fw-bold text-primary" href="<?= url_to('welcome') ?>">AFRIKENKID</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -72,7 +72,7 @@
 
     <footer class="bg-dark text-white text-center py-4">
         <div class="container">
-            <p class="mb-0">&copy; <?= date('Y') ?> MySite. All rights reserved.</p>
+            <p class="mb-0">&copy; <?= date('Y') ?> AFRIKENKID. All rights reserved.</p>
         </div>
     </footer>
 
