@@ -78,7 +78,7 @@ class Crypto extends BaseController
                 if ($userId) {
                     $user = $this->userModel->find($userId);
 
-                    $deductionAmount = 50; // Amount to deduct for a successful query
+                    $deductionAmount = 10; // Amount to deduct for a successful query
 
                     if ($user && $user->balance >= $deductionAmount) {
                         $user->balance -= $deductionAmount;
