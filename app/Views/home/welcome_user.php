@@ -5,12 +5,6 @@
     <div class="row justify-content-center">
         <div class="col-lg-8">
 
-            <?php if (session()->getFlashdata('success')): ?>
-                <div class="alert alert-success" role="alert">
-                    <?= esc(session()->getFlashdata('success')) ?>
-                </div>
-            <?php endif; ?>
-
             <div class="card border-0 shadow-lg">
                 <div class="card-header bg-primary text-white text-center">
                     <h3 class="mb-0">User Dashboard</h3>

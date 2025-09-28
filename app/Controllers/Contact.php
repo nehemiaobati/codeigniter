@@ -41,6 +41,8 @@ class Contact extends BaseController
         $emailService->setMessage("Name: {$name}\nEmail: {$email}\n\nMessage:\n{$message}");
 
         if ($emailService->send()) {
+            // Set a warning message indicating potential delays, even if sent successfully
+            session()->setFlashdata('warning', 'Your message has been sent. Please note that email delivery may experience slight delays.');
             return redirect()->back()->with('success', 'Your message has been sent successfully!');
         } else {
             $data = $emailService->printDebugger(['headers']);

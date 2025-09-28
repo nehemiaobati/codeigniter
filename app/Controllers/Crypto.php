@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Models\User;
 use CodeIgniter\HTTP\ResponseInterface;
 use App\Libraries\CryptoService;
 
@@ -10,9 +11,12 @@ class Crypto extends BaseController
 {
     protected $cryptoService;
 
+    protected $userModel;
+
     public function __construct()
     {
         $this->cryptoService = new CryptoService();
+        $this->userModel = new User();
     }
 
     public function index()
@@ -27,6 +31,8 @@ class Crypto extends BaseController
 
     public function query()
     {
+        
+
         $rules = [
             'asset' => 'required|in_list[btc,ltc]',
             'query_type' => 'required|in_list[balance,tx]',
@@ -63,6 +69,35 @@ class Crypto extends BaseController
 
             if (isset($result['error'])) {
                 $errors[] = $result['error'];
+            }
+
+            // Deduct balance if query was successful and user has enough balance
+            if (empty($errors)) { // Check if crypto query itself had errors
+                $userId = session()->get('userId'); // Corrected session key
+
+                if ($userId) {
+                    $user = $this->userModel->find($userId);
+
+                    $deductionAmount = 50; // Amount to deduct for a successful query
+
+                    if ($user && $user->balance >= $deductionAmount) {
+                        $user->balance -= $deductionAmount;
+                        if ($this->userModel->save($user)) {
+                            session()->setFlashdata('success', $deductionAmount . ' units deducted for query.');
+                        } else {
+                            $errors[] = 'Failed to update balance after successful query.';
+                            log_message('error', 'Failed to save user balance after crypto query.');
+                        }
+                    } elseif ($user && $user->balance < $deductionAmount) {
+                        $errors[] = 'Insufficient balance to perform this query.';
+                    } else {
+                        $errors[] = 'User not found or invalid user session.';
+                        log_message('error', 'User not found or invalid session during balance deduction.');
+                    }
+                } else {
+                    $errors[] = 'User not logged in. Cannot deduct balance.';
+                    log_message('error', 'User not logged in during balance deduction.');
+                }
             }
 
         } catch (\Exception $e) {

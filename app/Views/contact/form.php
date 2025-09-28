@@ -5,16 +5,6 @@
     <div class="row justify-content-center">
         <div class="col-lg-8">
 
-            <?php if (session()->getFlashdata('success')): ?>
-                <div class="alert alert-success" role="alert">
-                    <?= esc(session()->getFlashdata('success')) ?>
-                </div>
-            <?php elseif (session()->getFlashdata('error')): ?>
-                <div class="alert alert-danger" role="alert">
-                    <?= esc(session()->getFlashdata('error')) ?>
-                </div>
-            <?php endif; ?>
-
             <div class="card border-0 shadow-lg text-center">
                 <div class="card-header bg-primary text-white">
                     <h3 class="mb-0">Contact Us</h3>

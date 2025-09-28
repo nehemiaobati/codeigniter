@@ -9,16 +9,6 @@
                     <h3 class="card-title"><?= esc($title) ?></h3>
                 </div>
                 <div class="card-body">
-                    <?php if (session()->getFlashdata('errors')): ?>
-                        <div class="alert alert-danger">
-                            <ul>
-                                <?php foreach (session()->getFlashdata('errors') as $error): ?>
-                                    <li><?= esc($error) ?></li>
-                                <?php endforeach; ?>
-                            </ul>
-                        </div>
-                    <?php endif; ?>
-
                     <form action="<?= url_to('crypto.query') ?>" method="post">
                         <?= csrf_field() ?>
                         <div class="mb-3">

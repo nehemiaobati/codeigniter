@@ -9,16 +9,6 @@
                         <h4 class="mb-0">Login</h4>
                     </div>
                     <div class="card-body">
-                        <?php if (session()->getFlashdata('error')): ?>
-                            <div class="alert alert-danger" role="alert">
-                                <?= esc(session()->getFlashdata('error')) ?>
-                            </div>
-                        <?php endif; ?>
-                        <?php if (session()->getFlashdata('success')): ?>
-                            <div class="alert alert-success" role="alert">
-                                <?= esc(session()->getFlashdata('success')) ?>
-                            </div>
-                        <?php endif; ?>
                         <?php if (isset($validation)): ?>
                             <div class="alert alert-danger" role="alert">
                                 <?= $validation->listErrors() ?>

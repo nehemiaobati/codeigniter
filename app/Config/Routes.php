@@ -24,12 +24,13 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     // Payment Routes (already grouped, but now nested under the main auth group for clarity)
     $routes->group('payment', static function ($routes) {
         $routes->get('/', 'Payments::index', ['as' => 'payment.index']);
+        $routes->get('initiate', 'Payments::initiate', ['as' => 'payment.initiate']); // Added GET route
         $routes->post('initiate', 'Payments::initiate', ['as' => 'payment.initiate']);
         $routes->get('verify', 'Payments::verify', ['as' => 'payment.verify']);
     });
 
     // Crypto Routes
-    $routes->group('crypto', static function ($routes) {
+    $routes->group('crypto', ['filter' => 'balance'], static function ($routes) { // Apply balance filter
         $routes->get('/', 'Crypto::index', ['as' => 'crypto.index']);
         $routes->post('query', 'Crypto::query', ['as' => 'crypto.query']);
     });

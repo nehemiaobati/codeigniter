@@ -11,7 +11,9 @@ CodeIgniter 4 Production Deployment Rules & Workflow
        Views (app/Views/): Handle presentation with minimal PHP. Escape all dynamic data with esc() to prevent XSS attacks. Use View Layouts for page structure and View Cells for reusable components. An entire view file's content must not be wrapped in <![CDATA[...]]> tags.
        Database (app/Database/): Manage all schema changes through Migration files and initial data with Seeder files.
        Filters (app/Filters/): Use filters only for cross-cutting concerns like security (CSRF), authentication, or rate limiting.
-       Routing (app/Config/Routes.php): Define all application routes with a named route using the ['as' => 'routename'] parameter. Generate all internal URLs using urlto('routename') to ensure maintainability.
+       Routing (app/Config/Routes.php): Define all application routes with a named route using the ['as' => 'routename'] parameter. Distinguish between client-side and server-side URL generation:
+       - Client-Side (Views): For all client-side links (e.g., in `<a>` tags), generate URLs using `url_to('routename')`. This ensures that links remain consistent and maintainable.
+       - Server-Side (Controllers): For all server-side redirects (e.g., after a form submission), use `redirect()->to(url_to('routename'))`. This combines the redirect functionality with the maintainability of named routes.
        Helpers (app/Helpers/): Contain only stateless, procedural helper functions.
        Language (app/Language/): Store all language-specific strings for internationalization.
        Libraries/Services (app/Libraries/, app/Config/Services.php): House reusable application logic as classes and manage them as Services for scalability and testability.
@@ -89,6 +91,18 @@ CodeIgniter 4 Production Deployment Rules & Workflow
 2.  Define table schemas, constraints, and keys clearly within the up() method using forge methods.
 3.  For tables with timestamps, include createdat and updatedat fields and set useTimestamps = true in the corresponding model.
 4.  Keep each migration file focused on a single, logical schema change.
+
+ 9\. Flash Message Handling
+
+1.  Centralized Display: All flash messages (e.g., success, error, info) must be rendered through a single, centralized view partial, such as `app/Views/partials/flash_messages.php`. This partial should be included in the main application layout to ensure consistent display across all pages.
+2.  Standardized Keys: Use the following standardized keys when setting flashdata in controllers:
+    success: For successful operations.
+    error: For general errors or failures.
+    warning: For non-critical issues or important notices.
+    info: For informational messages.
+    errors: For an array of validation errors.
+3.  Controller Responsibility: Controllers are responsible for setting flashdata. This should be done using `session()->setFlashdata('key', 'message')` or, when redirecting, the `with('key', 'message')` method.
+4.  View Responsibility: Individual views must not contain logic for displaying flash messages. This responsibility is delegated entirely to the centralized partial. Data that is not a simple alert message (e.g., a complex query result) may be handled within its specific view.
 
  URL References
 

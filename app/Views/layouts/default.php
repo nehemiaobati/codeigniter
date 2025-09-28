@@ -66,6 +66,10 @@
         </nav>
     </header>
 
+<div class="container my-3">
+    <?= $this->include('partials/flash_messages') ?>
+</div>
+
     <main class="flex-grow-1">
         <?= $this->renderSection('content') ?>
     </main>
