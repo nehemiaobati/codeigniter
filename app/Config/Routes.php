@@ -14,6 +14,7 @@ $routes->group('', static function ($routes) {
     $routes->post('login/authenticate', 'Auth::authenticate', ['as' => 'login.authenticate']);
     $routes->get('contact', 'Contact::form', ['as' => 'contact.form']);
     $routes->post('contact/send', 'Contact::send', ['as' => 'contact.send']);
+    $routes->get('portfolio', 'Portfolio::index', ['as' => 'portfolio.index']);
 });
 
 // Authenticated Routes
