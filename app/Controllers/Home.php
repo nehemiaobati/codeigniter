@@ -45,4 +45,20 @@ class Home extends BaseController
         ];
         return view('home/landing_page', $data);
     }
+
+    public function terms(): string
+    {
+        $data = [
+            'pageTitle' => 'Terms of Service',
+        ];
+        return view('pages/terms', $data);
+    }
+
+    public function privacy(): string
+    {
+        $data = [
+            'pageTitle' => 'Privacy Policy',
+        ];
+        return view('pages/privacy', $data);
+    }
 }

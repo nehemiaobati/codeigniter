@@ -59,6 +59,9 @@
                                     <li><a class="dropdown-item" href="<?= url_to('home') ?>">Home</a></li>
                                     <li><a class="dropdown-item" href="<?= url_to('payment.index') ?>">Make Payment</a></li>
                                     <li><a class="dropdown-item" href="<?= url_to('crypto.index') ?>">Crypto Service</a></li>
+                                    <?php if (session()->get('is_admin')): ?>
+                                        <li><a class="dropdown-item" href="<?= url_to('admin.index') ?>">Admin</a></li>
+                                    <?php endif; ?>
                                     <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item" href="<?= url_to('logout') ?>">Logout</a></li>
                                 </ul>
@@ -84,6 +87,10 @@
     <footer class="bg-white text-dark text-center py-4 mt-auto border-top">
         <div class="container">
             <p class="mb-0">&copy; <?= date('Y') ?> AFRIKENKID. All rights reserved.</p>
+            <p class="mb-0">
+                <a href="<?= url_to('terms') ?>" class="text-dark me-3">Terms of Service</a>
+                <a href="<?= url_to('privacy') ?>" class="text-dark">Privacy Policy</a>
+            </p>
         </div>
     </footer>
 

@@ -43,6 +43,10 @@ class CreateUsersTableWithUsername extends Migration
                 'default' => '0.00',
                 'null' => false,
             ],
+            'is_admin' => [
+                'type' => 'BOOLEAN',
+                'default' => false,
+            ],
         ]);
         $this->forge->addKey('id', true);
         $this->forge->createTable('users');
