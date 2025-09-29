@@ -15,6 +15,7 @@ $routes->group('', static function ($routes) {
     $routes->get('contact', 'Contact::form', ['as' => 'contact.form']);
     $routes->post('contact/send', 'Contact::send', ['as' => 'contact.send']);
     $routes->get('portfolio', 'Portfolio::index', ['as' => 'portfolio.index']);
+    $routes->post('portfolio/send', 'Portfolio::sendEmail', ['as' => 'portfolio.sendEmail']);
 });
 
 // Authenticated Routes
@@ -28,7 +29,8 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->get('initiate', 'Payments::initiate', ['as' => 'payment.initiate']); // Added GET route
         $routes->post('initiate', 'Payments::initiate', ['as' => 'payment.initiate']);
         $routes->get('verify', 'Payments::verify', ['as' => 'payment.verify']);
-    });
+
+});
 
     // Crypto Routes
     $routes->group('crypto', ['filter' => 'balance'], static function ($routes) { // Apply balance filter
