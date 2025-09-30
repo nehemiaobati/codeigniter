@@ -21,7 +21,7 @@
     <section id="features" class="py-5 text-center">
         <h2 class="display-5 fw-bold mb-5 text-primary">Our Core Offering</h2>
         <div class="row g-4 justify-content-center">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card h-100 shadow-sm border-0 card-hoverable">
                     <div class="card-body p-4">
                         <div class="feature-icon bg-primary bg-gradient text-white rounded-3 mb-3 mx-auto d-flex align-items-center justify-content-center" style="width: 3rem; height: 3rem; font-size: 1.5rem;">
@@ -32,7 +32,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card h-100 shadow-sm border-0 card-hoverable">
                     <div class="card-body p-4">
                         <div class="feature-icon bg-primary bg-gradient text-white rounded-3 mb-3 mx-auto d-flex align-items-center justify-content-center" style="width: 3rem; height: 3rem; font-size: 1.5rem;">
@@ -40,6 +40,17 @@
                         </div>
                         <h3 class="fs-4 fw-bold">Transaction History</h3>
                         <p class="text-muted">Retrieve detailed transaction histories for any address. Understand the flow of funds with clear, concise, and accurate data.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm border-0 card-hoverable">
+                    <div class="card-body p-4">
+                        <div class="feature-icon bg-primary bg-gradient text-white rounded-3 mb-3 mx-auto d-flex align-items-center justify-content-center" style="width: 3rem; height: 3rem; font-size: 1.5rem;">
+                            <i class="bi bi-robot"></i>
+                        </div>
+                        <h3 class="fs-4 fw-bold">Gemini API Integration</h3>
+                        <p class="text-muted">Leverage the power of Google's Gemini API. Interact with a cutting-edge AI to get insights, generate content, and more, directly within our platform.</p>
                     </div>
                 </div>
             </div>

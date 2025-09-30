@@ -59,6 +59,7 @@
                                     <li><a class="dropdown-item" href="<?= url_to('home') ?>">Home</a></li>
                                     <li><a class="dropdown-item" href="<?= url_to('payment.index') ?>">Make Payment</a></li>
                                     <li><a class="dropdown-item" href="<?= url_to('crypto.index') ?>">Crypto Service</a></li>
+                                    <li><a class="dropdown-item" href="<?= url_to('gemini.index') ?>">Gemini API</a></li>
                                     <?php if (session()->get('is_admin')): ?>
                                         <li><a class="dropdown-item" href="<?= url_to('admin.index') ?>">Admin</a></li>
                                     <?php endif; ?>

@@ -63,4 +63,10 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->get('/', 'CryptoController::index', ['as' => 'crypto.index']);
         $routes->post('query', 'CryptoController::query', ['as' => 'crypto.query']);
     });
+
+    // Gemini API Routes (with balance filter)
+    $routes->group('gemini', ['filter' => 'balance'], static function ($routes) {
+        $routes->get('/', 'GeminiController::index', ['as' => 'gemini.index']);
+        $routes->post('generate', 'GeminiController::generate', ['as' => 'gemini.generate']);
+    });
 });
