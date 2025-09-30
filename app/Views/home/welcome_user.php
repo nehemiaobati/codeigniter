@@ -16,7 +16,7 @@
                         <div class="card-header">
                            <h5 class="mb-0 text-primary">Account Information</h5>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body table-responsive">
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
                                     <strong>Username:</strong>
