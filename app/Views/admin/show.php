@@ -4,12 +4,6 @@
 <div class="container">
     <h1 class="mt-5">User Details</h1>
 
-    <?php if (session()->getFlashdata('success')): ?>
-        <div class="alert alert-success"><?= session()->getFlashdata('success') ?></div>
-    <?php endif; ?>
-    <?php if (session()->getFlashdata('error')): ?>
-        <div class="alert alert-danger"><?= session()->getFlashdata('error') ?></div>
-    <?php endif; ?>
 
     <div class="card mt-3">
         <div class="card-body">
