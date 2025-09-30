@@ -8,7 +8,7 @@ use App\Models\Payment;
 use App\Models\User;
 use CodeIgniter\HTTP\RedirectResponse;
 
-class Payments extends BaseController
+class PaymentsController extends BaseController
 {
     protected $paymentModel;
     protected $paystackService;

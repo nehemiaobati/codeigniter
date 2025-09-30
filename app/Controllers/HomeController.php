@@ -4,7 +4,7 @@ namespace App\Controllers;
 
 use App\Models\User;
 
-class Home extends BaseController
+class HomeController extends BaseController
 {
     protected $userModel; // Declare UserModel property
 
@@ -51,7 +51,7 @@ class Home extends BaseController
         $data = [
             'pageTitle' => 'Terms of Service',
         ];
-        return view('pages/terms', $data);
+        return view('home/terms', $data);
     }
 
     public function privacy(): string
@@ -59,6 +59,6 @@ class Home extends BaseController
         $data = [
             'pageTitle' => 'Privacy Policy',
         ];
-        return view('pages/privacy', $data);
+        return view('home/privacy', $data);
     }
 }

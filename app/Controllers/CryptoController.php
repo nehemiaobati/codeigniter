@@ -7,7 +7,7 @@ use App\Models\User;
 use CodeIgniter\HTTP\ResponseInterface;
 use App\Libraries\CryptoService;
 
-class Crypto extends BaseController
+class CryptoController extends BaseController
 {
     protected $cryptoService;
 

@@ -5,7 +5,7 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use App\Models\User;
 
-class Admin extends BaseController
+class AdminController extends BaseController
 {
     public function index()
     {

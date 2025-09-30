@@ -2,20 +2,20 @@
 
 namespace App\Controllers;
 
-helper('form');
-
 use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
-use CodeIgniter\Email\Email;
+use CodeIgniter\Email\Email; // Added use statement for Email
 
-class Contact extends BaseController
+helper('form'); // Ensure helper is loaded
+
+class PortfolioController extends BaseController
 {
-    public function form()
+    public function index()
     {
-        return view('contact/form');
+        return view('pages/portfolio');
     }
 
-    public function send()
+    public function sendEmail()
     {
         $rules = [
             'name'    => 'required|min_length[3]',
@@ -25,6 +25,7 @@ class Contact extends BaseController
         ];
 
         if (! $this->validate($rules)) {
+            // Redirect back with input and validation errors
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
@@ -33,20 +34,22 @@ class Contact extends BaseController
         $subject = $this->request->getPost('subject');
         $message = $this->request->getPost('message');
 
+        // Get the email service
         $emailService = service('email');
 
+        // Configure email settings (using config from app/Config/Email.php)
         $emailService->setFrom(config('Email')->fromEmail, config('Email')->fromName);
         $emailService->setTo('nehemiahobati@gmail.com'); // Replace with your recipient email
         $emailService->setSubject($subject);
         $emailService->setMessage("Name: {$name}\nEmail: {$email}\n\nMessage:\n{$message}");
 
         if ($emailService->send()) {
-            // Set a warning message indicating potential delays, even if sent successfully
-            session()->setFlashdata('warning', 'Your message has been sent. Please note that email delivery may experience slight delays.');
+            // Set a success message
             return redirect()->back()->with('success', 'Your message has been sent successfully!');
         } else {
+            // Log the error and return an error message
             $data = $emailService->printDebugger(['headers']);
-            log_message('error', 'Email sending failed: ' . print_r($data, true));
+            log_message('error', 'Portfolio email sending failed: ' . print_r($data, true));
             return redirect()->back()->with('error', 'Failed to send your message. Please try again later.');
         }
     }

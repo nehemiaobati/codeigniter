@@ -6,7 +6,7 @@ use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
 use App\Models\User;
 
-class Auth extends BaseController
+class AuthController extends BaseController
 {
     public function register(): string
     {
