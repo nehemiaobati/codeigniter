@@ -63,7 +63,7 @@ CodeIgniter 4 Production Deployment Rules & Workflow
 2.  Enable exception logging by setting $log to true in app/Config/Exceptions.php.
 3.  Configure the logging threshold in app/Config/Logger.php to an appropriate level for production (e.g., 4 for errors).
 4.  Create custom error pages for common HTTP status codes in app/Views/errors/html/.
-5.  **PHP Extension Checks**: When a specific PHP extension is required for a feature, include a check to ensure the extension is loaded. If it is not, log an error message to assist with debugging in new deployment instances. For example:
+5.  **PHP Extension Checks**: When a specific PHP extension is required for a feature, include a check to ensure the extension is loaded. If it is not, log an error message to assist with debugging in new deployment instances. For example, check for the `bcmath` extension with `extension_loaded('bcmath')`:
     ```php
     // Check if bcmath extension is loaded for precise calculations
     if (!extension_loaded('bcmath')) {
@@ -112,17 +112,25 @@ CodeIgniter 4 Production Deployment Rules & Workflow
 3.  For tables with timestamps, include createdat and updatedat fields and set useTimestamps = true in the corresponding model.
 4.  Keep each migration file focused on a single, logical schema change.
 
- 9\. Flash Message Handling
+ 11\. Dynamic Responses & Flash Messaging
 
-1.  Centralized Display: All flash messages (e.g., success, error, info) must be rendered through a single, centralized view partial, such as `app/Views/partials/flash_messages.php`. This partial should be included in the main application layout to ensure consistent display across all pages.
-2.  Standardized Keys: Use the following standardized keys when setting flashdata in controllers:
-    success: For successful operations.
-    error: For general errors or failures.
-    warning: For non-critical issues or important notices.
-    info: For informational messages.
-    errors: For an array of validation errors.
-3.  Controller Responsibility: Controllers are responsible for setting flashdata. This should be done using `session()->setFlashdata('key', 'message')` or, when redirecting, the `with('key', 'message')` method.
-4.  View Responsibility: Individual views must not contain logic for displaying flash messages. This responsibility is delegated entirely to the centralized partial. Data that is not a simple alert message (e.g., a complex query result) may be handled within its specific view.
+1.  **Workflow for Dynamic Actions**: For any controller action that produces a dynamic result (e.g., form submissions, API queries), the following workflow is mandatory:
+    - The action method (e.g., `create()`, `generate()`) must process the request and perform its core logic.
+    - Upon completion, all response data—including status messages (`success`, `error`) and the primary `result` (e.g., query output, model entity)—must be stored in the session using `session()->setFlashdata()` or the `with()` method on a redirect instance.
+    - The method must conclude by redirecting the user to the appropriate view, typically using `return redirect()->back()->withInput()`. **JSON responses are forbidden for such actions.**
+2.  **View Controller Responsibility**: The controller method responsible for displaying the view (e.g., `index()`) must:
+    - Retrieve all relevant flash data from the session (e.g., `result`, `errors`, `success`).
+    - Pass this data to the view in the `$data` array.
+3.  **View Rendering**:
+    - **Status Messages**: All standard status messages (`success`, `error`, `warning`, `info`, `errors`) must be rendered exclusively through the `app/Views/partials/flash_messages.php` partial, which is included in the main `app/Views/layouts/default.php` layout. Individual views must not contain logic for displaying these messages.
+    - **Dynamic Results**: The primary `result` of the action (e.g., AI-generated text, database query results) should be rendered within the main content area of the specific view (e.g., `app/Views/gemini/index.php`).
+4.  **Standardized Keys**: Use the following standardized keys for flash data:
+    - `success`: For successful operations.
+    - `error`: For general errors or failures.
+    - `warning`: For non-critical issues or important notices.
+    - `info`: For informational messages.
+    - `errors`: For an array of validation errors.
+    - `result`: For the primary dynamic output of an action.
 
  URL References
 

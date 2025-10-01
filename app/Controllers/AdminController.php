@@ -11,8 +11,7 @@ class AdminController extends BaseController
     {
         $userModel = new User();
         $data['users'] = $userModel->findAll(); // Fetch all users as the view expects them
-        $totalBalanceData = $userModel->selectSum('balance')->first();
-        $data['total_balance'] = $totalBalanceData ? $totalBalanceData->balance : '0.00';
+        $data['total_balance'] = $userModel->getTotalBalance();
 
         return view('admin/index', $data);
     }
