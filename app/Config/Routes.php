@@ -68,15 +68,15 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->get('verify', 'PaymentsController::verify', ['as' => 'payment.verify']);
     });
 
-    // Crypto Routes (with balance filter)
-    $routes->group('crypto', ['filter' => 'balance'], static function ($routes) {
+    // Crypto Routes
+    $routes->group('crypto', static function ($routes) {
         $routes->get('/', 'CryptoController::index', ['as' => 'crypto.index']);
-        $routes->post('query', 'CryptoController::query', ['as' => 'crypto.query']);
+        $routes->post('query', 'CryptoController::query', ['as' => 'crypto.query', 'filter' => 'balance']);
     });
 
-    // Gemini API Routes (with balance filter)
-    $routes->group('gemini', ['filter' => 'balance'], static function ($routes) {
+    // Gemini API Routes
+    $routes->group('gemini', static function ($routes) {
         $routes->get('/', 'GeminiController::index', ['as' => 'gemini.index']);
-        $routes->post('generate', 'GeminiController::generate', ['as' => 'gemini.generate']);
+        $routes->post('generate', 'GeminiController::generate', ['as' => 'gemini.generate', 'filter' => 'balance']);
     });
 });
