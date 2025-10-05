@@ -52,6 +52,9 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     // Dashboard/Home for logged-in users
     $routes->get('home', 'HomeController::index', ['as' => 'home']);
 
+    // Account Routes
+    $routes->get('account', 'AccountController::index', ['as' => 'account.index']);
+
     // Admin Panel Routes
     $routes->group('admin', static function ($routes) {
         $routes->get('/', 'AdminController::index', ['as' => 'admin.index']);
@@ -79,4 +82,5 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->get('/', 'GeminiController::index', ['as' => 'gemini.index']);
         $routes->post('generate', 'GeminiController::generate', ['as' => 'gemini.generate', 'filter' => 'balance']);
     });
+
 });
