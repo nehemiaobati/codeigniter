@@ -17,9 +17,12 @@ class AuthController extends BaseController
      *
      * @return string The rendered registration view.
      */
-    public function register(): string
+    public function register(): string|ResponseInterface
     {
         helper(['form']);
+        if ($this->session->has('isLoggedIn')) {
+            return redirect()->to(url_to('home'));
+        }
         $data = [];
         return view('auth/register', $data);
     }
@@ -65,6 +68,7 @@ class AuthController extends BaseController
         // Prepare and send the email verification message.
         $emailService = service('email');
         $emailService->setTo($data['email']);
+        $emailService->setReplyTo('afrikenkid@gmail.com');
         $emailService->setSubject('Email Verification');
         $verificationLink = url_to('verify_email', $token);
         $message = view('emails/verification_email', [
@@ -229,8 +233,9 @@ class AuthController extends BaseController
 
             // Prepare and send the password reset email.
             $emailService = service('email');
-            $emailService->setTo($user->email);
-            $emailService->setSubject('Password Reset Request');
+        $emailService->setTo($user->email);
+        $emailService->setReplyTo('afrikenkid@gmail.com');
+        $emailService->setSubject('Password Reset Request');
             $resetLink = url_to('auth.reset_password', $token);
             $message = view('emails/reset_password_email', [
                 'name' => $user->username,
