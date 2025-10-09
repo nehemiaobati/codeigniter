@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Models\UserModel;
+use App\Entities\User; // Import the User entity
 
 /**
  * Manages administrative functions related to user accounts, including viewing,
@@ -102,7 +103,8 @@ class AdminController extends BaseController
             // Optionally, return an error to the user if bcmath is critical.
             // return redirect()->back()->with('error', 'Server configuration error: bcmath extension missing.');
         }
-
+        
+        /** @var User|null $user */
         $user = $userModel->find($id);
 
         // If the user is not found, return an error.

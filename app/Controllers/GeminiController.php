@@ -6,6 +6,7 @@ use App\Controllers\BaseController;
 use App\Models\UserModel;
 use App\Libraries\GeminiService;
 use CodeIgniter\HTTP\RedirectResponse;
+use App\Entities\User; // Import the User entity
 
 class GeminiController extends BaseController
 {
@@ -34,7 +35,8 @@ class GeminiController extends BaseController
         if ($userId <= 0) {
             return redirect()->back()->withInput()->with('error', ['User not logged in or invalid user ID. Cannot deduct balance.']);
         }
-
+        
+        /** @var User|null $user */
         $user = $this->userModel->find($userId);
         $deductionAmount = 10;
 

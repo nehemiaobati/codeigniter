@@ -77,17 +77,26 @@ This section defines the standards for code quality, security hardening, and app
 - **Modern PHP:** Use modern language features, including strict types (`declare(strict_types=1);`), typed properties, and return type declarations.
 - **Framework First:** Prioritize built-in CodeIgniter functions and libraries over custom implementations.
 - **API Standardization:** Use CodeIgniter’s `API Response Trait` for standardizing all API endpoint responses.
+- **Static Analysis Compliance:** To aid static analysis tools and prevent false positives with CodeIgniter’s Entities, add PHPDoc type hints (`/** @var ClassName|null $variable */`) within methods in Models and Controllers immediately before a variable is assigned the result of a framework method (e.g., `find()`, `first()`).
 
 ### 2.2. Documentation & Commenting Standards
-- **PHPDoc Standard:** All classes, methods, and properties must be documented using PHPDoc syntax.
-- **Class DocBlocks:** Ensure each class has a PHPDoc block that briefly describes its purpose.
-- **Method DocBlocks:** Every public method must have a PHPDoc block that includes:
-    - A concise one-line summary of what the method does.
-    - `@param` tags for all parameters, specifying their type and a clear description.
-    - A `@return` tag specifying the exact return type and a description of the returned value.
-    - A `@throws` tag for any exceptions the method might throw.
-- **Property DocBlocks:** Add `@var` PHPDoc tags to describe class properties.
-- **Clarity and Precision:** Comments must be direct and specific. Remove any placeholder, redundant, or conversational comments.
+Adherence to the PHPDoc standard is mandatory for all code constructs to ensure clarity, maintainability, and compatibility with IDEs and static analysis tools. This is a non-negotiable standard.
+
+- **Class DocBlocks:** Every class MUST have a PHPDoc block that includes:
+    - A short, one-line summary of the class's purpose.
+    - A longer, more detailed description if necessary.
+    - For Entities, a full list of `@property` tags defining its data map and types to assist static analysis.
+
+- **Property DocBlocks:** All `public` and `protected` class properties MUST have a `@var` tag defining their type and a brief description.
+
+- **Method DocBlocks:** All `public` and `protected` methods, including constructors, MUST have a complete PHPDoc block. This block is required even if the method has no parameters or return values. The block must include:
+    - A short, one-line summary of the method's function.
+    - A longer, more detailed description if the method's logic is complex.
+    - An `@param` tag for every parameter, including its type, name (e.g., `$userId`), and a clear description.
+    - A `@return` tag specifying the exact return type (e.g., `string`, `bool`, `void`, `RedirectResponse`) and a description of what is being returned. A method with no return value must be documented with `@return void`.
+    - A `@throws` tag for any specific exceptions the method is expected to throw.
+
+- **Clarity and Precision:** All comments must be direct, accurate, and professional. Placeholder comments (e.g., `// TODO`), redundant comments (e.g., `// increments i`), or conversational notes are forbidden in production code.
 
 ### 2.3. Security Mandates
 - **CSRF Protection:** Must be enabled globally to protect against cross-site request forgery attacks.
