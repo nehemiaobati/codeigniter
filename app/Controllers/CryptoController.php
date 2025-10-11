@@ -12,6 +12,10 @@ class CryptoController extends BaseController
     protected CryptoService $cryptoService;
     protected UserModel $userModel;
 
+    /**
+     * Constructor.
+     * Initializes the CryptoService and UserModel.
+     */
     public function __construct()
     {
         $this->cryptoService = new CryptoService();

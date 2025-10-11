@@ -47,4 +47,13 @@ class Services extends BaseService
 
         return new \App\Libraries\CryptoService();
     }
+
+    public static function geminiService($getShared = true): \App\Libraries\GeminiService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('geminiService');
+        }
+
+        return new \App\Libraries\GeminiService();
+    }
 }

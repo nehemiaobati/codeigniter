@@ -13,10 +13,14 @@ class GeminiController extends BaseController
     protected UserModel $userModel;
     protected GeminiService $geminiService;
 
+    /**
+     * Constructor.
+     * Initializes the UserModel and GeminiService via the services container.
+     */
     public function __construct()
     {
         $this->userModel = new UserModel();
-        $this->geminiService = new GeminiService();
+        $this->geminiService = service('geminiService');
     }
 
     public function index(): string

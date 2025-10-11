@@ -4,6 +4,9 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
+/**
+ * Manages payment data and database interactions.
+ */
 class PaymentModel extends Model
 {
     protected $table            = 'payments';

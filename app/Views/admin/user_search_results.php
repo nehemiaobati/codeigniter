@@ -118,7 +118,7 @@
 
     <!-- Pagination - Note: Pagination for search results might need custom implementation if not handled by the controller -->
     <!-- If $pager is available and has links, display them -->
-    <?php if (isset($pager) && $pager->hasPages()): ?>
+    <?php if (isset($pager) && $pager->getPageCount() > 1): ?>
         <div class="d-flex justify-content-center mt-4">
             <?= $pager->links() ?>
         </div>

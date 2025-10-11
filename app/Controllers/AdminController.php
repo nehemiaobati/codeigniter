@@ -54,10 +54,12 @@ class AdminController extends BaseController
         }
 
         // Perform a search for users whose username or email contains the search query.
-        // Note: For simplicity, pagination is not applied to search results here.
+        // Use paginate(10) to retrieve paginated results.
         $data['users'] = $userModel->like('username', $searchQuery)
                                    ->orLike('email', $searchQuery)
-                                   ->findAll();
+                                   ->paginate(10);
+        // Pass the pager instance to the view for pagination controls.
+        $data['pager'] = $userModel->pager;
         $data['search_query'] = $searchQuery;
         // Count the number of users found in the search results.
         $data['total_users'] = count($data['users']);
