@@ -1,3 +1,4 @@
 {
-    "git.alwaysShowStagedChangesResourceGroup": true
+    "git.alwaysShowStagedChangesResourceGroup": true,
+    "git.enableSmartCommit": true
 }
