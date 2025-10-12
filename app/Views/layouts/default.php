@@ -173,7 +173,7 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto text-center">
                         <?php if (session()->get('isLoggedIn')): ?>
-                            <li class="nav-item"><a class="nav-link" href="<?= url_to('home') ?>">Dashboard</a></li>
+                            <li class="nav-item"><a class="nav-link" href="<?= url_to('home') ?>">Home</a></li>
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="servicesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     Services
@@ -184,14 +184,14 @@
                                 </ul>
                             </li>
                             <li class="nav-item"><a class="nav-link" href="<?= url_to('payment.index') ?>">Top Up</a></li>
-                             <?php if (session()->get('is_admin')): ?>
-                                <li class="nav-item"><a class="nav-link" href="<?= url_to('admin.index') ?>">Admin Panel</a></li>
-                            <?php endif; ?>
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     <i class="bi bi-person-circle"></i> <?= esc(session()->get('username')) ?>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <?php if (session()->get('is_admin')): ?>
+                                        <li class="nav-item"><a class="dropdown-item" href="<?= url_to('admin.index') ?>">Admin Panel</a></li>
+                                    <?php endif; ?>
                                     <li><a class="dropdown-item" href="<?= url_to('account.index') ?>">My Account</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item" href="<?= url_to('logout') ?>">Logout</a></li>
