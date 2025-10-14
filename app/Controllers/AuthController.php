@@ -24,6 +24,7 @@ class AuthController extends BaseController
             return redirect()->to(url_to('home'));
         }
         $data = [];
+        $data['pageTitle'] = 'User Registration';
         return view('auth/register', $data);
     }
 
@@ -43,6 +44,7 @@ class AuthController extends BaseController
             'email' => 'required|valid_email|is_unique[users.email]',
             'password' => 'required|min_length[8]|max_length[255]',
             'confirmpassword' => 'matches[password]',
+            'terms' => 'required',
         ];
 
         // Validate the submitted data. If validation fails, display the registration form with errors.
@@ -111,6 +113,7 @@ class AuthController extends BaseController
     {
         helper(['form']);
         $data = [];
+        $data['pageTitle'] = 'User Login';
         return view('auth/login', $data);
     }
 
