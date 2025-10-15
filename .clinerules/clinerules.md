@@ -35,6 +35,7 @@ All code must strictly adhere to the CodeIgniter 4 architecture and the followin
     - Avoid complex PHP logic; focus on displaying data.
     - Escape all dynamic data with `esc()` to prevent Cross-Site Scripting (XSS) attacks.
     - Use View Layouts for page structure and View Cells for reusable components.
+    - **No CDATA tags should be used in views.**
 
 - **Routing (`app/Config/Routes.php`):**
     - **Role:** Define the application's URL structure.
