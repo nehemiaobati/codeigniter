@@ -153,6 +153,27 @@ This section provides a strict protocol for any AI agent modifying the codebase.
 5.  **File Modification:** When updating a file, specify its full path from the project root and provide the complete, updated file content. Partial code snippets are not acceptable.
 6.  **Final Confirmation:** Confirm that all changes have been applied in accordance with these rules before concluding the task.
 
+---
+
+## Part 5: Front-End & UI/UX Standards
+
+This section defines the visual and structural standards for all user-facing views to ensure a consistent, responsive, and professional user experience.
+
+### 5.1. Core Framework & Layout
+- **Bootstrap 5:** The application MUST use Bootstrap 5 as its foundational CSS framework.
+- **Default Layout:** All standard application views MUST extend the main layout file located at `app/Views/layouts/default.php`. Creating standalone HTML pages is forbidden to maintain header, footer, and style consistency.
+
+### 5.2. Theming and Styling
+- **Theme:** The application follows a light, clean, and modern theme. The primary color palette and typography are defined in `app/Views/layouts/default.php` and should be referenced via CSS variables (e.g., `var(--primary-color)`).
+- **Global Styles:** Styles that apply to multiple pages (e.g., pagination, buttons, cards) MUST be centralized in the main layout file (`app/Views/layouts/default.php`) to ensure consistency and reduce code duplication.
+- **Page-Specific Styles:** CSS that is unique to a single page SHOULD be placed within a `<?= $this->section('styles') ?>` block in the respective view file.
+
+### 5.3. Component Consistency
+- **Standard Components:** Use standard Bootstrap 5 components for all common UI elements to ensure a predictable user interface.
+    - **Cards:** Use the `.card` class with a consistent style (`border-radius: 0.75rem`, `box-shadow`, `border: none`).
+    - **Forms:** Use `.form-floating` for all input fields to provide a modern, uniform appearance.
+    - **Buttons:** Use the standard `.btn` classes (e.g., `.btn-primary`, `.btn-outline-secondary`).
+- **Responsiveness:** All views must be fully responsive and tested on common device breakpoints (mobile, tablet, desktop). Use Bootstrap's grid system (`.row`, `.col-*`) to create fluid layouts.
 
  URL References
 
