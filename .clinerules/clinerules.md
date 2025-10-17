@@ -119,6 +119,9 @@ Adherence to the PHPDoc standard is mandatory for all code constructs to ensure 
 - **Exception Logging:** Enable exception logging by setting `$log = true` in `app/Config/Exceptions.php`.
 - **Log Level:** Set the production logging threshold to an appropriate level (e.g., 4 for runtime errors) in `app/Config/Logger.php`.
 - **Dependency Checks:** When a feature requires a specific PHP extension (e.g., `bcmath`), programmatically check if it's loaded with `extension_loaded()` and log a descriptive error if it's missing.
+- **Dual Logging Strategy:** The application must employ a dual logging strategy:
+    - **Developer Logs (Raw):** Use the built-in `log_message()` helper for all system-level events, errors, and debugging information. These logs are for developer use only and are stored in `writable/logs/`.
+    - **User-Facing Notifications (End-User Log):** Use session flash messages (`session()->setFlashdata()`) to communicate the outcome of user actions (e.g., success, error, info). These messages serve as a temporary, user-visible log of events and must be rendered through the `app/Views/partials/flash_messages.php` partial.
 
 ---
 
