@@ -139,7 +139,7 @@ class GeminiController extends BaseController
             
             // Ensure a minimum charge of KES 0.01 for any successful API call with usage data.
             $deductionAmount = max(0.01, $costInKSH);
-            $costMessage = "KSH " . number_format($deductionAmount, 2) . " deducted for your AI query based on token usage.";
+            $costMessage = "KSH " . number_format($deductionAmount, 3) . " deducted for your AI query based on token usage.";
         }
         
         /** @var User|null $user */
