@@ -87,7 +87,12 @@ class GeminiController extends BaseController
             'application/pdf',
             'text/plain'
         ];
-        $maxFileSize = 10 * 1024 * 1024;
+
+        // Individual file size limit
+        $maxFileSize = 10 * 1024 * 1024; 
+        // Define the maximum total file size allowed (e.g., 20MB)
+        $totalMaxFileSize = 50 * 1024 * 1024;
+        $totalFileSize = 0; // Initialize total file size
         $parts = [];
 
         if ($finalPrompt) {
@@ -100,12 +105,20 @@ class GeminiController extends BaseController
                 if (!in_array($mimeType, $supportedMimeTypes)) {
                     return redirect()->back()->withInput()->with('error', "Unsupported file type: {$mimeType}.");
                 }
+                // Check individual file size
                 if ($file->getSize() > $maxFileSize) {
                     return redirect()->back()->withInput()->with('error', 'File size exceeds 10 MB limit.');
                 }
+                // Add the size of the current file to the total
+                $totalFileSize += $file->getSize();
                 $base64Content = base64_encode(file_get_contents($file->getTempName()));
                 $parts[] = ['inlineData' => ['mimeType' => $mimeType, 'data' => $base64Content]];
             }
+        }
+
+        // Check if the total file size exceeds the limit
+        if ($totalFileSize > $totalMaxFileSize) {
+            return redirect()->back()->withInput()->with('error', 'Total file size exceeds the 50 MB limit.');
         }
 
         if (empty($parts)) {
@@ -121,33 +134,15 @@ class GeminiController extends BaseController
         // --- Token-based Pricing Logic ---
         $deductionAmount = 10.00; // Default fallback cost in KSH
         $costMessage = "A default charge of KSH " . number_format($deductionAmount, 2) . " has been applied.";
-        if (defined('USD_TO_KSH_RATE')) {
-            $usdToKshRate = USD_TO_KSH_RATE;
-        } else {
-            define('USD_TO_KSH_RATE', 129);
-            $usdToKshRate = USD_TO_KSH_RATE;
-        }
-
+        $usdToKshRate = 129; // Define rate directly
 
         if (isset($apiResponse['usage']['totalTokenCount'])) {
             $inputTokens = (int) ($apiResponse['usage']['promptTokenCount'] ?? 0);
             $outputTokens = (int) ($apiResponse['usage']['candidatesTokenCount'] ?? 0);
 
             // Pricing for Gemini 2.5 Pro
-            $inputPricePerMillion = 0.0;
-            $outputPricePerMillion = 0.0;
-
-            $totalTokens = (int) ($apiResponse['usage']['totalTokenCount'] ?? 0);
-
-            if ($totalTokens <= 200000) {
-                // <=200K tokens
-                $inputPricePerMillion = 3.25;
-                $outputPricePerMillion = 12.00;
-            } else {
-                // >200K tokens
-                $inputPricePerMillion = 4.50;
-                $outputPricePerMillion = 17.00;
-            }
+            $inputPricePerMillion = 5.50;  // Standard price
+            $outputPricePerMillion = 12.50; // Standard price
 
             $inputCostUSD = ($inputTokens / 1000000) * $inputPricePerMillion;
             $outputCostUSD = ($outputTokens / 1000000) * $outputPricePerMillion;

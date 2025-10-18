@@ -100,7 +100,7 @@ class AGI extends BaseConfig
      *
      * @var int
      */
-    public int $forcedRecentInteractions = 2;
+    public int $forcedRecentInteractions = 3;
 
 
     // --- Hybrid Search Tuning ---

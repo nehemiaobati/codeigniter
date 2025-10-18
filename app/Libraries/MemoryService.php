@@ -38,9 +38,11 @@ class MemoryService
      */
     private function cosineSimilarity(array $vecA, array $vecB): float
     {
-        $dotProduct = 0.0; $magA = 0.0; $magB = 0.0;
+        $dotProduct = 0.0;
+        $magA = 0.0;
+        $magB = 0.0;
         $count = count($vecA);
-        if ($count !== count($vecB)) return 0;
+        if ($count !== count($vecB) || $count === 0) return 0;
 
         for ($i = 0; $i < $count; $i++) {
             $dotProduct += $vecA[$i] * $vecB[$i];
@@ -74,20 +76,22 @@ class MemoryService
 
         // Keyword Search (Lexical)
         $inputEntities = $this->extractEntities($userInput);
-        // Normalizing and expanding entities is complex with DB, simplify for now.
         $keywordResults = [];
-        $entities = $this->entityModel->where('user_id', $this->userId)->whereIn('entity_key', $inputEntities)->findAll();
-        foreach ($entities as $entity) {
-            foreach ($entity->mentioned_in as $interactionId) {
-                if (!isset($keywordResults[$interactionId])) {
-                     $interaction = $this->interactionModel->where('unique_id', $interactionId)->first();
-                     if($interaction) {
-                          $keywordResults[$interactionId] = $interaction->relevance_score;
-                     }
+        if (!empty($inputEntities)) {
+            $entities = $this->entityModel->where('user_id', $this->userId)->whereIn('entity_key', $inputEntities)->findAll();
+            foreach ($entities as $entity) {
+                $mentionedIn = $entity->mentioned_in ?? [];
+                foreach ($mentionedIn as $interactionId) {
+                    if (!isset($keywordResults[$interactionId])) {
+                        $interaction = $this->interactionModel->where('unique_id', $interactionId)->first();
+                        if ($interaction) {
+                            $keywordResults[$interactionId] = $interaction->relevance_score;
+                        }
+                    }
                 }
             }
+            arsort($keywordResults);
         }
-        arsort($keywordResults);
 
         // Hybrid Fusion
         $fusedScores = [];
@@ -137,7 +141,7 @@ class MemoryService
                 ->update();
         }
 
-        // 2. Decay all interactions (simplified - a more complex version could exclude recent)
+        // 2. Decay all interactions
         $this->interactionModel
             ->where('user_id', $this->userId)
             ->set('relevance_score', "relevance_score - {$this->config->decayScore}", false)
@@ -157,7 +161,7 @@ class MemoryService
             'ai_output' => $aiOutput,
             'relevance_score' => $this->config->initialScore,
             'last_accessed' => date('Y-m-d H:i:s'),
-            'context_used_ids' => is_array($usedInteractionIds) ? $usedInteractionIds : [],
+            'context_used_ids' => $usedInteractionIds,
             'embedding' => $embedding,
             'keywords' => $keywords
         ]);
@@ -180,21 +184,18 @@ class MemoryService
                     'user_id' => $this->userId,
                     'entity_key' => $entityKey,
                     'name' => $keyword,
-                    'relevance_score' => $this->config->initialScore,
-                    'mentioned_in' => [],
                 ]);
             }
-            
-            $entity->access_count++;
-            $entity->relevance_score += $this->config->rewardScore;
-            // Ensure $mentioned is an array before using in_array
-            $mentioned = is_array($entity->mentioned_in) ? $entity->mentioned_in : [];
-            
+
+            $entity->access_count = ($entity->access_count ?? 0) + 1;
+            $entity->relevance_score = ($entity->relevance_score ?? $this->config->initialScore) + $this->config->rewardScore;
+
+            $mentioned = $entity->mentioned_in ?? [];
             if (!in_array($interactionId, $mentioned)) {
                 $mentioned[] = $interactionId;
             }
             $entity->mentioned_in = $mentioned;
-            
+
             $this->entityModel->save($entity);
         }
     }
@@ -215,7 +216,7 @@ class MemoryService
             }
         }
     }
-    
+
     public function getTimeAwareSystemPrompt(): string
     {
         return "**PRIMARY DIRECTIVE: YOU ARE A HELPFUL, TIME-AWARE ASSISTANT.**\n\n" .
