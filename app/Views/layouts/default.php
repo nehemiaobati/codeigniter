@@ -338,6 +338,7 @@
             }
         });
     </script>
+    <script>hljs.highlightAll();</script>
     <?= $this->renderSection('scripts') ?>
 </body>
 

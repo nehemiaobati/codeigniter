@@ -46,7 +46,7 @@ class GeminiService
                 ]
             ],
             "generationConfig" => [
-                "maxOutputTokens" => 8192,
+                "maxOutputTokens" => 65192,
             ],
             "tools" => [
                 [
@@ -87,11 +87,17 @@ class GeminiService
                 return ['error' => 'Failed to decode API response.'];
             }
 
-            $processedText = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? '';
+            $processedText = '';
+            if (isset($responseData['candidates'][0]['content']['parts'])) {
+                foreach ($responseData['candidates'][0]['content']['parts'] as $part) {
+                    $processedText .= $part['text'] ?? '';
+                }
+            }
+
             $usageMetadata = $responseData['usageMetadata'] ?? null;
 
             if (empty($processedText) && $usageMetadata === null) {
-                 return ['error' => 'Received an empty or invalid response from the AI.'];
+                return ['error' => 'Received an empty or invalid response from the AI.'];
             }
 
             return ['result' => $processedText, 'usage' => $usageMetadata];

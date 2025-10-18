@@ -127,6 +127,11 @@ class GeminiController extends BaseController
 
         $apiResponse = $this->geminiService->generateContent($parts);
 
+        // Log the raw API response
+        $logFilePath = WRITEPATH . 'logs/gemini_payload.log';
+        $logContent = json_encode($apiResponse, JSON_PRETTY_PRINT);
+        file_put_contents($logFilePath, $logContent . PHP_EOL, FILE_APPEND);
+
         if (isset($apiResponse['error'])) {
             return redirect()->back()->withInput()->with('error', ['error' => $apiResponse['error']]);
         }
@@ -141,8 +146,16 @@ class GeminiController extends BaseController
             $outputTokens = (int) ($apiResponse['usage']['candidatesTokenCount'] ?? 0);
 
             // Pricing for Gemini 2.5 Pro
-            $inputPricePerMillion = 5.50;  // Standard price
-            $outputPricePerMillion = 12.50; // Standard price
+            $inputPricePerMillion = 0.0;
+            $outputPricePerMillion = 0.0;
+
+            if ($inputTokens <= 200000 && $outputTokens <= 200000) {
+                $inputPricePerMillion = 3.25;  // Price for <= 200K tokens
+                $outputPricePerMillion = 12.00; // Price for <= 200K tokens
+            } else {
+                $inputPricePerMillion = 4.50;  // Price for > 200K tokens
+                $outputPricePerMillion = 17.00; // Price for > 200K tokens
+            }
 
             $inputCostUSD = ($inputTokens / 1000000) * $inputPricePerMillion;
             $outputCostUSD = ($outputTokens / 1000000) * $outputPricePerMillion;
@@ -172,7 +185,11 @@ class GeminiController extends BaseController
             $memoryService->updateMemory($inputText, $aiResponseText, $usedInteractionIds);
         }
 
-        return redirect()->back()->withInput()->with('result', $apiResponse['result']);
+        // Instantiate Parsedown and convert Markdown to HTML
+        $parsedown = new \Parsedown();
+        $htmlResult = $parsedown->text($apiResponse['result']);
+
+        return redirect()->back()->withInput()->with('result', $htmlResult);
     }
 
     public function addPrompt(): RedirectResponse

@@ -60,21 +60,95 @@
         animation: blink 1s step-end infinite;
     }
 
-    @keyframes blink {
-        from, to { color: transparent; }
-        50% { color: var(--primary-color); }
-    }
+        @keyframes blink {
+            from, to { color: transparent; }
+            50% { color: var(--primary-color); }
+        }
 
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        to {
-            opacity: 1;
-            transform: translateY(0);
+
+        /* Styles for rendered HTML content */
+        .ai-response-html {
+            line-height: 1.6;
+            color: #333;
         }
-    }
+
+        .ai-response-html h1,
+        .ai-response-html h2,
+        .ai-response-html h3,
+        .ai-response-html h4,
+        .ai-response-html h5,
+        .ai-response-html h6 {
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+            font-weight: 600;
+        }
+
+        .ai-response-html h1 { font-size: 2em; }
+        .ai-response-html h2 { font-size: 1.75em; }
+        .ai-response-html h3 { font-size: 1.5em; }
+        .ai-response-html h4 { font-size: 1.25em; }
+
+        .ai-response-html p {
+            margin-bottom: 1em;
+        }
+
+        .ai-response-html ul,
+        .ai-response-html ol {
+            margin-bottom: 1em;
+            padding-left: 2em;
+        }
+
+        .ai-response-html li {
+            margin-bottom: 0.5em;
+        }
+
+        .ai-response-html strong,
+        .ai-response-html b {
+            font-weight: bold;
+        }
+
+        .ai-response-html em,
+        .ai-response-html i {
+            font-style: italic;
+        }
+
+        /* Code block styling */
+        .ai-response-html pre {
+            background-color: #f8f9fa; /* Light background for code blocks */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto; /* Enable horizontal scrolling for long lines */
+            border: 1px solid #dee2e6; /* Subtle border */
+            margin-bottom: 1em;
+            font-family: 'Courier New', Courier, monospace; /* Monospace font */
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .ai-response-html code {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: rgba(0, 0, 0, 0.05); /* Slight background for inline code */
+            padding: 0.2em 0.4em;
+            border-radius: 0.3em;
+            font-size: 0.9em;
+        }
+
+        .ai-response-html pre code {
+            background-color: transparent; /* Reset background for code within pre */
+            padding: 0;
+            border-radius: 0;
+            font-size: inherit; /* Inherit font size from pre */
+        }
 </style>
 <?= $this->endSection() ?>
 
@@ -351,33 +425,30 @@
                 resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100);
 
-            // 2. Artificially stream the response
-            let index = 0;
-            responseElement.classList.add('typing');
+            // Set the innerHTML directly to render the HTML content
+            responseElement.innerHTML = fullText;
             
-            function type() {
-                if (index < fullText.length) {
-                    responseElement.textContent += fullText.charAt(index);
-                    index++;
-                    setTimeout(type, 10); // Adjust speed here (milliseconds)
-                } else {
-                    responseElement.classList.remove('typing');
-                    if (copyBtn) copyBtn.disabled = false; // Enable copy button when done
-                }
-            }
-            
-            setTimeout(type, 500); // Start typing after a short delay
+            // Enable copy button when content is available
+            if (copyBtn) copyBtn.disabled = false;
 
-            // --- Copy to Clipboard Functionality ---
-            if (copyBtn) {
-                copyBtn.addEventListener('click', function() {
-                    navigator.clipboard.writeText(fullText).then(() => {
-                        const originalHtml = copyBtn.innerHTML;
-                        copyBtn.innerHTML = '<i class="bi bi-check-lg"></i> Copied!';
-                        setTimeout(() => { copyBtn.innerHTML = originalHtml; }, 2000);
-                    }).catch(err => console.error('Failed to copy text: ', err));
+            // Add event listener for the copy button
+            copyBtn.addEventListener('click', function() {
+                // Use innerText to get the plain text from the <pre> element
+                const textToCopy = responseElement.innerText;
+
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    // Provide user feedback
+                    const originalIcon = this.innerHTML;
+                    this.innerHTML = '<i class="bi bi-check-lg"></i> Copied!';
+                    setTimeout(() => {
+                        this.innerHTML = originalIcon;
+                    }, 2000); // Revert back after 2 seconds
+                }).catch(err => {
+                    console.error('Failed to copy text: ', err);
+                    // Optionally, provide an error message to the user
+                    alert('Failed to copy text. Please try again.');
                 });
-            }
+            });
         }
     });
 </script>
