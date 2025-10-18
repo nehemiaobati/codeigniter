@@ -198,7 +198,11 @@
         </div>
     </form>
 
-    <?php if ($result = session()->getFlashdata('result')): ?>
+    <?php 
+        $result = session()->getFlashdata('result');
+        $raw_result = session()->getFlashdata('raw_result');
+        if ($result):
+    ?>
         <div class="row justify-content-center mt-4">
             <div class="col-lg-12">
                 <div class="card results-card">
@@ -212,7 +216,7 @@
                         <div id="ai-response-wrapper" class="ai-response-html">
                              <?= $result ?>
                         </div>
-                        <textarea id="raw-response-for-copy" class="visually-hidden"><?= esc(strip_tags($result)) ?></textarea>
+                        <textarea id="raw-response-for-copy" class="visually-hidden"><?= esc($raw_result ?? strip_tags($result)) ?></textarea>
                     </div>
                 </div>
             </div>

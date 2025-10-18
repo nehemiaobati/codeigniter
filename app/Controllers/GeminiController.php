@@ -189,7 +189,9 @@ class GeminiController extends BaseController
         $parsedown = new \Parsedown();
         $htmlResult = $parsedown->text($apiResponse['result']);
 
-        return redirect()->back()->withInput()->with('result', $htmlResult);
+        return redirect()->back()->withInput()
+            ->with('result', $htmlResult)
+            ->with('raw_result', $apiResponse['result']);
     }
 
     public function addPrompt(): RedirectResponse
