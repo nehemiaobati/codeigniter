@@ -89,8 +89,8 @@
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h2 class="card-title fw-bold mb-0"><i class="bi bi-stars text-primary"></i> Gemini AI</h2>
                             <div class="form-check form-switch fs-5">
-                                <input class="form-check-input" type="checkbox" role="switch" id="reportToggle" name="report" value="1">
-                                <label class="form-check-label" for="reportToggle">Report Mode</label>
+                                <input class="form-check-input" type="checkbox" role="switch" id="assistantModeToggle" name="assistant_mode" value="1" checked>
+                                <label class="form-check-label" for="assistantModeToggle">Assistant Mode</label>
                             </div>
                         </div>
 

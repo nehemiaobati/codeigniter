@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace App\Controllers;
 
@@ -6,6 +8,7 @@ use App\Controllers\BaseController;
 use App\Models\UserModel;
 use App\Models\PromptModel;
 use App\Libraries\GeminiService;
+use App\Libraries\MemoryService;
 use CodeIgniter\HTTP\RedirectResponse;
 use App\Entities\User; // Import the User entity
 
@@ -42,58 +45,66 @@ class GeminiController extends BaseController
 
     public function generate(): RedirectResponse
     {
-        $userId = (int) session()->get('userId'); // Cast userId to integer
+        $userId = (int) session()->get('userId');
         if ($userId <= 0) {
-            return redirect()->back()->withInput()->with('error', ['User not logged in or invalid user ID. Cannot deduct balance.']);
+            return redirect()->back()->withInput()->with('error', ['User not logged in or invalid user ID.']);
         }
-        
+
         $inputText = $this->request->getPost('prompt');
-        $isReport = $this->request->getPost('report') === '1';
+        $isAssistantMode = $this->request->getPost('assistant_mode') === '1';
+        $finalPrompt = $inputText;
+        $usedInteractionIds = [];
+        $memoryService = null;
 
-        if ($isReport) {
-            $inputText = "no markdown\n\n{$inputText}";
+        if ($isAssistantMode && !empty(trim($inputText))) {
+            $memoryService = service('memory', $userId);
+            $recalled = $memoryService->getRelevantContext($inputText);
+            $context = $recalled['context'];
+            $usedInteractionIds = $recalled['used_interaction_ids'];
+
+            $systemPrompt = $memoryService->getTimeAwareSystemPrompt();
+            $currentTime = "CURRENT_TIME: " . date('Y-m-d H:i:s T');
+            $finalPrompt = "{$systemPrompt}\n\n---RECALLED CONTEXT---\n{$context}---END CONTEXT---\n\n{$currentTime}\n\nUser query: \"{$inputText}\"";
         }
-        $uploadedFiles = $this->request->getFileMultiple('media') ?: [];
 
+        // Handle file uploads
+        $uploadedFiles = $this->request->getFileMultiple('media') ?: [];
         $supportedMimeTypes = [
-            'image/png', 'image/jpeg', 'image/webp',
-            'audio/mpeg', 'audio/mp3', 'audio/wav',
-            'video/mov', 'video/mpeg', 'video/mp4', 'video/mpg', 'video/avi', 'video/wmv', 'video/mpegps', 'video/flv',
+            'image/png',
+            'image/jpeg',
+            'image/webp',
+            'audio/mpeg',
+            'audio/mp3',
+            'audio/wav',
+            'video/mov',
+            'video/mpeg',
+            'video/mp4',
+            'video/mpg',
+            'video/avi',
+            'video/wmv',
+            'video/mpegps',
+            'video/flv',
             'application/pdf',
             'text/plain'
         ];
-
+        $maxFileSize = 10 * 1024 * 1024;
         $parts = [];
-        if ($inputText) {
-            $parts[] = ['text' => $inputText];
+
+        if ($finalPrompt) {
+            $parts[] = ['text' => $finalPrompt];
         }
 
-        $maxFileSize = 10 * 1024 * 1024;
-
-        if (!empty($uploadedFiles)) {
-            foreach ($uploadedFiles as $file) {
-                if ($file->isValid()) {
-                    $mimeType = $file->getMimeType();
-
-                    if (!in_array($mimeType, $supportedMimeTypes)) {
-                        return redirect()->back()->withInput()->with('error', ["Unsupported file type: {$mimeType}. Please upload only supported media types."]);
-                    }
-
-                    if ($file->getSize() > $maxFileSize) {
-                        return redirect()->back()->withInput()->with('error', ['Uploaded file is too large. Maximum allowed size is 10 MB.']);
-                    }
-
-                    $filePath = $file->getTempName();
-                    $fileContent = file_get_contents($filePath);
-                    $base64Content = base64_encode($fileContent);
-
-                    $parts[] = [
-                        'inlineData' => [
-                            'mimeType' => $mimeType,
-                            'data' => $base64Content
-                        ]
-                    ];
+        foreach ($uploadedFiles as $file) {
+            if ($file->isValid()) {
+                $mimeType = $file->getMimeType();
+                if (!in_array($mimeType, $supportedMimeTypes)) {
+                    return redirect()->back()->withInput()->with('error', "Unsupported file type: {$mimeType}.");
                 }
+                if ($file->getSize() > $maxFileSize) {
+                    return redirect()->back()->withInput()->with('error', 'File size exceeds 10 MB limit.');
+                }
+                $base64Content = base64_encode(file_get_contents($file->getTempName()));
+                $parts[] = ['inlineData' => ['mimeType' => $mimeType, 'data' => $base64Content]];
             }
         }
 
@@ -107,58 +118,63 @@ class GeminiController extends BaseController
             return redirect()->back()->withInput()->with('error', ['error' => $apiResponse['error']]);
         }
 
-        // --- Token-based Pricing Logic in KSH ---
+        // --- Token-based Pricing Logic ---
         $deductionAmount = 10.00; // Default fallback cost in KSH
-        $costMessage = "A default charge of KSH " . number_format($deductionAmount, 2) . " has been applied for your AI query.";
-        define('USD_TO_KSH_RATE', 129);
+        $costMessage = "A default charge of KSH " . number_format($deductionAmount, 2) . " has been applied.";
+        if (defined('USD_TO_KSH_RATE')) {
+            $usdToKshRate = USD_TO_KSH_RATE;
+        } else {
+            define('USD_TO_KSH_RATE', 129);
+            $usdToKshRate = USD_TO_KSH_RATE;
+        }
 
-        // Check if usage metadata is available for precise cost calculation
-        if (isset($apiResponse['usage']['totalTokenCount'], $apiResponse['usage']['promptTokenCount'], $apiResponse['usage']['candidatesTokenCount'])) {
-            $totalTokens = (int) $apiResponse['usage']['totalTokenCount'];
-            $inputTokens = (int) $apiResponse['usage']['promptTokenCount'];
-            $outputTokens = (int) $apiResponse['usage']['candidatesTokenCount'];
 
+        if (isset($apiResponse['usage']['totalTokenCount'])) {
+            $inputTokens = (int) ($apiResponse['usage']['promptTokenCount'] ?? 0);
+            $outputTokens = (int) ($apiResponse['usage']['candidatesTokenCount'] ?? 0);
+
+            // Pricing for Gemini 2.5 Pro
             $inputPricePerMillion = 0.0;
             $outputPricePerMillion = 0.0;
-            
-            // Pricing for gemini-2.5-pro model
-            if ($totalTokens <= 200000) { // <= 200K tokens pricing tier
-                $inputPricePerMillion = 3.25;  // $1.25 per 1,000,000 tokens
-                $outputPricePerMillion = 12.00; // $10.00 per 1,000,000 tokens
-            } else { // > 200K tokens pricing tier
-                $inputPricePerMillion = 2.50;  // $2.50 per 1,000,000 tokens
-                $outputPricePerMillion = 17.00; // $15.00 per 1,000,000 tokens
+
+            $totalTokens = (int) ($apiResponse['usage']['totalTokenCount'] ?? 0);
+
+            if ($totalTokens <= 200000) {
+                // <=200K tokens
+                $inputPricePerMillion = 3.25;
+                $outputPricePerMillion = 12.00;
+            } else {
+                // >200K tokens
+                $inputPricePerMillion = 4.50;
+                $outputPricePerMillion = 17.00;
             }
 
             $inputCostUSD = ($inputTokens / 1000000) * $inputPricePerMillion;
             $outputCostUSD = ($outputTokens / 1000000) * $outputPricePerMillion;
             $totalCostUSD = $inputCostUSD + $outputCostUSD;
-            
-            // Convert USD cost to KSH
-            $costInKSH = $totalCostUSD * USD_TO_KSH_RATE;
-            
-            // Ensure a minimum charge of KES 0.01 for any successful API call with usage data.
+            $costInKSH = $totalCostUSD * $usdToKshRate;
+
             $deductionAmount = max(0.01, $costInKSH);
-            $costMessage = "KSH " . number_format($deductionAmount, 3) . " deducted for your AI query based on token usage.";
+            $costMessage = "KSH " . number_format($deductionAmount, 3) . " deducted for your AI query.";
         }
-        
+
         /** @var User|null $user */
         $user = $this->userModel->find($userId);
-
-        // Check if the user has enough balance for the calculated cost
         if (bccomp((string) $user->balance, (string) $deductionAmount, 2) < 0) {
-            log_message('error', "User {$userId} had insufficient balance for a query that already ran. Cost: {$deductionAmount}, Balance: {$user->balance}.");
-            session()->setFlashdata('error', 'Your query was processed, but your balance was insufficient to cover the full cost. Please top up your account.');
-            return redirect()->back()->withInput()->with('result', $apiResponse['result']);
+            session()->setFlashdata('error', 'Query processed, but your balance was insufficient to cover the cost.');
+        } else {
+            $newBalance = bcsub((string) $user->balance, (string) $deductionAmount, 2);
+            if ($this->userModel->update($userId, ['balance' => $newBalance])) {
+                session()->setFlashdata('success', $costMessage);
+            } else {
+                session()->setFlashdata('error', 'Could not update your balance after the query.');
+            }
         }
 
-        // Deduct the calculated KSH amount from the user's balance
-        $newBalance = bcsub((string) $user->balance, (string) $deductionAmount, 2);
-        if ($this->userModel->update($userId, ['balance' => $newBalance])) {
-            session()->setFlashdata('success', $costMessage);
-        } else {
-            log_message('error', 'Failed to update user balance for user ID: ' . $userId . '. Deduction amount was: KSH ' . $deductionAmount);
-            session()->setFlashdata('error', 'Could not update your balance after the query. Please contact support.');
+        // Update memory if assistant mode was used
+        if ($isAssistantMode && $memoryService) {
+            $aiResponseText = $apiResponse['result'];
+            $memoryService->updateMemory($inputText, $aiResponseText, $usedInteractionIds);
         }
 
         return redirect()->back()->withInput()->with('result', $apiResponse['result']);
