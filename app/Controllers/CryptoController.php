@@ -74,7 +74,7 @@ class CryptoController extends BaseController
 
             if (empty($errors)) {
                 $userId = session()->get('userId');
-                $deductionAmount = 10;
+                $deductionAmount = 1;
 
         $userId = (int) session()->get('userId'); // Cast userId to integer
         if ($userId > 0) { // Check if userId is valid (greater than 0)

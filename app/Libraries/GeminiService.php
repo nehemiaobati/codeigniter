@@ -35,7 +35,7 @@ class GeminiService
             return ['error' => 'GEMINI_API_KEY not set in .env file.'];
         }
 
-        $modelId = "gemini-2.5-pro"; // Updated model ID
+        $modelId = "gemini-flash-latest"; // Updated model ID
         $generateContentApi = "generateContent"; // Changed to non-streaming endpoint
 
         $requestPayload = [
