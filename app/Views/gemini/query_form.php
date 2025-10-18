@@ -1,13 +1,17 @@
 <?= $this->extend('layouts/default') ?>
 
 <?= $this->section('styles') ?>
+    <!-- ADD THIS LINE FOR SYNTAX HIGHLIGHTING STYLES -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
 <style>
     .query-card,
-    .results-card {
+    .results-card,
+    .settings-card {
         border-radius: 0.75rem;
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
         border: none;
         transition: all 0.3s ease-in-out;
+        height: 100%; /* Make cards in the same row equal height */
     }
 
     .results-card pre {
@@ -20,12 +24,18 @@
         min-height: 100px; /* Ensure pre has height for the cursor */
     }
 
-    /* Saved Prompts Enhancement */
-    .saved-prompts-block {
-        background-color: #f8f9fa;
-        border: 1px dashed #ced4da;
-        border-radius: 0.5rem;
-        padding: 1rem;
+    /* Settings Card specific styles */
+    .settings-card .card-body {
+        display: flex;
+        flex-direction: column;
+    }
+    .settings-card .form-check-label {
+        font-weight: 500;
+    }
+    .settings-card .saved-prompts-block {
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e9ecef;
     }
 
     /* Media Upload Area Styling */
@@ -60,132 +70,104 @@
         animation: blink 1s step-end infinite;
     }
 
-        @keyframes blink {
-            from, to { color: transparent; }
-            50% { color: var(--primary-color); }
-        }
+    @keyframes blink {
+        from, to { color: transparent; }
+        50% { color: var(--primary-color); }
+    }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
         }
-
-        /* Styles for rendered HTML content */
-        .ai-response-html {
-            line-height: 1.6;
-            color: #333;
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
+    }
 
-        .ai-response-html h1,
-        .ai-response-html h2,
-        .ai-response-html h3,
-        .ai-response-html h4,
-        .ai-response-html h5,
-        .ai-response-html h6 {
-            margin-top: 1.5em;
-            margin-bottom: 0.8em;
-            font-weight: 600;
-        }
-
-        .ai-response-html h1 { font-size: 2em; }
-        .ai-response-html h2 { font-size: 1.75em; }
-        .ai-response-html h3 { font-size: 1.5em; }
-        .ai-response-html h4 { font-size: 1.25em; }
-
-        .ai-response-html p {
-            margin-bottom: 1em;
-        }
-
-        .ai-response-html ul,
-        .ai-response-html ol {
-            margin-bottom: 1em;
-            padding-left: 2em;
-        }
-
-        .ai-response-html li {
-            margin-bottom: 0.5em;
-        }
-
-        .ai-response-html strong,
-        .ai-response-html b {
-            font-weight: bold;
-        }
-
-        .ai-response-html em,
-        .ai-response-html i {
-            font-style: italic;
-        }
-
-        /* Code block styling */
-        .ai-response-html pre {
-            background-color: #f8f9fa; /* Light background for code blocks */
-            padding: 1rem;
-            border-radius: 0.5rem;
-            overflow-x: auto; /* Enable horizontal scrolling for long lines */
-            border: 1px solid #dee2e6; /* Subtle border */
-            margin-bottom: 1em;
-            font-family: 'Courier New', Courier, monospace; /* Monospace font */
-            font-size: 0.9em;
-            line-height: 1.4;
-        }
-
-        .ai-response-html code {
-            font-family: 'Courier New', Courier, monospace;
-            background-color: rgba(0, 0, 0, 0.05); /* Slight background for inline code */
-            padding: 0.2em 0.4em;
-            border-radius: 0.3em;
-            font-size: 0.9em;
-        }
-
-        .ai-response-html pre code {
-            background-color: transparent; /* Reset background for code within pre */
-            padding: 0;
-            border-radius: 0;
-            font-size: inherit; /* Inherit font size from pre */
-        }
+    /* Styles for rendered HTML content */
+    .ai-response-html { line-height: 1.6; color: #333; }
+    .ai-response-html h1, .ai-response-html h2, .ai-response-html h3, .ai-response-html h4 {
+        margin-top: 1.5em; margin-bottom: 0.8em; font-weight: 600;
+    }
+    .ai-response-html h1 { font-size: 2em; }
+    .ai-response-html h2 { font-size: 1.75em; }
+    .ai-response-html h3 { font-size: 1.5em; }
+    .ai-response-html p { margin-bottom: 1em; }
+    .ai-response-html ul, .ai-response-html ol { margin-bottom: 1em; padding-left: 2em; }
+    .ai-response-html li { margin-bottom: 0.5em; }
+    .ai-response-html pre {
+        background-color: #f8f9fa; padding: 1rem; border-radius: 0.5rem;
+        overflow-x: auto; border: 1px solid #dee2e6; margin-bottom: 1em;
+        font-family: 'Courier New', Courier, monospace; font-size: 0.9em; line-height: 1.4;
+    }
+    .ai-response-html code {
+        font-family: 'Courier New', Courier, monospace; background-color: rgba(0, 0, 0, 0.05);
+        padding: 0.2em 0.4em; border-radius: 0.3em; font-size: 0.9em;
+    }
+    .ai-response-html pre code { background-color: transparent; padding: 0; font-size: inherit; }
 </style>
+
+    <!-- ADD THIS LINE TO LOAD THE HIGHLIGHT.JS LIBRARY -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <!-- This line (which you already have) can now run successfully -->
+    <script>hljs.highlightAll();</script> 
+    
+    <?= $this->renderSection('scripts') ?>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 <div class="container my-5">
-    <div class="row g-4 justify-content-center">
-        <div class="col-lg-8">
-            <div class="card query-card">
-                <div class="card-body p-4 p-md-5">
-                    <form id="geminiForm" action="<?= url_to('gemini.generate') ?>" method="post" enctype="multipart/form-data">
-                        <?= csrf_field() ?>
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h2 class="card-title fw-bold mb-0"><i class="bi bi-stars text-primary"></i> Gemini AI</h2>
-                            <div class="form-check form-switch fs-5">
-                                <input class="form-check-input" type="checkbox" role="switch" id="assistantModeToggle" name="assistant_mode" value="1" checked>
-                                <label class="form-check-label" for="assistantModeToggle">Assistant Mode</label>
+    <div class="text-center mb-5">
+        <h1 class="fw-bold"><i class="bi bi-stars text-primary"></i> Gemini AI Studio</h1>
+        <p class="text-muted lead">Craft your prompts, attach media, and generate content with assistant-level context.</p>
+    </div>
+
+    <form id="geminiForm" action="<?= url_to('gemini.generate') ?>" method="post" enctype="multipart/form-data">
+        <?= csrf_field() ?>
+        <div class="row g-4 justify-content-center">
+            <!-- Left Column: Settings & Config -->
+            <div class="col-lg-4">
+                <div class="card settings-card">
+                    <div class="card-body p-4">
+                        <h4 class="card-title fw-bold mb-4">
+                            <i class="bi bi-gear-fill"></i> Settings
+                        </h4>
+                        <div class="form-check form-switch fs-5 p-0 d-flex justify-content-between align-items-center">
+                            <label class="form-check-label" for="assistantModeToggle">Assistant Mode</label>
+                            <input class="form-check-input" type="checkbox" role="switch" id="assistantModeToggle" name="assistant_mode" value="1" <?= old('assistant_mode', '1') === '1' ? 'checked' : '' ?>>
+                        </div>
+                        <small class="text-muted d-block mt-1">Enables memory and context for conversational queries.</small>
+                        
+                        <?php if (!empty($prompts)): ?>
+                        <div class="saved-prompts-block flex-grow-1">
+                            <label for="savedPrompts" class="form-label fw-bold">Saved Prompts</label>
+                            <div class="input-group">
+                                <select class="form-select" id="savedPrompts">
+                                    <option selected disabled>Select a prompt...</option>
+                                    <?php foreach ($prompts as $p): ?>
+                                        <option value="<?= esc($p->prompt_text) ?>" data-id="<?= $p->id ?>"><?= esc($p->title) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="d-flex gap-2 mt-2">
+                                <button type="button" id="usePromptBtn" class="btn btn-sm btn-outline-secondary w-100"><i class="bi bi-arrow-down-circle"></i> Use</button>
+                                <button type="button" id="deletePromptBtn" class="btn btn-sm btn-outline-danger w-100" disabled><i class="bi bi-trash"></i> Delete</button>
                             </div>
                         </div>
-
-                        <?php if (!empty($prompts)): ?>
-                            <div class="saved-prompts-block mb-4">
-                                <label for="savedPrompts" class="form-label fw-bold">Use a Saved Prompt</label>
-                                <div class="input-group">
-                                    <select class="form-select" id="savedPrompts">
-                                        <option selected disabled>Select a prompt...</option>
-                                        <?php foreach ($prompts as $p): ?>
-                                            <option value="<?= esc($p->prompt_text) ?>" data-id="<?= $p->id ?>"><?= esc($p->title) ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <button type="button" id="usePromptBtn" class="btn btn-outline-secondary"><i class="bi bi-arrow-down-circle"></i> Use</button>
-                                    <button type="button" id="deletePromptBtn" class="btn btn-outline-danger" disabled><i class="bi bi-trash"></i></button>
-                                </div>
-                            </div>
                         <?php endif; ?>
+                    </div>
+                </div>
+            </div>
 
+            <!-- Right Column: Main Prompt & Actions -->
+            <div class="col-lg-8">
+                <div class="card query-card">
+                    <div class="card-body p-4 p-md-5">
                         <div class="form-floating mb-2">
-                            <textarea id="prompt" name="prompt" class="form-control" placeholder="Enter your prompt" style="height: 125px" required><?= old('prompt') ?></textarea>
+                            <textarea id="prompt" name="prompt" class="form-control" placeholder="Enter your prompt" style="height: 150px" required><?= old('prompt') ?></textarea>
                             <label for="prompt">Your Prompt</label>
                         </div>
                         <div class="d-flex justify-content-end mb-4">
@@ -210,27 +192,32 @@
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary btn-lg fw-bold"><i class="bi bi-robot"></i> Generate Content</button>
                         </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <?php if ($result = session()->getFlashdata('result')): ?>
-            <div class="col-lg-8">
-                <div class="card results-card mt-4">
-                    <div class="card-body p-4 p-md-5">
-                        <h3 class="fw-bold mb-4 d-flex justify-content-between align-items-center">
-                            AI Response
-                            <button id="copy-response-btn" class="btn btn-sm btn-outline-secondary" disabled>
-                                <i class="bi bi-clipboard"></i> Copy
-                            </button>
-                        </h3>
-                        <pre id="ai-response-content" data-full-text="<?= esc($result) ?>"></pre>
                     </div>
                 </div>
             </div>
-        <?php endif; ?>
-    </div>
+        </div>
+    </form>
+
+    <?php if ($result = session()->getFlashdata('result')): ?>
+        <div class="row justify-content-center mt-4">
+            <div class="col-lg-12">
+                <div class="card results-card">
+                    <div class="card-body p-4 p-md-5">
+                        <h3 class="fw-bold mb-4 d-flex justify-content-between align-items-center">
+                            AI Response
+                            <button id="copy-response-btn" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-clipboard"></i> Copy
+                            </button>
+                        </h3>
+                        <div id="ai-response-wrapper" class="ai-response-html">
+                             <?= $result ?>
+                        </div>
+                        <textarea id="raw-response-for-copy" class="visually-hidden"><?= esc(strip_tags($result)) ?></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
 </div>
 
 <!-- Save Prompt Modal -->
@@ -249,8 +236,8 @@
                         <label for="promptTitle">Prompt Title</label>
                     </div>
                     <div class="form-floating">
-                        <textarea class="form-control" placeholder="Prompt Text" id="promptText" name="prompt_text" style="height: 100px" required></textarea>
-                        <label for="promptText">Prompt Text</label>
+                        <textarea class="form-control" placeholder="Prompt Text" id="modalPromptText" name="prompt_text" style="height: 100px" required></textarea>
+                        <label for="modalPromptText">Prompt Text</label>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -269,9 +256,6 @@
         // --- Main Form and Prompt Elements ---
         const geminiForm = document.getElementById('geminiForm');
         const mainPromptTextarea = document.getElementById('prompt');
-        if (mainPromptTextarea) {
-            mainPromptTextarea.focus({ preventScroll: true });
-        }
         const submitButton = geminiForm.querySelector('button[type="submit"]');
 
         // --- Saved Prompts Elements ---
@@ -279,6 +263,19 @@
         const usePromptBtn = document.getElementById('usePromptBtn');
         const deletePromptBtn = document.getElementById('deletePromptBtn');
 
+        // --- Modal Elements ---
+        const savePromptModal = new bootstrap.Modal(document.getElementById('savePromptModal'));
+        const modalPromptTextarea = document.getElementById('modalPromptText');
+        
+        // --- Populate Save Modal ---
+        const savePromptTrigger = document.querySelector('[data-bs-target="#savePromptModal"]');
+        if (savePromptTrigger) {
+            savePromptTrigger.addEventListener('click', () => {
+                modalPromptTextarea.value = mainPromptTextarea.value;
+            });
+        }
+
+        // --- Saved Prompts Logic ---
         if (savedPromptsSelect) {
             let selectedPromptId = null;
 
@@ -292,14 +289,7 @@
                 usePromptBtn.addEventListener('click', function() {
                     const selectedOption = savedPromptsSelect.options[savedPromptsSelect.selectedIndex];
                     if (selectedOption && selectedOption.value) {
-                        const savedPrompt = selectedOption.value;
-                        const existingPrompt = mainPromptTextarea.value.trim();
-
-                        if (existingPrompt) {
-                            mainPromptTextarea.value = savedPrompt + '\n\n' + existingPrompt;
-                        } else {
-                            mainPromptTextarea.value = savedPrompt;
-                        }
+                        mainPromptTextarea.value = selectedOption.value;
                     }
                 });
             }
@@ -317,7 +307,6 @@
                         if(csrfField) {
                            tempForm.appendChild(csrfField.cloneNode());
                         }
-
                         document.body.appendChild(tempForm);
                         tempForm.submit();
                     }
@@ -337,116 +326,72 @@
 
             mediaRows.forEach((row, index) => {
                 const removeBtn = row.querySelector('.remove-media-btn');
-                removeBtn.style.display = (mediaRows.length > 1) ? 'inline-block' : 'none';
+                removeBtn.style.display = (mediaRows.length > 1 || row.querySelector('input').files.length > 0) ? 'inline-block' : 'none';
             });
-             // Also hide the first remove button if there is only one empty input
-            if (mediaRows.length === 1) {
-                const firstInput = mediaRows[0].querySelector('input[type="file"]');
-                const firstRemoveBtn = mediaRows[0].querySelector('.remove-media-btn');
-                if (firstInput.files.length === 0) {
-                    firstRemoveBtn.style.display = 'none';
-                }
-            }
         };
 
         if (addMediaBtn && mediaContainer) {
             addMediaBtn.addEventListener('click', function() {
+                if (mediaContainer.querySelectorAll('.media-input-row').length >= maxMediaFiles) return;
                 const newRow = document.createElement('div');
                 newRow.className = 'mb-2 media-input-row';
-                newRow.innerHTML = `
-                    <input type="file" class="form-control" name="media[]">
-                    <button type="button" class="btn btn-outline-danger btn-sm remove-media-btn"><i class="bi bi-x-lg"></i></button>
-                `;
+                newRow.innerHTML = `<input type="file" class="form-control" name="media[]"><button type="button" class="btn btn-outline-danger btn-sm remove-media-btn"><i class="bi bi-x-lg"></i></button>`;
                 mediaContainer.appendChild(newRow);
                 updateMediaButtons();
             });
 
-            mediaContainer.addEventListener('click', function(event) {
-                const removeBtn = event.target.closest('.remove-media-btn');
-                if (removeBtn) {
-                    removeBtn.closest('.media-input-row').remove();
+            mediaContainer.addEventListener('click', e => {
+                if (e.target.closest('.remove-media-btn')) {
+                    e.target.closest('.media-input-row').remove();
                     updateMediaButtons();
                 }
             });
-             mediaContainer.addEventListener('change', function(event) {
-                if (event.target.matches('input[type="file"]')) {
-                    const removeBtn = event.target.closest('.media-input-row').querySelector('.remove-media-btn');
-                    if (event.target.files.length > 0) {
-                        removeBtn.style.display = 'inline-block';
-                    }
-                    updateMediaButtons();
-                }
+            mediaContainer.addEventListener('change', e => {
+                if (e.target.matches('input[type="file"]')) updateMediaButtons();
             });
 
-            // Optional: Drag and drop listeners for better UX
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                mediaUploadArea.addEventListener(eventName, e => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }, false);
-            });
-            ['dragenter', 'dragover'].forEach(eventName => {
-                mediaUploadArea.addEventListener(eventName, () => mediaUploadArea.classList.add('dragover'), false);
-            });
-            ['dragleave', 'drop'].forEach(eventName => {
-                mediaUploadArea.addEventListener(eventName, () => mediaUploadArea.classList.remove('dragover'), false);
-            });
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => mediaUploadArea.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }));
+            ['dragenter', 'dragover'].forEach(eventName => mediaUploadArea.addEventListener(eventName, () => mediaUploadArea.classList.add('dragover')));
+            ['dragleave', 'drop'].forEach(eventName => mediaUploadArea.addEventListener(eventName, () => mediaUploadArea.classList.remove('dragover')));
+            
             mediaUploadArea.addEventListener('drop', e => {
-                 const firstInput = mediaContainer.querySelector('input[type="file"]');
-                 if(firstInput.files.length === 0) { // If the first input is empty, use it
+                const firstInput = mediaContainer.querySelector('input[type="file"]');
+                if (firstInput && firstInput.files.length === 0) {
                     firstInput.files = e.dataTransfer.files;
-                    const changeEvent = new Event('change', { bubbles: true });
-                    firstInput.dispatchEvent(changeEvent);
-                 }
-            }, false);
+                    firstInput.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            });
 
             updateMediaButtons();
         }
 
         // --- Form Submission Loading State ---
         if (geminiForm && submitButton) {
-            geminiForm.addEventListener('submit', function(event) {
-                if (this.action.includes('delete')) return;
+            geminiForm.addEventListener('submit', function() {
                 submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...';
                 submitButton.disabled = true;
             });
         }
+        
+        // --- AI Response and Copy Logic ---
+        const responseWrapper = document.getElementById('ai-response-wrapper');
+        const copyBtn = document.getElementById('copy-response-btn');
 
-        // --- AI Response Streaming ---
-        const responseElement = document.getElementById('ai-response-content');
-        if (responseElement) {
-            const resultsCard = responseElement.closest('.results-card');
-            const copyBtn = document.getElementById('copy-response-btn');
-            const fullText = responseElement.getAttribute('data-full-text');
-            responseElement.removeAttribute('data-full-text'); // Clean up
+        if (responseWrapper && copyBtn) {
+            const rawTextarea = document.getElementById('raw-response-for-copy');
+            const resultsCard = responseWrapper.closest('.results-card');
 
-            // 1. Scroll to the results card
             setTimeout(() => {
                 resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100);
 
-            // Set the innerHTML directly to render the HTML content
-            responseElement.innerHTML = fullText;
-            
-            // Enable copy button when content is available
-            if (copyBtn) copyBtn.disabled = false;
-
-            // Add event listener for the copy button
             copyBtn.addEventListener('click', function() {
-                // Use innerText to get the plain text from the <pre> element
-                const textToCopy = responseElement.innerText;
-
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                    // Provide user feedback
+                navigator.clipboard.writeText(rawTextarea.value).then(() => {
                     const originalIcon = this.innerHTML;
                     this.innerHTML = '<i class="bi bi-check-lg"></i> Copied!';
-                    setTimeout(() => {
-                        this.innerHTML = originalIcon;
-                    }, 2000); // Revert back after 2 seconds
+                    setTimeout(() => { this.innerHTML = originalIcon; }, 2000);
                 }).catch(err => {
                     console.error('Failed to copy text: ', err);
-                    // Optionally, provide an error message to the user
-                    alert('Failed to copy text. Please try again.');
                 });
             });
         }
