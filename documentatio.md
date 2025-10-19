@@ -64,6 +64,7 @@ The database schema is defined by the following migration files and tables:
 *   **`prompts`**: Enables users to save and reuse frequently used AI prompts, linking them to their user ID.
 *   **`interactions`**: The core of the AI's long-term memory. Each row represents a single conversational turn (user input and AI output), storing the raw text, relevance score, vector embedding, and keywords.
 *   **`entities`**: Acts as a knowledge graph for the AI's memory. It tracks unique concepts (entities/keywords), their relationships, and links them back to the interactions where they were mentioned.
+*   **`user_settings`**: Stores user-specific preferences, such as the enabled/disabled state of the AI's Assistant Mode, ensuring a consistent user experience across sessions.
 
 ### 6. Key Features and Modules
 
@@ -102,6 +103,7 @@ The database schema is defined by the following migration files and tables:
     *   **Context Retrieval:** Before sending a prompt, the service performs a **hybrid search** of past interactions. It combines a **vector search** (for semantic similarity) with a **keyword search** (for lexical relevance) to retrieve the most relevant memories.
     *   **Prompt Augmentation:** This retrieved context is prepended to the user's current prompt, providing the AI with a rich conversational history.
     *   **Memory Update:** After receiving a response, the system "learns" by rewarding the relevance of the context that was used, decaying the score of unused memories, and saving the new interaction with its own vector embedding for future recall.
+    *   **Persistent Setting:** The user's choice to enable or disable Assistant Mode is saved to their profile, providing a consistent experience across sessions.
 *   **Token-Based Billing:** The system calculates the exact cost of each query based on the number of input and output tokens, converts the price from USD to KES, and deducts the precise amount from the user's balance.
 *   **Prompt Management:** Provides a UI for users to save, load, and delete their favorite prompts.
 *   **Rich Output:** AI-generated Markdown is parsed into clean HTML for an enhanced user experience.
