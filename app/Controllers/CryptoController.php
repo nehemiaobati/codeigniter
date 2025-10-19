@@ -18,7 +18,7 @@ class CryptoController extends BaseController
      */
     public function __construct()
     {
-        $this->cryptoService = new CryptoService();
+        $this->cryptoService = service('cryptoService');
         $this->userModel = new UserModel();
     }
 
@@ -73,20 +73,26 @@ class CryptoController extends BaseController
             }
 
             if (empty($errors)) {
-                $userId = session()->get('userId');
-                $deductionAmount = 1;
+                $userId = (int) session()->get('userId'); // Cast userId to integer
+                // Assuming a fixed USD cost for crypto queries for conversion to KSH
+                $totalCostUSD = 0.01; // Placeholder for crypto query cost in USD
+                $usdToKshRate = 129; // Exchange rate from USD to KSH
 
-        $userId = (int) session()->get('userId'); // Cast userId to integer
-        if ($userId > 0) { // Check if userId is valid (greater than 0)
-            if ($this->userModel->deductBalance($userId, $deductionAmount)) {
-                session()->setFlashdata('success', "{$deductionAmount} units deducted for query.");
-            } else {
-                $errors[] = 'Insufficient balance or failed to update balance.';
-            }
-        } else {
-            $errors[] = 'User not logged in or invalid user ID. Cannot deduct balance.';
-            log_message('error', 'User not logged in or invalid user ID during balance deduction.');
-        }
+                $costInKSH = $totalCostUSD * $usdToKshRate;
+                $deductionAmount = max(0.01, ceil($costInKSH * 100) / 100); // Ensure a minimum deduction
+                $costMessage = "KSH " . number_format($deductionAmount, 2) . " deducted for your AI query.";
+
+                if ($userId > 0) {
+                    if ($this->userModel->deductBalance($userId, (string)$deductionAmount)) {
+                        session()->setFlashdata('success', $costMessage);
+                    } else {
+                        // This error message covers insufficient balance or other deduction failures
+                        $errors[] = 'Insufficient balance or failed to update balance.';
+                    }
+                } else {
+                    $errors[] = 'User not logged in or invalid user ID. Cannot deduct balance.';
+                    log_message('error', 'User not logged in or invalid user ID during balance deduction.');
+                }
             }
 
         } catch (\Exception $e) {

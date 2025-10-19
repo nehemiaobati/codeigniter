@@ -14,12 +14,65 @@ class GeminiService
     protected $apiKey;
 
     /**
+     * The model ID to use for API calls.
+     * @var string
+     */
+    protected string $modelId = "gemini-flash-latest"; // Centralize model ID
+
+    /**
      * Constructor.
      * Initializes the service and retrieves the Gemini API key from environment variables.
      */
     public function __construct()
     {
         $this->apiKey = env('GEMINI_API_KEY') ?? getenv('GEMINI_API_KEY');
+    }
+
+    /**
+     * Counts the number of tokens in a given set of content parts.
+     *
+     * @param array $parts An array of content parts (text and/or inlineData for files).
+     * @return array An associative array with 'status' (bool) and 'totalTokens' (int) or 'error' (string).
+     */
+    public function countTokens(array $parts): array
+    {
+        if (!$this->apiKey) {
+            return ['status' => false, 'error' => 'GEMINI_API_KEY not set in .env file.'];
+        }
+
+        $countTokensApi = "countTokens";
+        $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/{$this->modelId}:{$countTokensApi}?key={$this->apiKey}";
+
+        $requestPayload = ["contents" => [["parts" => $parts]]];
+        $requestBody = json_encode($requestPayload);
+        $client = \Config\Services::curlrequest();
+
+        try {
+            $response = $client->request('POST', $apiUrl, [
+                'body' => $requestBody,
+                'headers' => ['Content-Type' => 'application/json'],
+                'timeout' => 10,
+            ]);
+
+            $statusCode = $response->getStatusCode();
+            $responseBody = $response->getBody();
+
+            if ($statusCode !== 200) {
+                $errorData = json_decode($responseBody, true);
+                $errorMessage = $errorData['error']['message'] ?? 'Unknown API error during token count.';
+                log_message('error', "Gemini API countTokens Error: Status {$statusCode} - {$errorMessage}");
+                return ['status' => false, 'error' => $errorMessage];
+            }
+
+            $responseData = json_decode($responseBody, true);
+            $totalTokens = $responseData['totalTokens'] ?? 0;
+
+            return ['status' => true, 'totalTokens' => $totalTokens];
+
+        } catch (\Exception $e) {
+            log_message('error', 'Gemini API countTokens Exception: ' . $e->getMessage());
+            return ['status' => false, 'error' => 'Could not connect to the AI service to estimate cost.'];
+        }
     }
 
     /**
@@ -35,7 +88,6 @@ class GeminiService
             return ['error' => 'GEMINI_API_KEY not set in .env file.'];
         }
 
-        $modelId = "gemini-flash-latest"; // Updated model ID
         $generateContentApi = "generateContent"; // Changed to non-streaming endpoint
 
         $requestPayload = [
@@ -60,7 +112,7 @@ class GeminiService
 
         try {
             // Added timeout and connect_timeout options
-            $response = $client->request('POST', "https://generativelanguage.googleapis.com/v1beta/models/{$modelId}:{$generateContentApi}?key={$this->apiKey}", [
+            $response = $client->request('POST', "https://generativelanguage.googleapis.com/v1beta/models/{$this->modelId}:{$generateContentApi}?key={$this->apiKey}", [
                 'body' => $requestBody,
                 'headers' => [
                     'Content-Type' => 'application/json',
