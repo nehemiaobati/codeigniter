@@ -210,3 +210,8 @@ This section defines the visual and structural standards for all user-facing vie
    Validation: https://codeigniter.com/userguide/libraries/validation.html
    View Cells: https://codeigniter.com/userguide/outgoing/viewcells.html
    View Layouts: https://codeigniter.com/userguide/outgoing/viewlayouts.html
+
+
+
+manually added by me owner
+if i share error about cors origin blocks and we are using 'urlto' in view, suggest or edit to use 'window.location.origin'
