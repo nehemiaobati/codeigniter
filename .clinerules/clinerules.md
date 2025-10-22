@@ -178,7 +178,11 @@ This section defines the visual and structural standards for all user-facing vie
     - **Buttons:** Use the standard `.btn` classes (e.g., `.btn-primary`, `.btn-outline-secondary`).
 - **Responsiveness:** All views must be fully responsive and tested on common device breakpoints (mobile, tablet, desktop). Use Bootstrap's grid system (`.row`, `.col-*`) to create fluid layouts.
 
- URL References
+### 5.4. Dynamic URL Generation in JavaScript
+- When making AJAX/fetch requests from client-side JavaScript, avoid hardcoding URLs. If `url_to()` cannot be used directly in the script, construct the URL dynamically. For AJAX calls that are blocked by CORS policies, prefer using `window.location.origin` to build the base path instead of relying on `url_to()` rendered into a data attribute, as this can be more robust in complex hosting environments. Example: `const uploadUrl = \`${window.location.origin}/gemini/upload-media\`;`.
+
+---
+## URL References
 
    Application Structure: https://codeigniter.com/userguide/concepts/structure.html
    API Responses: https://codeigniter.com/userguide/outgoing/apiresponses.html
@@ -210,8 +214,3 @@ This section defines the visual and structural standards for all user-facing vie
    Validation: https://codeigniter.com/userguide/libraries/validation.html
    View Cells: https://codeigniter.com/userguide/outgoing/viewcells.html
    View Layouts: https://codeigniter.com/userguide/outgoing/viewlayouts.html
-
-
-
-manually added by me owner
-if i share error about cors origin blocks and we are using 'urlto' in view, suggest or edit to use 'window.location.origin'
