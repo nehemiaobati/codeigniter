@@ -31,14 +31,19 @@
                         <?php if (!empty($campaigns)): ?>
                         <div class="mb-3">
                             <label for="campaignTemplate" class="form-label fw-bold">Load a Template</label>
-                            <select class="form-select" id="campaignTemplate">
-                                <option selected disabled>Select a saved campaign...</option>
-                                <?php foreach ($campaigns as $campaign): ?>
-                                    <option value="<?= esc($campaign->id) ?>" data-subject="<?= esc($campaign->subject) ?>" data-body="<?= esc($campaign->body) ?>">
-                                        <?= esc($campaign->subject) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                            <div class="input-group">
+                                <select class="form-select" id="campaignTemplate">
+                                    <option selected disabled>Select a saved campaign...</option>
+                                    <?php foreach ($campaigns as $campaign): ?>
+                                        <option value="<?= esc($campaign->id) ?>" data-subject="<?= esc($campaign->subject) ?>" data-body="<?= esc($campaign->body) ?>">
+                                            <?= esc($campaign->subject) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <button class="btn btn-outline-danger" type="button" id="deleteTemplateBtn" disabled>
+                                    <i class="bi bi-trash"></i> Delete
+                                </button>
+                            </div>
                         </div>
                         <?php endif; ?>
 
@@ -74,21 +79,52 @@
         const templateSelect = document.getElementById('campaignTemplate');
         const subjectInput = document.getElementById('subject');
         const messageTextarea = document.getElementById('message');
+        const deleteButton = document.getElementById('deleteTemplateBtn');
+        const csrfToken = document.querySelector('input[name="<?= csrf_token() ?>"]').value;
 
         if (templateSelect) {
             templateSelect.addEventListener('change', function() {
                 const selectedOption = this.options[this.selectedIndex];
+                
+                // Enable or disable the delete button
+                deleteButton.disabled = (this.value === "" || selectedOption.disabled);
+
                 if (selectedOption && !selectedOption.disabled) {
                     const subject = selectedOption.getAttribute('data-subject');
-                    // Use textContent to get the raw HTML from the data attribute
                     const body = selectedOption.getAttribute('data-body');
                     
-                    if (subject) {
-                        subjectInput.value = subject;
-                    }
-                    if (body) {
-                        messageTextarea.value = body;
-                    }
+                    if (subject) subjectInput.value = subject;
+                    if (body) messageTextarea.value = body;
+                }
+            });
+        }
+
+        if (deleteButton) {
+            deleteButton.addEventListener('click', function() {
+                const selectedOption = templateSelect.options[templateSelect.selectedIndex];
+                if (!selectedOption || selectedOption.disabled) {
+                    return; // Do nothing if no valid template is selected
+                }
+
+                const campaignId = selectedOption.value;
+                const campaignSubject = selectedOption.getAttribute('data-subject');
+                
+                if (confirm(`Are you sure you want to delete the template: "${campaignSubject}"? This action cannot be undone.`)) {
+                    // Create a temporary form to submit the DELETE request
+                    const tempForm = document.createElement('form');
+                    tempForm.method = 'POST';
+                    // Construct the URL using the base and the ID
+                    tempForm.action = `<?= rtrim(url_to('admin.campaign.delete', 0), '0') ?>${campaignId}`;
+                    
+                    // Add CSRF token
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '<?= csrf_token() ?>';
+                    csrfInput.value = csrfToken;
+                    tempForm.appendChild(csrfInput);
+                    
+                    document.body.appendChild(tempForm);
+                    tempForm.submit();
                 }
             });
         }

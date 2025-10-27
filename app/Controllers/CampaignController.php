@@ -78,6 +78,33 @@ class CampaignController extends BaseController
     }
 
     /**
+     * Deletes a specific campaign template.
+     *
+     * @param int $id The ID of the campaign to delete.
+     * @return RedirectResponse
+     */
+    public function delete(int $id): RedirectResponse
+    {
+        // Security check
+        if (!session()->get('is_admin')) {
+            return redirect()->to(url_to('home'))->with('error', 'You are not authorized to perform this action.');
+        }
+
+        $campaignModel = new CampaignModel();
+        $campaign = $campaignModel->find($id);
+
+        if (!$campaign) {
+            return redirect()->to(url_to('admin.campaign.create'))->with('error', 'Campaign template not found.');
+        }
+
+        if ($campaignModel->delete($id)) {
+            return redirect()->to(url_to('admin.campaign.create'))->with('success', 'Campaign template deleted successfully.');
+        }
+
+        return redirect()->to(url_to('admin.campaign.create'))->with('error', 'Failed to delete the campaign template.');
+    }
+
+    /**
      * Processes the campaign form submission and sends the email to all users.
      *
      * @return RedirectResponse

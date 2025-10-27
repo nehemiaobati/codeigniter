@@ -66,10 +66,11 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->post('users/delete/(:num)', 'AdminController::delete/$1', ['as' => 'admin.users.delete']);
         $routes->get('users/search', 'AdminController::searchUsers', ['as' => 'admin.users.search']);
         
-        // --- NEW: Campaign Routes ---
+        // --- Campaign Routes ---
         $routes->get('campaign', 'CampaignController::create', ['as' => 'admin.campaign.create']);
         $routes->post('campaign/send', 'CampaignController::send', ['as' => 'admin.campaign.send']);
-        $routes->post('campaign/save', 'CampaignController::save', ['as' => 'admin.campaign.save']); // ADDED THIS LINE
+        $routes->post('campaign/save', 'CampaignController::save', ['as' => 'admin.campaign.save']);
+        $routes->post('campaign/delete/(:num)', 'CampaignController::delete/$1', ['as' => 'admin.campaign.delete']); // ADDED THIS LINE
     });
 
     // Payment Routes
