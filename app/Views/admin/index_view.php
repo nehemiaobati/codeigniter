@@ -2,12 +2,6 @@
 
 <?= $this->section('styles') ?>
 <style>
-    .stat-card {
-        border-radius: 0.75rem;
-        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05);
-        border: none;
-        height: 100%; /* Ensure cards are same height */
-    }
     .stat-card .card-body {
         display: flex;
         align-items: center;
@@ -29,27 +23,16 @@
         font-size: 2rem;
         font-weight: 700;
     }
-    /* Action card specific style */
-    .action-card {
-        text-decoration: none;
-        color: inherit;
-        display: block;
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    }
-    .action-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 0.8rem 1.5rem rgba(0,0,0,0.07);
-    }
-    .table-wrapper {
-        border-radius: 0.75rem;
-        overflow: hidden;
-        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05);
-    }
     .table thead {
         background-color: var(--bs-light);
     }
     .table th {
         font-weight: 600;
+    }
+    a.action-card {
+        text-decoration: none;
+        color: inherit;
+        display: block;
     }
 </style>
 <?= $this->endSection() ?>
@@ -67,7 +50,7 @@
     <!-- Stats & Actions Cards -->
     <div class="row g-4 mb-4">
         <div class="col-md-4">
-            <div class="card stat-card">
+            <div class="card blueprint-card stat-card">
                 <div class="card-body">
                     <div class="icon"><i class="bi bi-wallet2"></i></div>
                     <div>
@@ -78,7 +61,7 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card stat-card">
+            <div class="card blueprint-card stat-card">
                 <div class="card-body">
                     <div class="icon"><i class="bi bi-people-fill"></i></div>
                     <div>
@@ -90,7 +73,7 @@
         </div>
         <div class="col-md-4">
             <a href="<?= url_to('admin.campaign.create') ?>" class="action-card">
-                <div class="card stat-card">
+                <div class="card blueprint-card stat-card h-100">
                     <div class="card-body">
                         <div class="icon"><i class="bi bi-envelope-paper-heart"></i></div>
                         <div>
@@ -105,7 +88,7 @@
     
     <!-- User Management Table -->
     <h2 class="h3 fw-bold mb-3">User Management</h2>
-    <div class="card table-wrapper">
+    <div class="card blueprint-card">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead>

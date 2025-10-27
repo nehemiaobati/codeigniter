@@ -128,3 +128,105 @@ This is the mandatory workflow for any AI agent modifying the codebase.
 3.  **Generate Full Files:** When modifying a file, provide the complete, updated file content. Partial snippets are FORBIDDEN.
 4.  **Use Generators:** New boilerplate files (Controllers, Models, etc.) MUST be created using `php spark make:*` commands.
 5.  **Confirm Compliance:** Conclude by confirming that all changes adhere to the rules outlined in this document.
+
+---
+
+### **Part 7: The Unified Frontend Workflow (The 'Blueprint' Method)**
+
+This section enhances Part 4, providing a mandatory, step-by-step workflow for creating all user-facing views to ensure absolute consistency.
+
+#### **7.1. The Blueprint Philosophy**
+*   **Minimal:** Prioritize Bootstrap 5 utility classes over custom CSS. A new view should require little to no page-specific styling.
+*   **Consistent:** All views are built from the same core components (The Container, The Card), ensuring a predictable user experience.
+*   **Scalable:** The component-based approach allows for rapid, consistent development of new features.
+
+#### **7.2. The Core Blueprint Components**
+These are the foundational building blocks for every view.
+
+*   **A. The Container:** Every page's primary content MUST be wrapped in a single `<div class="container my-5">`. This establishes consistent vertical and horizontal spacing sitewide.
+
+*   **B. The Card (`.blueprint-card`):** All primary content, forms, and data displays MUST be placed within a "Blueprint Card." This is a standard Bootstrap card with a consistent, project-defined style.
+    *   **Implementation:** `<div class="card blueprint-card">...</div>`
+    *   **Mandatory Style (applied via `<style>` block or sitewide CSS):**
+        ```css
+        .blueprint-card {
+            border-radius: 0.75rem;
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05);
+            border: none;
+        }
+        ```
+    *   **Card Body Padding:** The content inside a card body (`<div class="card-body">`) MUST use consistent padding, typically `p-4` or `p-5`.
+
+*   **C. The Header (`.blueprint-header`):** All pages MUST have a clear header section.
+    *   **Implementation:**
+        ```html
+        <div class="blueprint-header text-center mb-5">
+            <h1 class="fw-bold">Page Title</h1>
+            <p class="lead text-muted">A brief, helpful description of the page.</p>
+        </div>
+        ```
+    *   For pages with a back button, the header is adjusted:
+        ```html
+         <div class="d-flex align-items-center mb-4">
+            <a href="..." class="btn btn-outline-secondary me-3"><i class="bi bi-arrow-left"></i> Back</a>
+            <h1 class="fw-bold mb-0">Page Title</h1>
+        </div>
+        ```
+
+*   **D. The Color Palette:** Color usage is strictly limited to the CSS variables defined in `layouts/default.php` and Bootstrap's theme colors.
+    *   **Primary Actions & Links:** `var(--primary-color)`
+    *   **Secondary Text & Subtitles:** `var(--text-muted)`
+    *   **Success State:** `var(--success-green)`
+    *   **Backgrounds:** `var(--light-bg)` for pages, `var(--card-bg)` for cards.
+    *   Introducing new, one-off hex color codes is **FORBIDDEN**.
+
+#### **7.3. The View Creation Workflow**
+
+1.  **Controller Preparation:** The controller MUST pass all necessary data to the view, including mandatory SEO variables: `pageTitle`, `metaDescription`, and `canonicalUrl`.
+
+2.  **View Scaffolding:** Every new view file MUST follow this structure:
+    ```php
+    <?= $this->extend('layouts/default') ?>
+
+    <?= $this->section('styles') ?>
+    /* Custom styles are a last resort. Use Bootstrap utilities first. */
+    <style>
+        .blueprint-card { /* Standard card definition */
+            border-radius: 0.75rem;
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05);
+            border: none;
+        }
+    </style>
+    <?= $this->endSection() ?>
+
+    <?= $this->section('content') ?>
+    <div class="container my-5">
+        <!-- Step 1: Add Blueprint Header -->
+        
+        <!-- Step 2: Build UI with Blueprint Cards -->
+        <div class="card blueprint-card">
+            <div class="card-body p-4">
+                <!-- Content goes here -->
+            </div>
+        </div>
+    </div>
+    <?= $this->endSection() ?>
+
+    <?= $this->section('scripts') ?>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // All page-specific JavaScript goes here.
+        });
+    </script>
+    <?= $this->endSection() ?>
+    ```
+
+3.  **Component Implementation:**
+    *   **Forms:** All text inputs MUST use the Bootstrap 5 "Floating labels" pattern for consistency (`<div class="form-floating">...</div>`).
+    *   **Buttons:** Button usage MUST follow a strict hierarchy:
+        *   **Primary Action:** One `btn-primary` per form/view (e.g., "Submit", "Save").
+        *   **Secondary Actions:** Use `btn-outline-secondary` or `btn-secondary` (e.g., "Cancel", "Back").
+        *   **Destructive Actions:** Use `btn-danger` or `btn-outline-danger` (e.g., "Delete").
+    *   **Alerts/Messages:** All user feedback (success, error) MUST be handled via the `partials/flash_messages.php` partial.
+
+By following this workflow, every view will share a consistent, professional, and user-friendly DNA.

@@ -1,28 +1,10 @@
-<?= '
-' ?>
 <?= $this->extend('layouts/default') ?>
-
-<?= $this->section('styles') ?>
-<style>
-    .payment-card {
-        border-radius: 1rem;
-        box-shadow: 0 1rem 3rem rgba(0,0,0,.075);
-        border: none;
-        width: 100%;
-        max-width: 450px;
-    }
-    .microcopy {
-        font-size: 0.85rem;
-        color: #6c757d;
-    }
-</style>
-<?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 <div class="container my-5">
     <div class="row justify-content-center">
         <div class="col-lg-5 col-md-7">
-            <div class="card payment-card">
+            <div class="card blueprint-card">
                 <div class="card-body p-5">
                     <div class="text-center mb-5">
                         <i class="bi bi-credit-card-2-front-fill text-primary" style="font-size: 3rem;"></i>
@@ -43,7 +25,7 @@
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary btn-lg fw-bold">Proceed to Secure Payment</button>
                         </div>
-                        <p class="text-center mt-3 microcopy"><i class="bi bi-lock-fill"></i> Your financial details are never stored on our servers.</p>
+                        <p class="text-center mt-3 small text-muted"><i class="bi bi-lock-fill"></i> Your financial details are never stored on our servers.</p>
                     </form>
                 </div>
             </div>

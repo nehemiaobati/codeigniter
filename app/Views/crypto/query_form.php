@@ -1,29 +1,18 @@
-<?= '
-' ?>
 <?= $this->extend('layouts/default') ?>
 
 <?= $this->section('styles') ?>
 <style>
-    .query-card,
-    .results-card {
-        border-radius: 0.75rem;
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
-        border: none;
-    }
-
-    .results-card .accordion-button:not(.collapsed) {
+    .accordion-button:not(.collapsed) {
         background-color: var(--bs-primary-bg-subtle);
         color: var(--bs-primary);
         box-shadow: none;
     }
-
     .balance-display {
         background-color: #e7f1ff;
         border-left: 5px solid var(--primary-color);
         padding: 1.5rem;
         border-radius: 0.5rem;
     }
-
     .balance-display .balance-amount {
         font-size: 2.5rem;
         font-weight: 700;
@@ -36,10 +25,12 @@
 <div class="container my-5">
     <div class="row g-4 justify-content-center">
         <div class="col-lg-8">
-            <div class="card query-card">
+            <div class="card blueprint-card">
                 <div class="card-body p-4 p-md-5">
-                    <h2 class="card-title fw-bold mb-1 text-center"><i class="bi bi-search"></i> CryptoQuery</h2>
-                    <p class="text-center text-muted mb-4">Get instant, on-chain data for Bitcoin and Litecoin addresses.</p>
+                    <div class="blueprint-header text-center mb-4">
+                        <h1 class="fw-bold"><i class="bi bi-search"></i> CryptoQuery</h1>
+                        <p class="lead text-muted">Get instant, on-chain data for Bitcoin and Litecoin addresses.</p>
+                    </div>
                     <form id="cryptoQueryForm" action="<?= url_to('crypto.query') ?>" method="post">
                         <?= csrf_field() ?>
                         <div class="form-floating mb-3">
@@ -76,7 +67,7 @@
 
         <?php if ($result = session()->getFlashdata('result')): ?>
         <div class="col-lg-9">
-            <div class="card results-card mt-4">
+            <div class="card blueprint-card mt-4">
                 <div class="card-body p-4 p-md-5">
                     <h3 class="fw-bold mb-4">Query Results</h3>
                     <div class="list-group list-group-flush mb-4">
@@ -126,17 +117,11 @@
         <?php endif; ?>
     </div>
 </div>
-
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const assetSelect = document.getElementById('asset');
-        if(assetSelect) {
-            assetSelect.focus({ preventScroll: true });
-        }
-        
         const queryTypeSelect = document.getElementById('query_type');
         const limitField = document.getElementById('limit-field');
         const cryptoForm = document.getElementById('cryptoQueryForm');
@@ -144,10 +129,8 @@
         function toggleLimitField() {
             limitField.style.display = (queryTypeSelect.value === 'tx') ? 'block' : 'none';
         }
-
         queryTypeSelect.addEventListener('change', toggleLimitField);
         
-        // Form submission loading state
         function handleFormSubmit(form) {
             const submitButton = form.querySelector('button[type="submit"]');
             if (submitButton) {
@@ -161,20 +144,16 @@
                 });
             }
         }
-
         if (cryptoForm) {
             cryptoForm.addEventListener('submit', () => handleFormSubmit(cryptoForm));
         }
         
-        // Auto-scroll to results if they exist
         const resultsCard = document.querySelector('.results-card');
         if (resultsCard) {
             setTimeout(() => {
                 resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100);
         }
-
-        // Initial check on page load
         toggleLimitField();
     });
 </script>
