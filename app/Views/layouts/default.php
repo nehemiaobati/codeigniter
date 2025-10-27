@@ -1,3 +1,5 @@
+<?= '
+' ?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -202,6 +204,16 @@
             transform: translateY(-2px);
         }
         
+        /* === NEW: Micro-interactions === */
+        .btn, .nav-link, .dropdown-item, .form-control {
+            transition: all 0.2s ease-in-out;
+        }
+        .dashboard-card:hover, .query-card:hover, .feature-card:hover, .contact-card:hover, .auth-card:hover, .portfolio-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.8rem 1.5rem rgba(0,0,0,0.07) !important;
+        }
+        /* === END: Micro-interactions === */
+
         /* Mobile Navbar Improvements */
         @media (max-width: 991.98px) {
             .navbar-collapse {

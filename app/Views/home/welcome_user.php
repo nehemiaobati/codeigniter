@@ -1,3 +1,5 @@
+<?= '
+' ?>
 <?= $this->extend('layouts/default') ?>
 
 <?= $this->section('styles') ?>

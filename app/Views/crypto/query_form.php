@@ -1,3 +1,5 @@
+<?= '
+' ?>
 <?= $this->extend('layouts/default') ?>
 
 <?= $this->section('styles') ?>
@@ -125,6 +127,9 @@
     </div>
 </div>
 
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const assetSelect = document.getElementById('asset');
@@ -135,9 +140,7 @@
         const queryTypeSelect = document.getElementById('query_type');
         const limitField = document.getElementById('limit-field');
         const cryptoForm = document.getElementById('cryptoQueryForm');
-        const submitButton = cryptoForm.querySelector('button[type="submit"]');
 
-        // Toggle visibility of the transaction limit field
         function toggleLimitField() {
             limitField.style.display = (queryTypeSelect.value === 'tx') ? 'block' : 'none';
         }
@@ -145,11 +148,22 @@
         queryTypeSelect.addEventListener('change', toggleLimitField);
         
         // Form submission loading state
-        if (cryptoForm && submitButton) {
-            cryptoForm.addEventListener('submit', function() {
-                submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Searching...';
+        function handleFormSubmit(form) {
+            const submitButton = form.querySelector('button[type="submit"]');
+            if (submitButton) {
+                const originalButtonText = submitButton.innerHTML;
+                submitButton.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Searching...`;
                 submitButton.disabled = true;
-            });
+
+                window.addEventListener('pageshow', function() {
+                    submitButton.innerHTML = originalButtonText;
+                    submitButton.disabled = false;
+                });
+            }
+        }
+
+        if (cryptoForm) {
+            cryptoForm.addEventListener('submit', () => handleFormSubmit(cryptoForm));
         }
         
         // Auto-scroll to results if they exist
@@ -160,7 +174,7 @@
             }, 100);
         }
 
-        // Initial check on page load (e.g., after a validation error)
+        // Initial check on page load
         toggleLimitField();
     });
 </script>
