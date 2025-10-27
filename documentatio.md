@@ -1,7 +1,3 @@
-### **Project: Afrikenkid Web Platform**
-
-***
-
 ### 1. Project Overview
 
 The Afrikenkid Web Platform is a comprehensive, multi-functional application built on the CodeIgniter 4 framework. It serves as a portal for registered users to access a suite of powerful digital services. The platform is designed with a modular architecture, featuring a robust user authentication system, an account management dashboard with an integrated balance and payment system, and an administrative panel for user oversight.
@@ -49,7 +45,7 @@ The project strictly follows the **Model-View-Controller (MVC)** architectural p
 *   **`app/Controllers`:** Controllers are the entry point for user requests. They are kept lean and are responsible for orchestrating the application flow, validating input, and calling upon models and services to perform business logic. They do not contain database queries or complex logic.
 *   **`app/Models`:** Models are responsible for all database interactions. They use CodeIgniter's Query Builder and Entities to ensure data is accessed securely and consistently.
 *   **`app/Entities`:** Entities are object-oriented representations of database table rows, allowing for clean, typed interaction with data.
-*   **`app/Views`:** Views handle all presentation logic. They are organized into subdirectories named after their corresponding controller (e.g., `app/Views/auth/`). All dynamic data is escaped using `esc()` to prevent XSS attacks.
+*   **`app/Views`:** Views handle all presentation logic. They are organized into subdirectories named after their corresponding controller (e.g., `app/Views/auth/`). All dynamic data is escaped using `esc()` to prevent XSS attacks. The UI is built on the **Bootstrap 5** framework and utilizes a main layout (`app/Views/layouts/default.php`) for consistency. Reusable components, such as a custom Bootstrap 5 pagination view (`app/Views/pagers/bootstrap5_pagination.php`) and a flash message partial, are employed to ensure a uniform user experience.
 *   **`app/Libraries` (Services):** This directory contains the core business logic. Classes like `PaystackService`, `GeminiService`, `CryptoService`, and the sophisticated `MemoryService` encapsulate interactions with external APIs and complex application logic, making them reusable and testable.
 *   **`app/Config`:** This directory centralizes all application configuration, including a custom `AGI.php` file that fine-tunes the behavior of the AI's memory system.
 *   **`app/Filters`:** These classes act as middleware to protect routes. `AuthFilter` ensures a user is logged in, while `BalanceFilter` checks for sufficient funds before allowing access to paid services.
@@ -78,11 +74,12 @@ The database schema is defined by the following migration files and tables:
 *   **Dashboard (`/home`):** Provides a personalized welcome, displays the current account balance, and offers quick links to the primary application services.
 *   **Account Page (`/account`):** Shows detailed profile information and a paginated history of all payment transactions, including status and reference numbers.
 
-#### 6.3. Admin Panel (`AdminController`)
+#### 6.3. Admin Panel (`AdminController`, `CampaignController`)
 *   **User Management:** Provides a paginated and searchable list of all registered users.
 *   **Financial Oversight:** Displays the total aggregated balance of all users.
 *   **Balance Adjustment:** Allows administrators to manually deposit or withdraw funds from a user's account. All calculations use PHP's `bcmath` extension for arbitrary-precision arithmetic to prevent floating-point inaccuracies.
 *   **User Deletion:** Provides functionality to delete users, with a safeguard to prevent an admin from deleting their own account.
+*   **Email Campaigns (`CampaignController`):** An admin-only feature to compose and send mass emails to all registered users. The system uses a dynamic email template to personalize greetings (e.g., using the user's name) for a more professional outreach.
 
 #### 6.4. Payment System (`PaymentsController`, `PaystackService`)
 *   **Initiation:** The user submits an amount to deposit. The system creates a `pending` payment record and redirects the user to the secure Paystack payment gateway.
