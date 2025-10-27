@@ -63,8 +63,12 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->get('/', 'AdminController::index', ['as' => 'admin.index']);
         $routes->get('users/(:num)', 'AdminController::show/$1', ['as' => 'admin.users.show']);
         $routes->post('users/update_balance/(:num)', 'AdminController::updateBalance/$1', ['as' => 'admin.users.update_balance']);
-        $routes->post('admin/users/delete/(:num)', 'AdminController::delete/$1', ['as' => 'admin.users.delete']); // Corrected path to 'admin/users/delete'
-        $routes->get('admin/users/search', 'AdminController::searchUsers', ['as' => 'admin.users.search']);
+        $routes->post('users/delete/(:num)', 'AdminController::delete/$1', ['as' => 'admin.users.delete']);
+        $routes->get('users/search', 'AdminController::searchUsers', ['as' => 'admin.users.search']);
+        
+        // --- NEW: Campaign Routes ---
+        $routes->get('campaign', 'CampaignController::create', ['as' => 'admin.campaign.create']);
+        $routes->post('campaign/send', 'CampaignController::send', ['as' => 'admin.campaign.send']);
     });
 
     // Payment Routes

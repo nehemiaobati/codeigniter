@@ -6,6 +6,7 @@
         border-radius: 0.75rem;
         box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05);
         border: none;
+        height: 100%; /* Ensure cards are same height */
     }
     .stat-card .card-body {
         display: flex;
@@ -28,6 +29,17 @@
         font-size: 2rem;
         font-weight: 700;
     }
+    /* Action card specific style */
+    .action-card {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.8rem 1.5rem rgba(0,0,0,0.07);
+    }
     .table-wrapper {
         border-radius: 0.75rem;
         overflow: hidden;
@@ -38,34 +50,6 @@
     }
     .table th {
         font-weight: 600;
-    }
-    .pagination .page-item .page-link {
-        color: var(--primary-color);
-    }
-    /* Improved Pagination Styling */
-    .pagination {
-        --bs-pagination-padding-x: 0.85rem;
-        --bs-pagination-padding-y: 0.45rem;
-        --bs-pagination-font-size: 0.95rem;
-        --bs-pagination-border-width: 0;
-        --bs-pagination-border-radius: 0.375rem;
-        --bs-pagination-hover-color: var(--primary-color);
-        --bs-pagination-hover-bg: #e9ecef;
-        --bs-pagination-active-color: #fff;
-        --bs-pagination-active-bg: var(--primary-color);
-        --bs-pagination-disabled-color: #6c757d;
-        --bs-pagination-disabled-bg: #fff;
-    }
-    .pagination .page-item {
-        margin: 0 4px; /* Adds space between page items */
-    }
-    .pagination .page-link {
-        border-radius: var(--bs-pagination-border-radius) !important; /* Ensure consistent border radius */
-        transition: all 0.2s ease-in-out;
-    }
-    .pagination .page-item.active .page-link {
-        box-shadow: 0 4px 8px rgba(13, 110, 253, 0.2);
-        transform: translateY(-2px);
     }
 </style>
 <?= $this->endSection() ?>
@@ -80,20 +64,20 @@
         </form>
     </div>
 
-    <!-- Stats Cards -->
+    <!-- Stats & Actions Cards -->
     <div class="row g-4 mb-4">
-                    <div class="col-md-6">
-                        <div class="card stat-card">
-                            <div class="card-body">
-                                <div class="icon"><i class="bi bi-wallet2"></i></div>
-                                <div>
-                                    <h6 class="card-subtitle text-muted">Total User Balance</h6>
-                                    <p class="card-text stat-value">Ksh. <?= number_format($total_balance, 2) ?></p>
-                                </div>
-                            </div>
-                        </div>
+        <div class="col-md-4">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="icon"><i class="bi bi-wallet2"></i></div>
+                    <div>
+                        <h6 class="card-subtitle text-muted">Total User Balance</h6>
+                        <p class="card-text stat-value">Ksh. <?= number_format($total_balance, 2) ?></p>
                     </div>
-        <div class="col-md-6">
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="icon"><i class="bi bi-people-fill"></i></div>
@@ -103,6 +87,19 @@
                     </div>
                 </div>
             </div>
+        </div>
+        <div class="col-md-4">
+            <a href="<?= url_to('admin.campaign.create') ?>" class="action-card">
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <div class="icon"><i class="bi bi-envelope-paper-heart"></i></div>
+                        <div>
+                            <h6 class="card-subtitle text-muted">Engage Users</h6>
+                            <p class="card-text stat-value h2">Send Campaign</p>
+                        </div>
+                    </div>
+                </div>
+            </a>
         </div>
     </div>
     
