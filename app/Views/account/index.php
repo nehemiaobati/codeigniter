@@ -16,12 +16,6 @@
         margin-right: 10px;
         width: 20px;
     }
-    .table thead {
-        background-color: var(--bs-light);
-    }
-    .table th {
-        font-weight: 600;
-    }
     .status-badge {
         font-size: 0.8rem;
         padding: 0.4em 0.7em;
@@ -74,12 +68,12 @@
                     <?php if (!empty($transactions)): ?>
                         <div class="table-responsive">
                             <table class="table table-hover align-middle">
-                                <thead>
+                                <thead class="table-light">
                                     <tr>
-                                        <th>Date</th>
-                                        <th>Amount (KES)</th>
-                                        <th>Status</th>
-                                        <th>Reference</th>
+                                        <th class="fw-semibold">Date</th>
+                                        <th class="fw-semibold">Amount (KES)</th>
+                                        <th class="fw-semibold">Status</th>
+                                        <th class="fw-semibold">Reference</th>
                                     </tr>
                                 </thead>
                                 <tbody>

@@ -2,11 +2,6 @@
 
 <?= $this->section('styles') ?>
 <style>
-    .stat-card .card-body {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
     .stat-card .icon {
         font-size: 2.5rem;
         padding: 1rem;
@@ -18,16 +13,6 @@
         display: flex;
         align-items: center;
         justify-content: center;
-    }
-    .stat-card .stat-value {
-        font-size: 2rem;
-        font-weight: 700;
-    }
-    .table thead {
-        background-color: var(--bs-light);
-    }
-    .table th {
-        font-weight: 600;
     }
     a.action-card {
         text-decoration: none;
@@ -51,22 +36,22 @@
     <div class="row g-4 mb-4">
         <div class="col-md-4">
             <div class="card blueprint-card stat-card">
-                <div class="card-body">
+                <div class="card-body d-flex align-items-center gap-3">
                     <div class="icon"><i class="bi bi-wallet2"></i></div>
                     <div>
                         <h6 class="card-subtitle text-muted">Total User Balance</h6>
-                        <p class="card-text stat-value">Ksh. <?= number_format($total_balance, 2) ?></p>
+                        <p class="card-text stat-value fs-2 fw-bold">Ksh. <?= number_format($total_balance, 2) ?></p>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card blueprint-card stat-card">
-                <div class="card-body">
+                <div class="card-body d-flex align-items-center gap-3">
                     <div class="icon"><i class="bi bi-people-fill"></i></div>
                     <div>
                         <h6 class="card-subtitle text-muted">Total Users</h6>
-                        <p class="card-text stat-value"><?= $total_users ?></p>
+                        <p class="card-text stat-value fs-2 fw-bold"><?= $total_users ?></p>
                     </div>
                 </div>
             </div>
@@ -74,11 +59,11 @@
         <div class="col-md-4">
             <a href="<?= url_to('admin.campaign.create') ?>" class="action-card">
                 <div class="card blueprint-card stat-card h-100">
-                    <div class="card-body">
+                    <div class="card-body d-flex align-items-center gap-3">
                         <div class="icon"><i class="bi bi-envelope-paper-heart"></i></div>
                         <div>
                             <h6 class="card-subtitle text-muted">Engage Users</h6>
-                            <p class="card-text stat-value h2">Send Campaign</p>
+                            <p class="card-text stat-value fs-2 fw-bold h2">Send Campaign</p>
                         </div>
                     </div>
                 </div>
@@ -91,12 +76,12 @@
     <div class="card blueprint-card">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
-                <thead>
+                <thead class="table-light">
                     <tr>
-                        <th scope="col">Username</th>
-                        <th scope="col">Email</th>
-                        <th scope="col">Balance</th>
-                        <th scope="col">Actions</th>
+                        <th class="fw-semibold">Username</th>
+                        <th class="fw-semibold">Email</th>
+                        <th class="fw-semibold">Balance</th>
+                        <th class="fw-semibold">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
