@@ -7,48 +7,32 @@
     :root {
         --primary-accent: #0d6efd;
         --success-green: #198754;
-        --warning-orange: #fd7e14;
-        --light-bg: #f8f9fa;
-        --card-bg: #ffffff;
-        --card-border: #dee2e6;
         --text-muted: #6c757d;
         --text-dark: #212529;
     }
 
-    /* --- General Enhancements --- */
+    /* --- Page Specific Enhancements --- */
     .dashboard-header h1 {
         font-weight: 700;
     }
-    .service-card {
-        background-color: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: 0.75rem;
-        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05);
-        transition: all 0.3s ease-in-out;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-    .service-card .card-body {
+    .card-body {
         display: flex;
         flex-direction: column;
         flex-grow: 1;
     }
-    .service-card .card-title {
+    .card-title {
         font-weight: 600;
         color: var(--text-dark);
     }
-    .service-card .card-text {
+    .card-text {
         color: var(--text-muted);
         flex-grow: 1;
     }
-    .service-card .icon {
+    .icon {
         font-size: 2.5rem;
         color: var(--primary-accent);
         margin-bottom: 1rem;
     }
-
-    /* --- Tip Box --- */
     .tip-box {
         background-color: #e7f1ff;
         border-left: 5px solid var(--primary-accent);
@@ -59,21 +43,12 @@
         font-weight: 600;
         color: var(--primary-accent);
     }
-
-    /* --- Balance Card --- */
-    .balance-card .balance-amount {
+    .balance-amount {
         font-size: 2.5rem;
         font-weight: 700;
         color: var(--success-green);
         line-height: 1;
     }
-    .balance-card .quick-topup-form {
-        display: flex;
-        gap: 0.5rem;
-        margin-top: 1rem;
-    }
-
-    /* --- AI Studio Card --- */
     .prompt-suggestion {
         background-color: var(--light-bg);
         border: 1px dashed var(--card-border);
@@ -93,14 +68,6 @@
         right: 0.5rem;
         cursor: pointer;
     }
-
-    /* --- Account Info Section --- */
-    .account-info-section {
-        background-color: var(--card-bg);
-        border-radius: 0.75rem;
-        padding: 2rem;
-        margin-top: 3rem;
-    }
     .account-info-section ul li {
         padding: 0.75rem 0;
         border-bottom: 1px solid var(--light-bg);
@@ -112,8 +79,6 @@
         color: var(--primary-accent);
         margin-right: 1rem;
     }
-
-    /* --- Low Balance Alert --- */
     .low-balance-alert {
         background-color: #fff3cd;
         border-color: #ffeeba;
@@ -149,9 +114,9 @@
     <?php endif; ?>
 
     <!-- Header -->
-    <div class="dashboard-header text-center mt-4">
+    <div class="blueprint-header text-center mt-4">
         <h1>Welcome back, <span class="text-primary"><?= esc($username ?? 'User') ?>!</span></h1>
-        <p class="lead">Your digital toolkit is ready. What will you create today?</p>
+        <p class="lead text-muted">Your digital toolkit is ready. What will you create today?</p>
     </div>
 
     <!-- Tip of the Day -->
@@ -165,7 +130,7 @@
 
         <!-- AI Studio Card -->
         <div class="col">
-            <div class="service-card">
+            <div class="card blueprint-card h-100">
                 <div class="card-body p-4">
                     <div class="icon"><i class="bi bi-stars"></i></div>
                     <h4 class="card-title">AI Studio</h4>
@@ -184,7 +149,7 @@
 
         <!-- CryptoQuery Card -->
         <div class="col">
-            <div class="service-card">
+            <div class="card blueprint-card h-100">
                 <div class="card-body p-4">
                     <div class="icon"><i class="bi bi-search"></i></div>
                     <h4 class="card-title">CryptoQuery</h4>
@@ -196,7 +161,7 @@
         
         <!-- Quick Actions Card -->
         <div class="col">
-            <div class="service-card">
+            <div class="card blueprint-card h-100">
                 <div class="card-body p-4">
                     <div class="icon"><i class="bi bi-wallet2"></i></div>
                     <h4 class="card-title">Quick Actions</h4>
@@ -215,22 +180,24 @@
     </div>
 
     <!-- Minimal Account Info Section -->
-    <div class="account-info-section">
-        <h4 class="fw-bold mb-3 text-center">Account Information</h4>
-        <ul class="list-unstyled">
-            <li class="d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-person-fill"></i><strong>Username</strong></span>
-                <span class="text-muted"><?= esc($username ?? 'N/A') ?></span>
-            </li>
-            <li class="d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-envelope-fill"></i><strong>Email</strong></span>
-                <span class="text-muted"><?= esc($email ?? 'N/A') ?></span>
-            </li>
-            <li class="d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-calendar-check-fill"></i><strong>Member Since</strong></span>
-                <span class="text-muted"><?= esc($member_since ? date('F d, Y', strtotime($member_since)) : 'N/A') ?></span>
-            </li>
-        </ul>
+    <div class="card blueprint-card mt-5">
+        <div class="card-body p-4 account-info-section">
+            <h4 class="fw-bold mb-3 text-center">Account Information</h4>
+            <ul class="list-unstyled mb-0">
+                <li class="d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-person-fill"></i><strong>Username</strong></span>
+                    <span class="text-muted"><?= esc($username ?? 'N/A') ?></span>
+                </li>
+                <li class="d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-envelope-fill"></i><strong>Email</strong></span>
+                    <span class="text-muted"><?= esc($email ?? 'N/A') ?></span>
+                </li>
+                <li class="d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-calendar-check-fill"></i><strong>Member Since</strong></span>
+                    <span class="text-muted"><?= esc($member_since ? date('F d, Y', strtotime($member_since)) : 'N/A') ?></span>
+                </li>
+            </ul>
+        </div>
     </div>
 
 </div>
