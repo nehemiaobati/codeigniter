@@ -69,6 +69,7 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         // --- NEW: Campaign Routes ---
         $routes->get('campaign', 'CampaignController::create', ['as' => 'admin.campaign.create']);
         $routes->post('campaign/send', 'CampaignController::send', ['as' => 'admin.campaign.send']);
+        $routes->post('campaign/save', 'CampaignController::save', ['as' => 'admin.campaign.save']); // ADDED THIS LINE
     });
 
     // Payment Routes

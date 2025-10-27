@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Models\UserModel;
+use App\Models\CampaignModel; // Import the new model
 use CodeIgniter\HTTP\RedirectResponse;
 
 /**
@@ -25,14 +26,55 @@ class CampaignController extends BaseController
         }
 
         helper('form');
+        $campaignModel = new CampaignModel();
 
         $data = [
-            'pageTitle' => 'Create Email Campaign | Admin',
+            'pageTitle'       => 'Create Email Campaign | Admin',
             'metaDescription' => 'Compose and send a new email campaign to all registered users.',
-            'canonicalUrl' => url_to('admin.campaign.create'),
+            'canonicalUrl'    => url_to('admin.campaign.create'),
+            // Fetch campaigns ordered by creation date, descending
+            'campaigns'       => $campaignModel->orderBy('created_at', 'DESC')->findAll(), 
         ];
 
         return view('admin/campaign/create', $data);
+    }
+
+    /**
+     * Saves the current subject and message as a new campaign template.
+     *
+     * @return RedirectResponse
+     */
+    public function save(): RedirectResponse
+    {
+        // Security check
+        if (!session()->get('is_admin')) {
+            return redirect()->to(url_to('home'))->with('error', 'You are not authorized to perform this action.');
+        }
+
+        // Validation rules
+        $rules = [
+            'subject' => 'required|min_length[5]|max_length[255]',
+            'message' => 'required|min_length[20]',
+        ];
+
+        if (!$this->validate($rules)) {
+            // Redirect back with input and errors if validation fails
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        $campaignModel = new CampaignModel();
+        $data = [
+            'subject' => $this->request->getPost('subject'),
+            'body'    => $this->request->getPost('message'),
+        ];
+
+        if ($campaignModel->save($data)) {
+            // Redirect to the create page with a success message
+            return redirect()->to(url_to('admin.campaign.create'))->with('success', 'Campaign template saved successfully.');
+        }
+
+        // Redirect back with input and an error message if saving fails
+        return redirect()->back()->withInput()->with('error', 'Failed to save the campaign template.');
     }
 
     /**
