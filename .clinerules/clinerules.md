@@ -85,12 +85,50 @@ These are non-negotiable rules for all code.
 *   **Input Validation:** All user-supplied data (`POST`, `GET`, etc.) MUST be validated using the Validation library before use.
 *   **Throttler:** The Throttler MUST be enabled on authentication and password reset routes to prevent brute-force attacks.
 
-#### **3.3. Performance**
+#### **3.3. Transactional Integrity: All or Nothing**
+*   **Rule 1:** All operations involving multiple database `write` actions (INSERT, UPDATE, DELETE) that are logically connected MUST be wrapped in a database transaction.
+*   **Rule 2:** All operations involving financial data (e.g., updating a user's `balance`) MUST be wrapped in a transaction, even if it is a single database call. This ensures atomicity and future-proofs the code for potential additions like audit logging.
+*   **Rule 3:** A transaction's status MUST be checked after completion. On failure, a `critical` log entry MUST be created, and a generic, safe error message MUST be shown to the user.
+
+*   **Example: The Critical Payment Verification Flow**
+
+    *   **DON'T (Data Corruption Risk):**
+        ```php
+        // 1. Update payment status
+        $this->paymentModel->update($paymentId, ['status' => 'success']);
+        //
+        // ---> SCRIPT FAILS HERE <--- The user is never credited.
+        //
+        // 2. Update user balance
+        $this->userModel->addBalance($userId, $amount);
+        ```
+
+    *   **DO (Data Integrity Guaranteed):**
+        ```php
+        $db = \Config\Database::connect();
+        $db->transStart();
+
+        $this->paymentModel->update($paymentId, ['status' => 'success']);
+        $this->userModel->addBalance($userId, $amount);
+
+        $db->transComplete();
+
+        if ($db->transStatus() === false) {
+            // Log the critical failure for support staff
+            log_message('critical', "Payment transaction failed for user: {$userId}");
+            // Show a safe message to the user
+            return redirect()->back()->with('error', 'A critical error occurred. Please contact support.');
+        }
+
+        return redirect()->to('...')->with('success', 'Payment successful!');
+        ```
+
+#### **3.4. Performance**
 *   **Auto-Routing:** Auto-routing MUST be disabled (`$autoRoute = false`) in `app/Config/Routing.php`.
 *   **Efficient Queries:** Use pagination (`paginate()`) for lists. Avoid `findAll()` on large tables. Select only the columns needed.
 *   **Optimization Command:** The deployment script MUST run `php spark optimize`.
 
-#### **3.4. Error Handling & Logging**
+#### **3.5. Error Handling & Logging**
 *   **Production Errors:** Detailed error reporting MUST be disabled in the production `.env` file (`CI_ENVIRONMENT = production`).
 *   **Dual Logging Strategy:**
     *   **Developer Logs:** Use `log_message('level', 'message')` for system events and errors. These are for developers only.

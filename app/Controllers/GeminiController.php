@@ -435,6 +435,7 @@ class GeminiController extends BaseController
 
     /**
      * Processes the API response, calculates final cost, deducts balance, and updates memory.
+     * All database writes are wrapped in a transaction.
      *
      * @param User  $user          The user entity.
      * @param array $apiResponse   The response from the Gemini API.
@@ -450,11 +451,10 @@ class GeminiController extends BaseController
 
         $costData = $this->_calculateCost($inputTokens, $outputTokens);
 
-        if ($this->userModel->deductBalance((int) $user->id, (string) $costData['deductionAmount'])) {
-            session()->setFlashdata('success', $costData['costMessage']);
-        } else {
-            session()->setFlashdata('error', 'Query processed, but an error occurred during balance deduction.');
-        }
+        $db = \Config\Database::connect();
+        $db->transStart();
+
+        $deductionSuccess = $this->userModel->deductBalance((int) $user->id, (string) $costData['deductionAmount']);
 
         if ($isAssistantMode && isset($contextData['memoryService'])) {
             /** @var MemoryService $memoryService */
@@ -465,6 +465,16 @@ class GeminiController extends BaseController
                 $aiResponseText,
                 $contextData['usedInteractionIds']
             );
+        }
+
+        $db->transComplete();
+
+        if ($db->transStatus() === false || !$deductionSuccess) {
+            // Log a critical error: The user received an AI response, but we failed to charge them or save their memory.
+            log_message('critical', "Transaction failed during AI response processing for user ID: {$user->id}");
+            session()->setFlashdata('error', 'Query processed, but a billing or memory error occurred. Please contact support.');
+        } else {
+            session()->setFlashdata('success', $costData['costMessage']);
         }
     }
 
