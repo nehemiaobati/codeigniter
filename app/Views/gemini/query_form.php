@@ -64,6 +64,13 @@
         padding-top: 1.5rem;
         border-top: 1px solid #e9ecef;
     }
+    
+    /* Toast notification for settings save */
+    .toast.show {
+        animation: slideIn 0.3s ease-out, fadeOut 0.5s ease-in 2.5s;
+    }
+    @keyframes slideIn { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
 
     /* Media Upload Area Styling */
     #mediaUploadArea {
@@ -162,17 +169,16 @@
         <div class="col-lg-4">
             <div class="card settings-card">
                 <div class="card-body p-4">
-                    <form id="settingsForm">
-                        <?= csrf_field() ?>
+                    <div id="settingsContainer">
                         <h4 class="card-title fw-bold mb-4">
                             <i class="bi bi-gear-fill"></i> Settings
                         </h4>
                         <div class="form-check form-switch fs-5 p-0 d-flex justify-content-between align-items-center">
                             <label class="form-check-label" for="assistantModeToggle">Conversational Memory</label>
-                            <input class="form-check-input" type="checkbox" role="switch" id="assistantModeToggle" name="assistant_mode" value="1" <?= old('assistant_mode', $assistant_mode_enabled ? '1' : '0') === '1' ? 'checked' : '' ?>>
+                            <input class="form-check-input" type="checkbox" role="switch" id="assistantModeToggle" name="assistant_mode" value="1" <?= $assistant_mode_enabled ? 'checked' : '' ?>>
                         </div>
                         <small class="text-muted d-block mt-1">Turn on to let the AI remember your previous conversations. Great for follow-up questions and multi-step tasks.</small>
-                    </form>
+                    </div>
 
                     <!-- SEPARATE FORM FOR CLEARING MEMORY -->
                     <div class="memory-management">
@@ -213,9 +219,6 @@
         <div class="col-lg-8">
             <form id="geminiForm" action="<?= url_to('gemini.generate') ?>" method="post" enctype="multipart/form-data">
                 <?= csrf_field() ?>
-                <!-- Pass settings values through hidden inputs -->
-                <input type="hidden" id="assistantModeInput" name="assistant_mode" value="<?= old('assistant_mode', $assistant_mode_enabled ? '1' : '0') ?>">
-
                 <div class="card query-card">
                     <div class="card-body p-4 p-md-5">
                         <div class="form-floating mb-2">
@@ -303,6 +306,18 @@
         </div>
     </div>
 </div>
+
+<!-- Toast container for notifications -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
+  <div id="settingsToast" class="toast align-items-center text-white bg-dark border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body">
+        <!-- Message will be set by JS -->
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
@@ -315,15 +330,52 @@
         let csrfToken = document.querySelector('input[name="<?= csrf_token() ?>"]').value;
         const csrfInput = document.querySelector('input[name="<?= csrf_token() ?>"]');
         
-        const uploadUrl = `${window.location.origin}/gemini/upload-media`;
-        const deleteUrl = `${window.location.origin}/gemini/delete-media`;
+        const uploadUrl = "<?= url_to('gemini.upload_media') ?>";
+        const deleteUrl = "<?= url_to('gemini.delete_media') ?>";
+        const updateSettingsUrl = "<?= url_to('gemini.settings.updateAssistantMode') ?>";
 
-        // Sync settings toggle with the hidden input in the main form
+        // --- Settings Save Logic (NEW) ---
         const assistantModeToggle = document.getElementById('assistantModeToggle');
-        const assistantModeInput = document.getElementById('assistantModeInput');
-        if (assistantModeToggle && assistantModeInput) {
+        const settingsToastEl = document.getElementById('settingsToast');
+        const settingsToast = new bootstrap.Toast(settingsToastEl);
+
+        if (assistantModeToggle) {
             assistantModeToggle.addEventListener('change', function() {
-                assistantModeInput.value = this.checked ? '1' : '0';
+                const isEnabled = this.checked;
+                const formData = new FormData();
+                formData.append('enabled', isEnabled);
+                formData.append('<?= csrf_token() ?>', csrfToken);
+
+                fetch(updateSettingsUrl, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Update CSRF token on the page for all forms
+                    csrfToken = data.csrf_token;
+                    document.querySelectorAll('input[name="<?= csrf_token() ?>"]').forEach(input => {
+                        input.value = data.csrf_token;
+                    });
+
+                    // Show feedback toast
+                    const toastBody = settingsToastEl.querySelector('.toast-body');
+                    if (data.status === 'success') {
+                        toastBody.textContent = `Conversational Memory ${isEnabled ? 'enabled' : 'disabled'}.`;
+                    } else {
+                        toastBody.textContent = 'Error saving setting.';
+                    }
+                    settingsToast.show();
+                })
+                .catch(error => {
+                    console.error('Error updating setting:', error);
+                    const toastBody = settingsToastEl.querySelector('.toast-body');
+                    toastBody.textContent = 'Network error. Could not save setting.';
+                    settingsToast.show();
+                });
             });
         }
         
@@ -616,4 +668,4 @@
         }
     });
 </script>
-<?= $this->endSection() ?>
+<?= $this->endSection() ?>```

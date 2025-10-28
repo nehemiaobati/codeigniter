@@ -99,17 +99,9 @@ class GeminiController extends BaseController
         $userId  = (int) session()->get('userId');
         $prompts = $this->promptModel->where('user_id', $userId)->findAll();
 
-        // Fetch or create user setting for Assistant Mode
+        // Fetch the user's saved setting. Default to 'true' if no setting exists yet.
         $userSetting = $this->userSettingsModel->where('user_id', $userId)->first();
-        if (!$userSetting) {
-            $this->userSettingsModel->save([
-                'user_id' => $userId,
-                'assistant_mode_enabled' => true, // Default to enabled for new users
-            ]);
-            $assistantModeEnabled = true;
-        } else {
-            $assistantModeEnabled = $userSetting->assistant_mode_enabled;
-        }
+        $assistantModeEnabled = $userSetting ? $userSetting->assistant_mode_enabled : true;
 
         $data = [
             'pageTitle'   => 'Gemini AI Studio | Afrikenkid',
@@ -118,7 +110,7 @@ class GeminiController extends BaseController
             'result'  => session()->getFlashdata('result'),
             'error'   => session()->getFlashdata('error'),
             'prompts' => $prompts,
-            'assistant_mode_enabled' => $assistantModeEnabled, // Pass setting to view
+            'assistant_mode_enabled' => $assistantModeEnabled,
         ];
         return view('gemini/query_form', $data);
     }
@@ -226,8 +218,9 @@ class GeminiController extends BaseController
             return redirect()->back()->withInput()->with('error', 'User not logged in or invalid user ID.');
         }
 
-        $isAssistantMode = $this->request->getPost('assistant_mode') === '1';
-        $this->userSettingsModel->where('user_id', $userId)->set(['assistant_mode_enabled' => $isAssistantMode])->update();
+        // Fetch the user's saved setting for assistant mode. Default to true if not found.
+        $userSetting = $this->userSettingsModel->where('user_id', $userId)->first();
+        $isAssistantMode = $userSetting ? $userSetting->assistant_mode_enabled : true;
 
         $inputText = (string) $this->request->getPost('prompt');
         $uploadedFileIds = (array) $this->request->getPost('uploaded_media');
@@ -280,6 +273,42 @@ class GeminiController extends BaseController
         return redirect()->back()->withInput()
             ->with('result', $htmlResult)
             ->with('raw_result', $apiResponse['result']);
+    }
+
+    /**
+     * [NEW] Handles an AJAX request to update the user's assistant mode setting.
+     *
+     * @return ResponseInterface A JSON response indicating the status of the operation.
+     */
+    public function updateAssistantMode(): ResponseInterface
+    {
+        $userId = (int) session()->get('userId');
+        if ($userId <= 0) {
+            return $this->response->setStatusCode(403)->setJSON([
+                'status' => 'error',
+                'message' => 'Authentication required.',
+                'csrf_token' => csrf_hash()
+            ]);
+        }
+
+        $isEnabled = $this->request->getPost('enabled') === 'true';
+
+        $setting = $this->userSettingsModel->where('user_id', $userId)->first();
+
+        if ($setting) {
+            $this->userSettingsModel->update($setting->id, ['assistant_mode_enabled' => $isEnabled]);
+        } else {
+            $this->userSettingsModel->save([
+                'user_id' => $userId,
+                'assistant_mode_enabled' => $isEnabled
+            ]);
+        }
+
+        return $this->response->setStatusCode(200)->setJSON([
+            'status' => 'success',
+            'message' => 'Setting saved.',
+            'csrf_token' => csrf_hash()
+        ]);
     }
 
     /**
