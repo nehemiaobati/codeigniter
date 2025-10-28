@@ -6,12 +6,13 @@ use App\Controllers\BaseController;
 use App\Entities\User;
 use App\Libraries\GeminiService;
 use App\Libraries\MemoryService;
+use App\Models\EntityModel;
+use App\Models\InteractionModel;
 use App\Models\PromptModel;
 use App\Models\UserModel;
 use App\Models\UserSettingsModel;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\ResponseInterface;
-use CodeIgniter\HTTP\Files\UploadedFile;
 use Parsedown;
 
 /**
@@ -548,5 +549,38 @@ class GeminiController extends BaseController
         }
 
         return redirect()->to(url_to('gemini.index'))->with('error', 'Failed to delete the prompt.');
+    }
+
+    /**
+     * Clears all conversational memory (interactions and entities) for the logged-in user.
+     *
+     * @return RedirectResponse
+     */
+    public function clearMemory(): RedirectResponse
+    {
+        $userId = (int) session()->get('userId');
+        if ($userId <= 0) {
+            return redirect()->to(url_to('gemini.index'))->with('error', 'You must be logged in to perform this action.');
+        }
+
+        $interactionModel = new InteractionModel();
+        $entityModel      = new EntityModel();
+
+        // Use a transaction to ensure both tables are cleared successfully
+        $db = \Config\Database::connect();
+        $db->transStart();
+
+        $interactionModel->where('user_id', $userId)->delete();
+        $entityModel->where('user_id', $userId)->delete();
+
+        $db->transComplete();
+
+        if ($db->transStatus() === false) {
+            // Log the error and notify the user
+            log_message('error', 'Failed to clear memory for user ID: ' . $userId);
+            return redirect()->to(url_to('gemini.index'))->with('error', 'An error occurred while trying to clear your memory. Please try again.');
+        }
+
+        return redirect()->to(url_to('gemini.index'))->with('success', 'Your conversational memory has been successfully cleared.');
     }
 }

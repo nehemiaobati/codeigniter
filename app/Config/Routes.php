@@ -93,6 +93,8 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->post('generate', 'GeminiController::generate', ['as' => 'gemini.generate', 'filter' => 'balance']);
         $routes->post('prompts/add', 'GeminiController::addPrompt', ['as' => 'gemini.prompts.add']);
         $routes->post('prompts/delete/(:num)', 'GeminiController::deletePrompt/$1', ['as' => 'gemini.prompts.delete']);
+        // Route for clearing conversational memory
+        $routes->post('memory/clear', 'GeminiController::clearMemory', ['as' => 'gemini.memory.clear']);
         $routes->post('upload-media', 'GeminiController::uploadMedia', ['as' => 'gemini.upload_media']);
         $routes->post('delete-media', 'GeminiController::deleteMedia', ['as' => 'gemini.delete_media']);
     });
