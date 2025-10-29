@@ -1,5 +1,3 @@
-<?= '
-' ?>
 <?= $this->extend('layouts/default') ?>
 
 <?= $this->section('styles') ?>
@@ -158,7 +156,7 @@
 
 <?= $this->section('content') ?>
 <div class="container my-5">
-    <div class="text-center mb-5">
+    <div class="blueprint-header text-center mb-5">
         <h1 class="fw-bold"><i class="bi bi-stars text-primary"></i> AI Studio</h1>
         <p class="text-muted lead">This is your creative canvas. Chat, analyze, or generate anything you can imagine.</p>
     </div>
@@ -167,7 +165,7 @@
     <div class="row g-4">
         <!-- Left Column: Settings & Config -->
         <div class="col-lg-4">
-            <div class="card settings-card">
+            <div class="card settings-card blueprint-card">
                 <div class="card-body p-4">
                     <div id="settingsContainer">
                         <h4 class="card-title fw-bold mb-4">
@@ -219,7 +217,7 @@
         <div class="col-lg-8">
             <form id="geminiForm" action="<?= url_to('gemini.generate') ?>" method="post" enctype="multipart/form-data">
                 <?= csrf_field() ?>
-                <div class="card query-card">
+                <div class="card query-card blueprint-card">
                     <div class="card-body p-4 p-md-5">
                         <div class="form-floating mb-2">
                             <textarea id="prompt" name="prompt" class="form-control" placeholder="Your Prompt" style="height: 150px" required><?= old('prompt') ?></textarea>
@@ -258,7 +256,7 @@
     ?>
         <div class="row justify-content-center mt-4">
             <div class="col-lg-12">
-                <div class="card results-card">
+                <div class="card results-card blueprint-card">
                     <div class="card-body p-4 p-md-5">
                         <h3 class="fw-bold mb-4 d-flex justify-content-between align-items-center">
                             Studio Output
@@ -668,4 +666,4 @@
         }
     });
 </script>
-<?= $this->endSection() ?>```
+<?= $this->endSection() ?>
