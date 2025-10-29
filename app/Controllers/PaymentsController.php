@@ -31,6 +31,8 @@ class PaymentsController extends BaseController
             'email'           => session()->get('userEmail') ?? '',
             'errors'          => session()->getFlashdata('errors'),
         ];
+        // Add noindex directive for authenticated pages
+        $data['robotsTag'] = 'noindex, follow';
 
         return view('payment/payment_form', $data); // View name updated
     }

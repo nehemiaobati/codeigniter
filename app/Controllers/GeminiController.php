@@ -123,13 +123,15 @@ class GeminiController extends BaseController
 
         $data = [
             'pageTitle'       => 'AI Studio | Afrikenkid',
-            'metaDescription' => 'Generate content, analyze files, and chat with your AI assistant. Access your saved prompts and manage conversational memory.',
+            'metaDescription' => 'Generate content, analyze PDFs, and chat with your AI assistant. Access your saved prompts and manage conversational memory.',
             'canonicalUrl'    => url_to('gemini.index'),
             'result'          => session()->getFlashdata('result'),
             'error'           => session()->getFlashdata('error'),
             'prompts'         => $prompts,
             'assistant_mode_enabled' => $assistantModeEnabled,
         ];
+        // Add noindex directive for authenticated pages
+        $data['robotsTag'] = 'noindex, follow';
         return view('gemini/query_form', $data);
     }
 

@@ -72,6 +72,8 @@ class CryptoController extends BaseController
             'result'          => session()->getFlashdata('result'),
             'errors'          => session()->getFlashdata('errors')
         ];
+        // Add noindex directive for authenticated pages
+        $data['robotsTag'] = 'noindex, follow';
         return view('crypto/query_form', $data); // View name updated
     }
 

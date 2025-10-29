@@ -35,6 +35,8 @@ class HomeController extends BaseController
             'balance'   => $balance,
             'canonicalUrl' => url_to('home'), // Corrected route name
         ];
+        // Add noindex directive for authenticated pages
+        $data['robotsTag'] = 'noindex, follow';
         return view('home/welcome_user', $data);
     }
 
