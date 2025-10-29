@@ -143,7 +143,7 @@ These are non-negotiable rules for all code.
 *   **Reusable Partials:** Common UI elements MUST be created as partial views in `app/Views/partials/`.
     *   **Flash Messages:** All status messages MUST be rendered via `app/Views/partials/flash_messages.php`.
     *   **Custom Components:** Sitewide components like pagination MUST have a custom view (e.g., `app/Views/pagers/bootstrap5_pagination.php`) and be configured as the default in `app/Config/Pager.php`.
-*   **Dynamic URLs in JS:** JavaScript making AJAX/fetch requests MUST construct URLs dynamically using `window.location.origin` to avoid hardcoding and ensure portability.
+*   **Dynamic URLs in JS:** JavaScript making AJAX/fetch requests MUST be given a relative URL path from the controller (e.g., using CodeIgniter's `route_to()` function). Hardcoding absolute URLs is forbidden. This is the mandatory solution to prevent "blocked by CORS" policy errors that arise when the browser's origin (e.g., with 'www') does not exactly match the application's configured base URL.
 
 ---
 
