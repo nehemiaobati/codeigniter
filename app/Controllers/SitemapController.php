@@ -14,8 +14,9 @@ class SitemapController extends BaseController
     {
         // Array of public-facing, static pages by their route name
         $pages = [
-            'welcome', 'register', 'login', 'contact.form',
+            'landing', 'register', 'login', 'contact.form',
             'portfolio.index', 'terms', 'privacy',
+            'gemini.public', 'crypto.public',
         ];
 
         $urls = [];
@@ -29,7 +30,7 @@ class SitemapController extends BaseController
                     'loc'        => $generatedUrl,
                     'lastmod'    => $today,
                     'changefreq' => 'monthly',
-                    'priority'   => ($page === 'welcome') ? '1.0' : '0.8',
+                    'priority'   => ($page === 'landing') ? '1.0' : '0.8',
                 ];
             } else {
                 log_message('error', 'Sitemap: Failed to generate URL for route - ' . $page);
