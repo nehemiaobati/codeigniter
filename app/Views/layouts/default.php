@@ -340,7 +340,7 @@ src="https://www.facebook.com/tr?id=1266537441823413&ev=PageView&noscript=1"
             <div class="row">
                 <div class="col-lg-4 col-md-6 mb-4 mb-lg-0">
                     <h5 class="text-uppercase">AFRIKENKID</h5>
-                    <p>Providing innovative solutions for real-time data access and AI-powered insights to help you succeed in the digital world.</p>
+                    <p>Build smarter with pay-as-you-go platform. Leverage Generative AI (Google Gemini), query real-time BTC & LTC wallet data, and securely top up with M-Pesa. Built for developers in Kenya and Africa.</p>
                     <div class="social-icons">
                         <a href="#" class="twitter"><i class="bi bi-twitter"></i></a>
                         <a href="https://www.linkedin.com/in/nehemia-obati-b74886344" class="linkedin"><i class="bi bi-linkedin"></i></a>
