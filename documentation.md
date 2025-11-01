@@ -13,7 +13,7 @@ The application integrates with several third-party APIs, including Paystack for
 *   **Backend:** PHP 8.1+, CodeIgniter 4
 *   **Frontend:** Bootstrap 5, JavaScript, HTML5, CSS3
 *   **Database:** MySQL (via MySQLi driver)
-*   **Key Libraries:** Parsedown (for Markdown rendering), Kint (for debugging)
+*   **Key Libraries:** Parsedown (for Markdown rendering), TinyMCE (for rich text editing), Kint (for debugging)
 *   **Development Tooling:** Composer, PHPUnit
 
 ### 3. Installation and Setup
@@ -29,11 +29,12 @@ The application integrates with several third-party APIs, including Paystack for
         *   **Database:** Configure `database.default.hostname`, `database.default.database`, `database.default.username`, and `database.default.password`.
         *   **API Keys:** Provide your secret keys for `PAYSTACK_SECRET_KEY`, `GEMINI_API_KEY`, `recaptcha.siteKey`, and `recaptcha.secretKey`.
         *   **Email:** Set up your SMTP server details under the `email.*` variables for sending verification and password reset emails.
-5.  **Database Migration:** Run the migrations to create the necessary database tables:
+5.  **Install Frontend Assets:** Download the TinyMCE community edition and place its contents in the `public/assets/tinymce/` directory to enable the rich text editor.
+6.  **Database Migration:** Run the migrations to create the necessary database tables:
     ```bash
     php spark migrate
     ```
-6.  **Run the Application:** Start the development server:
+7.  **Run the Application:** Start the development server:
     ```bash
     php spark serve
     ```
@@ -61,6 +62,7 @@ The database schema is defined by the following migration files and tables:
 *   **`interactions`**: The core of the AI's long-term memory. Each row represents a single conversational turn (user input and AI output), storing the raw text, relevance score, vector embedding, and keywords.
 *   **`entities`**: Acts as a knowledge graph for the AI's memory. It tracks unique concepts (entities/keywords), their relationships, and links them back to the interactions where they were mentioned.
 *   **`user_settings`**: Stores user-specific preferences, such as the enabled/disabled state of the AI's Assistant Mode, ensuring a consistent user experience across sessions.
+*   **`campaigns`**: Stores reusable email campaign templates, including their subject and body, for administrative use.
 
 ### 6. Key Features and Modules
 
@@ -79,7 +81,7 @@ The database schema is defined by the following migration files and tables:
 *   **Financial Oversight:** Displays the total aggregated balance of all users.
 *   **Balance Adjustment:** Allows administrators to manually deposit or withdraw funds from a user's account. All calculations use PHP's `bcmath` extension for arbitrary-precision arithmetic to prevent floating-point inaccuracies.
 *   **User Deletion:** Provides functionality to delete users, with a safeguard to prevent an admin from deleting their own account.
-*   **Email Campaigns (`CampaignController`):** An admin-only feature to compose and send mass emails to all registered users. The system uses a dynamic email template to personalize greetings (e.g., using the user's name) for a more professional outreach.
+*   **Email Campaigns (`CampaignController`):** An admin-only feature to compose and send mass emails to all registered users. The system uses a dynamic email template to personalize greetings (e.g., using the user's name). Administrators can also save, load, and delete campaign messages as templates for future use, streamlining the outreach process.
 
 #### 6.4. Payment System (`PaymentsController`, `PaystackService`)
 *   **Initiation:** The user submits an amount to deposit. The system creates a `pending` payment record and redirects the user to the secure Paystack payment gateway.
@@ -95,6 +97,7 @@ The database schema is defined by the following migration files and tables:
 *   **Billing:** A small, fixed fee is deducted from the user's balance for each successful query.
 
 **B. Gemini AI Studio (`GeminiController`, `MemoryService`, `EmbeddingService`)**
+*   **Rich Text Prompting:** The prompt input area is a rich text editor powered by a self-hosted instance of **TinyMCE**. This allows users to format their prompts with headings, bold text, lists, and links, sending structured HTML directly to the Gemini AI. The AI understands this structure, allowing for more nuanced and context-aware requests.
 *   **Multimedia Prompts:** Users can submit text prompts along with various media files (images, audio, video, PDFs) to the Gemini API.
 *   **Assistant Mode (Conversational Memory):** A highly advanced feature powered by `MemoryService`.
     *   **Context Retrieval:** Before sending a prompt, the service performs a **hybrid search** of past interactions. It combines a **vector search** (for semantic similarity) with a **keyword search** (for lexical relevance) to retrieve the most relevant memories.
@@ -104,6 +107,13 @@ The database schema is defined by the following migration files and tables:
 *   **Token-Based Billing:** The system calculates the exact cost of each query based on the number of input and output tokens, converts the price from USD to KES, and deducts the precise amount from the user's balance.
 *   **Prompt Management:** Provides a UI for users to save, load, and delete their favorite prompts.
 *   **Rich Output:** AI-generated Markdown is parsed into clean HTML for an enhanced user experience.
+
+#### 6.6. Public-Facing Pages & SEO
+Beyond the core authenticated services, the platform includes several public-facing pages to engage users and improve search engine visibility.
+*   **Static Pages (`HomeController`):** Manages the main landing page, terms of service, and privacy policy.
+*   **Marketing Pages (`GeminiController`, `CryptoController`):** Both core services feature a dedicated public landing page (`/ai-studio` and `/crypto-query`) that explains the tool's benefits and encourages user registration.
+*   **Contact & Portfolio (`ContactController`, `PortfolioController`):** Includes a professional portfolio and a secure contact form with reCAPTCHA integration for inquiries.
+*   **Dynamic Sitemap (`SitemapController`):** Automatically generates a `sitemap.xml` file based on the application's named routes. This ensures that all public pages are properly indexed by search engines, enhancing SEO.
 
 ### 7. Documentation and Best Practices (`clinerules.md`)
 
