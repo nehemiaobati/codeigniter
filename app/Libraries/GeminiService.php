@@ -113,9 +113,18 @@ class GeminiService
             $currentModel = $model;
             $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/{$currentModel}:{$generateContentApi}?key={$this->apiKey}";
 
+            // MODIFIED: Added tools and thinkingConfig to the payload
             $requestPayload = [
                 "contents" => [["role" => "user", "parts" => $parts]],
-                "generationConfig" => ["maxOutputTokens" => 8192],
+                "generationConfig" => [
+                    "maxOutputTokens" => 64192,
+                    "thinkingConfig" => [
+                        "thinkingBudget" => -1
+                    ]
+                ],
+                "tools" => [
+                    ["googleSearch" => new \stdClass()]
+                ],
             ];
 
             $maxRetries = 3;
