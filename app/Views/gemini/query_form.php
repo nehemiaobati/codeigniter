@@ -63,12 +63,11 @@
         border-top: 1px solid #e9ecef;
     }
     
-    /* Toast notification for settings save */
+    /* MODIFIED: Toast notification for settings save - Removed custom fadeOut animation */
     .toast.show {
-        animation: slideIn 0.3s ease-out, fadeOut 0.5s ease-in 2.5s;
+        animation: slideIn 0.3s ease-out;
     }
     @keyframes slideIn { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
 
     /* Media Upload Area Styling */
     #mediaUploadArea {
@@ -315,7 +314,8 @@
 
 <!-- Toast container for notifications -->
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
-  <div id="settingsToast" class="toast align-items-center text-white bg-dark border-0" role="alert" aria-live="assertive" aria-atomic="true">
+  <!-- MODIFIED: Added data-bs-delay attribute for standard Bootstrap auto-hide functionality -->
+  <div id="settingsToast" class="toast align-items-center text-white bg-dark border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3000">
     <div class="d-flex">
       <div class="toast-body">
         <!-- Message will be set by JS -->
