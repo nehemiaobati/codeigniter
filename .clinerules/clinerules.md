@@ -43,6 +43,13 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
     *   Initial or test data MUST be handled by Seeder files.
     *   Directly altering the database schema outside of migrations is strictly FORBIDDEN.
 
+#### **1.6. Helpers (`app/Helpers/`)**
+*   **Role:** Contain simple, stateless, global procedural functions.
+*   **Rules:**
+    *   Helpers are for small, reusable tasks (e.g., formatting data, checking a specific condition) that are needed in multiple places (controllers, views).
+    *   All new helpers MUST be registered in `app/Config/Autoload.php`.
+    *   Helpers MUST NOT contain business logic, perform database queries, or interact with external services. Such logic belongs in a Service.
+
 ---
 
 ### **Part 2: The Request & Response Protocol**
@@ -73,6 +80,9 @@ This **Post/Redirect/Get (PRG)** pattern is mandatory for all `POST` requests.
 #### **2.3. Filters: The Gatekeepers**
 *   Filters (`app/Filters/`) MUST be used for all cross-cutting concerns, primarily for security and access control.
 *   **Examples:** `AuthFilter` to protect logged-in areas, `AdminFilter` for admin-only pages, `BalanceFilter` to protect paid service routes.
+
+#### **2.4. Global View Data: The `BaseController`**
+*   **Rule:** For data required by the master layout or on every page (e.g., user consent status, notification counts), the data MUST be prepared and passed to the view system within `BaseController::initController()`. This centralizes logic and avoids repetition in individual controller methods.
 
 ---
 
@@ -150,6 +160,7 @@ These are non-negotiable rules for all code.
 *   **Reusable Partials:** Common UI elements MUST be created as partial views in `app/Views/partials/`.
     *   **Flash Messages:** All status messages MUST be rendered via `app/Views/partials/flash_messages.php`.
     *   **Custom Components:** Sitewide components like pagination MUST have a custom view (e.g., `app/Views/pagers/bootstrap5_pagination.php`) and be configured as the default in `app/Config/Pager.php`.
+*   **Legal and Compliance:** The Privacy Policy page (`privacy.php`) MUST contain a clear, up-to-date section detailing all first-party and third-party cookies used by the application, including their purpose.
 *   **URL Generation: `route_to()` vs. `url_to()`**
     *   **For JavaScript Background Requests:** All URLs used within `<script>` blocks for background requests (e.g., AJAX, `fetch`) MUST be generated as relative paths using `route_to('route.name')`.
     *   **For HTML Full-Page Navigation:** All URLs used in standard HTML for full-page navigations (e.g., `<a>` tag `href` attributes, standard `<form>` `action` attributes, and controller redirects) MUST be generated as absolute paths using `url_to('route.name')`.
