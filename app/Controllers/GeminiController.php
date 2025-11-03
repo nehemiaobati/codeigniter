@@ -645,7 +645,8 @@ class GeminiController extends BaseController
         return redirect()->to(url_to('gemini.index'))->with('success', 'Your conversational memory has been successfully cleared.');
     }
 
-    /**
+    
+/**
      * Generates a PDF from the raw markdown response and streams it for download.
      *
      * @return ResponseInterface|void
@@ -653,6 +654,10 @@ class GeminiController extends BaseController
     public function downloadPdf()
     {
         try {
+            // [THE FIX] Set the script execution time limit to unlimited (0) for this specific request.
+            // This prevents timeouts when generating large PDF files.
+            set_time_limit(0);
+
             // 1. Get the raw markdown content from the POST request
             $markdownContent = $this->request->getPost('raw_response');
     
@@ -689,20 +694,22 @@ class GeminiController extends BaseController
     
             // 3. Initialize Dompdf with robust options for production environments
             $options = new Options();
-            $options->set('defaultFont', 'DejaVu Sans'); // Font with broad Unicode support is crucial.
+            $options->set('defaultFont', 'DejaVu Sans');
             $options->set('isHtml5ParserEnabled', true);
             $options->set('isRemoteEnabled', true);
+            $options->set('isFontSubsettingEnabled', false); // Keep this to avoid the unpack() error.
             
-            // [FIX] Explicitly set a writable temp directory within your project.
-            // This avoids issues with restricted system temp folders on servers.
             $tempDir = WRITEPATH . 'dompdf_temp';
             if (!is_dir($tempDir)) {
                 mkdir($tempDir, 0775, true);
             }
+            if (!is_writable($tempDir)) {
+                log_message('error', '[PDF Generation Failed] Dompdf temp directory is not writable: ' . $tempDir);
+                return redirect()->back()->with('error', 'Server configuration error: PDF temporary directory is not writable.');
+            }
             $options->set('tempDir', $tempDir);
             
-            // [FIX] Set a "chroot" directory to help Dompdf resolve local file paths securely.
-            $options->set('chroot', FCPATH);
+            $options->set('chroot', ROOTPATH);
     
             $dompdf = new Dompdf($options);
     
