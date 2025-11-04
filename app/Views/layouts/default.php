@@ -60,7 +60,6 @@
     </script>
 
     <!-- Stylesheets -->
-    <!-- MODIFICATION: Swapped CDN link for local Bootstrap CSS -->
     <link href="<?= base_url('assets/bootstrap/css/bootstrap.min.css') ?>" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -79,6 +78,7 @@
             --text-heading: #212529;
             --border-color: #dee2e6;
             --header-bg: #ffffff;
+            --footer-bg: #212529; /* Kept for reference, but now overridden */
         }
 
         html[data-bs-theme="dark"] {
@@ -168,14 +168,37 @@
 
         main { flex-grow: 1; }
         .flash-message-container .alert { border-radius: 0.5rem; border-left-width: 5px; }
-        .footer { background-color: #212529; color: #adb5bd; padding-top: 3rem; padding-bottom: 1rem; }
-        .footer h5 { color: white; font-weight: 600; margin-bottom: 1rem; }
-        .footer a { color: #adb5bd; text-decoration: none; transition: color 0.3s; }
-        .footer a:hover { color: white; }
+
+        /* MODIFICATION: Footer styles updated to use theme variables */
+        .footer { 
+            background-color: var(--card-bg); 
+            color: var(--text-body); 
+            padding-top: 3rem; 
+            padding-bottom: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .footer h5 { 
+            color: var(--text-heading); 
+            font-weight: 600; 
+            margin-bottom: 1rem; 
+        }
+        .footer a { 
+            color: var(--text-body); 
+            text-decoration: none; 
+            transition: color 0.3s; 
+        }
+        .footer a:hover { 
+            color: var(--primary-color); 
+        }
         .footer .list-unstyled li { margin-bottom: 0.5rem; }
-        .footer .social-icons a { display: inline-flex; justify-content: center; align-items: center; width: 40px; height: 40px; border-radius: 50%; background-color: #495057; color: white; font-size: 1.2rem; margin-right: 0.5rem; }
-        .footer .social-icons a:hover { background-color: var(--primary-color); }
-        .footer .footer-bottom { border-top: 1px solid #495057; padding-top: 1rem; margin-top: 2rem; }
+        .footer .social-icons a { display: inline-flex; justify-content: center; align-items: center; width: 40px; height: 40px; border-radius: 50%; background-color: var(--light-bg); color: var(--text-body); font-size: 1.2rem; margin-right: 0.5rem; }
+        .footer .social-icons a:hover { background-color: var(--primary-color); color: white; }
+        .footer .footer-bottom { 
+            border-top: 1px solid var(--border-color); 
+            padding-top: 1rem; 
+            margin-top: 2rem; 
+        }
+        
         .pagination { --bs-pagination-padding-x: 0.85rem; --bs-pagination-padding-y: 0.45rem; --bs-pagination-font-size: 0.95rem; --bs-pagination-border-width: 0; --bs-pagination-border-radius: 0.375rem; --bs-pagination-hover-color: var(--primary-color); --bs-pagination-hover-bg: #e9ecef; --bs-pagination-active-color: #fff; --bs-pagination-active-bg: var(--primary-color); --bs-pagination-disabled-color: #6c757d; --bs-pagination-disabled-bg: #fff; }
         .pagination .page-item { margin: 0 4px; }
         .pagination .page-link { border-radius: var(--bs-pagination-border-radius) !important; }
@@ -344,7 +367,6 @@
         <?= $this->include('partials/cookie_banner') ?>
     <?php endif; ?>
 
-    <!-- MODIFICATION: Swapped CDN link for local Bootstrap JS -->
     <script src="<?= base_url('assets/bootstrap/js/bootstrap.bundle.min.js') ?>"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
