@@ -60,7 +60,8 @@
     </script>
 
     <!-- Stylesheets -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- MODIFICATION: Swapped CDN link for local Bootstrap CSS -->
+    <link href="<?= base_url('assets/bootstrap/css/bootstrap.min.css') ?>" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -126,7 +127,6 @@
             transition: color 0.2s ease, background-color 0.2s ease;
         }
         .navbar .nav-link:hover { color: var(--primary-color); }
-        /* MODIFICATION: Reinstated active link background highlight */
         .navbar .nav-link.active {
             color: var(--primary-color);
             background-color: rgba(13, 110, 253, 0.1);
@@ -215,7 +215,6 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
                     <?php if (session()->get('isLoggedIn')): ?>
-                        <!-- LOGGED-IN NAVIGATION (Desktop) -->
                         <li class="nav-item"><a class="nav-link <?= str_contains(current_url(), 'home') ? 'active' : '' ?>" href="<?= url_to('home') ?>">Dashboard</a></li>
                         <li class="nav-item"><a class="nav-link <?= str_contains(current_url(), 'gemini') ? 'active' : '' ?>" href="<?= url_to('gemini.index') ?>">AI Studio</a></li>
                         <li class="nav-item"><a class="nav-link <?= str_contains(current_url(), 'crypto') ? 'active' : '' ?>" href="<?= url_to('crypto.index') ?>">Crypto Query</a></li>
@@ -235,7 +234,6 @@
                             </ul>
                         </li>
                     <?php else: ?>
-                        <!-- LOGGED-OUT NAVIGATION (Desktop) -->
                         <li class="nav-item"><a class="nav-link <?= current_url() == url_to('landing') ? 'active' : '' ?>" href="<?= url_to('landing') ?>">Home</a></li>
                         <li class="nav-item"><a class="nav-link <?= str_contains(current_url(), 'ai-studio') ? 'active' : '' ?>" href="<?= url_to('gemini.public') ?>">AI Studio</a></li>
                         <li class="nav-item"><a class="nav-link <?= str_contains(current_url(), 'crypto-query') ? 'active' : '' ?>" href="<?= url_to('crypto.public') ?>">Crypto Query</a></li>
@@ -262,7 +260,6 @@
         <div class="offcanvas-body">
             <ul class="navbar-nav">
                 <?php if (session()->get('isLoggedIn')): ?>
-                    <!-- LOGGED-IN NAVIGATION (Mobile) -->
                     <li class="nav-item"><a class="nav-link" href="<?= url_to('home') ?>">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="<?= url_to('gemini.index') ?>">AI Studio</a></li>
                     <li class="nav-item"><a class="nav-link" href="<?= url_to('crypto.index') ?>">Crypto Query</a></li>
@@ -274,7 +271,6 @@
                      <li class="nav-item"><hr class="dropdown-divider"></li>
                     <li class="nav-item"><a class="nav-link" href="<?= url_to('logout') ?>">Logout</a></li>
                 <?php else: ?>
-                    <!-- LOGGED-OUT NAVIGATION (Mobile) -->
                     <li class="nav-item"><a class="nav-link" href="<?= url_to('landing') ?>">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="<?= url_to('gemini.public') ?>">AI Studio</a></li>
                     <li class="nav-item"><a class="nav-link" href="<?= url_to('crypto.public') ?>">Crypto Query</a></li>
@@ -348,7 +344,8 @@
         <?= $this->include('partials/cookie_banner') ?>
     <?php endif; ?>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- MODIFICATION: Swapped CDN link for local Bootstrap JS -->
+    <script src="<?= base_url('assets/bootstrap/js/bootstrap.bundle.min.js') ?>"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const themeToggles = document.querySelectorAll('.theme-toggle');

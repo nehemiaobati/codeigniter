@@ -8,14 +8,11 @@
         --code-bg: #282c34;
     }
 
-    /* MODIFICATION: The prompt card now dynamically calculates its height to fill the viewport.
-       260px is an approximation for the space taken by the navbar, page header, and margins. */
     .prompt-card {
         height: calc(100vh - 260px);
-        min-height: 500px; /* Retain a minimum height for smaller viewports */
+        min-height: 500px;
     }
 
-    /* RE-INTRODUCED: The editor wrapper needs to handle overflow for the dynamic height to work. */
     .prompt-editor-wrapper {
         overflow-y: auto;
         position: relative;
@@ -59,10 +56,10 @@
     }
 
     #mediaUploadArea {
+        /* MODIFICATION: Removed hardcoded background color. It's now handled by a Bootstrap class. */
         border: 2px dashed var(--border-color);
         border-radius: 0.5rem;
         padding: 1.5rem;
-        background-color: #f8f9fa;
         transition: background-color 0.2s ease, border-color 0.2s ease;
     }
 
@@ -100,15 +97,15 @@
         <div class="col-lg-8">
             <form id="geminiForm" action="<?= url_to('gemini.generate') ?>" method="post" enctype="multipart/form-data">
                 <?= csrf_field() ?>
-                <!-- RE-INTRODUCED: Bootstrap flex classes to structure the card vertically. -->
                 <div class="blueprint-card p-0 prompt-card d-flex flex-column">
-                    <!-- RE-INTRODUCED: flex-grow-1 allows the editor to fill the available space. -->
                     <div class="prompt-editor-wrapper p-4 flex-grow-1">
                         <label for="prompt" class="form-label fw-bold visually-hidden">Your Prompt</label>
                         <textarea id="prompt" name="prompt" style="visibility: hidden;"><?= old('prompt') ?></textarea>
                     </div>
-                    <div class="p-4 border-top bg-light action-footer">
-                        <div id="mediaUploadArea" class="mb-3">
+                    <!-- MODIFICATION: Replaced 'bg-light' with 'bg-body-tertiary' for theme compatibility. -->
+                    <div class="p-4 border-top bg-body-tertiary action-footer">
+                        <!-- MODIFICATION: Added 'bg-body-tertiary' to make the upload area theme-aware. -->
+                        <div id="mediaUploadArea" class="mb-3 bg-body-tertiary">
                             <input type="file" id="media-input-trigger" multiple class="d-none">
                             <label for="media-input-trigger" class="btn btn-outline-secondary w-100"><i class="bi bi-paperclip"></i> Attach Files or Drag & Drop</label>
                             <div id="upload-list-wrapper" class="mt-3 text-start" style="max-height: 120px; overflow-y: auto; padding-right: 10px;">
@@ -242,7 +239,6 @@
                 tinymce.init({
                     selector: '#prompt',
                     plugins: 'autolink link lists ',
-                    // MODIFICATION: Set height to 100% to fill its flex container.
                     height : '100%',
                     menubar: false,
                     statusbar: false,
