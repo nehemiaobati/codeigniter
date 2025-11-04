@@ -318,9 +318,8 @@
                 <div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
                     <h5 class="text-uppercase">Services</h5>
                     <ul class="list-unstyled mb-0">
-                        <li><a href="<?= url_to('gemini.index') ?>">Gemini AI</a></li>
-                        <li><a href="<?= url_to('crypto.index') ?>">Crypto Data</a></li>
-                        <li><a href="<?= url_to('payment.index') ?>">Pricing</a></li>
+                        <li><a href="<?= url_to('gemini.public') ?>">Gemini AI</a></li>
+                        <li><a href="<?= url_to('crypto.public') ?>">Crypto Data</a></li>
                     </ul>
                 </div>
                 <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
