@@ -1,9 +1,3 @@
-Acknowledged. The objective is to update the `.clinerules/clinerules.md` file to make the rule regarding JavaScript URL generation more direct, specific, and unambiguous, without including code snippets in the final output. The change will clarify the distinct use cases for `route_to()` and `url_to()`.
-
-The following is the complete, updated content for the `.clinerules/clinerules.md` file.
-
-***
-
 # Project Constitution: CodeIgniter 4 Development Standards
 
 This document is the **single source of truth** for all architectural, coding, and security standards for this project. Its purpose is to ensure a streamlined, maintainable, and secure application. Adherence is mandatory for all contributors, human and AI.
@@ -106,40 +100,6 @@ These are non-negotiable rules for all code.
 *   **Rule 2:** All operations involving financial data (e.g., updating a user's `balance`) MUST be wrapped in a transaction, even if it is a single database call. This ensures atomicity and future-proofs the code for potential additions like audit logging.
 *   **Rule 3:** A transaction's status MUST be checked after completion. On failure, a `critical` log entry MUST be created, and a generic, safe error message MUST be shown to the user.
 
-*   **Example: The Critical Payment Verification Flow**
-
-    *   **DON'T (Data Corruption Risk):**
-        ```php
-        // 1. Update payment status
-        $this->paymentModel->update($paymentId, ['status' => 'success']);
-        //
-        // ---> SCRIPT FAILS HERE <--- The user is never credited.
-        //
-        // 2. Update user balance
-        $this->userModel->addBalance($userId, $amount);
-        ```
-
-    *   **DO (Data Integrity Guaranteed):**
-        ```php
-        $db = \Config\Database::connect();
-        $db->transStart();
-
-        $this->paymentModel->update($paymentId, ['status' => 'success']);
-        $this->userModel->addBalance($userId, $amount);
-
-        $db->transComplete();
-
-        if ($db->transStatus() === false) {
-            // Log the critical failure for support staff
-            log_message('critical', "Payment transaction failed for user: {$userId}");
-            // Show a safe message to the user
-            return redirect()->back()->with('error', 'A critical error occurred. Please contact support.');
-        }
-
-        return redirect()->to('...')->with('success', 'Payment successful!');
-        ```
-
-
 #### **3.4. Performance**
 *   **Auto-Routing:** Auto-routing MUST be disabled (`$autoRoute = false`) in `app/Config/Routing.php`.
 *   **Efficient Queries:** Use pagination (`paginate()`) for lists. Avoid `findAll()` on large tables. Select only the columns needed.
@@ -207,12 +167,13 @@ These are the foundational building blocks for every view.
 *   **B. The Card (`.blueprint-card`):** All primary content, forms, and data displays MUST be placed within a "Blueprint Card." This is a standard Bootstrap card with a consistent, project-defined style.
 
     *   **Implementation:** `<div class="card blueprint-card">...</div>`
-    *   **Mandatory Style (applied via `<style>` block or sitewide CSS):**
+    *   **Mandatory Style (applied via sitewide CSS in `layouts/default.php`):**
         ```css
         .blueprint-card {
+            background-color: var(--card-bg);
             border-radius: 0.75rem;
-            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05);
-            border: none;
+            border: 1px solid var(--border-color);
+            /* Other base styles */
         }
         ```
 
@@ -225,21 +186,16 @@ These are the foundational building blocks for every view.
             <p class="lead text-muted">A brief, helpful description of the page.</p>
         </div>
         ```
-    *   For pages with a back button, the header is adjusted:
-        ```html
-         <div class="d-flex align-items-center mb-4">
-            <a href="..." class="btn btn-outline-secondary me-3"><i class="bi bi-arrow-left"></i> Back</a>
-            <h1 class="fw-bold mb-0">Page Title</h1>
-        </div>
-        ```
 
-
-*   **D. The Color Palette:** Color usage is strictly limited to the CSS variables defined in `layouts/default.php` and Bootstrap's theme colors.
-    *   **Primary Actions & Links:** `var(--primary-color)`
-    *   **Secondary Text & Subtitles:** `var(--text-muted)`
-    *   **Success State:** `var(--success-green)`
-    *   **Backgrounds:** `var(--light-bg)` for pages, `var(--card-bg)` for cards.
-    *   Introducing new, one-off hex color codes is **FORBIDDEN**.
+*   **D. The Color & Theme Palette: A Strict Hierarchy**
+    *   **Principle:** All styling MUST be theme-aware. The application supports both light and dark modes, and all UI components must adapt correctly. Hardcoding colors is strictly **FORBIDDEN**.
+    *   **Rule 1: Use Theme-Aware Bootstrap Utilities First.** Always prefer Bootstrap's built-in, theme-aware utility classes for backgrounds, text, and borders. These automatically adapt to the theme.
+        *   **DO:** `class="bg-body-tertiary"`, `class="text-body-secondary"`, `class="border-subtle"`
+        *   **DON'T:** `class="bg-light"`, `class="text-muted"` (unless the color must be fixed regardless of theme).
+    *   **Rule 2: Use CSS Variables Second.** For custom components where a Bootstrap utility is not available, use the project's global CSS variables defined in `layouts/default.php`.
+        *   **DO:** `background-color: var(--card-bg);`, `color: var(--text-heading);`
+    *   **Rule 3: Hardcoded Colors are Prohibited.** Do not use explicit hex codes, `rgb()`, or color names in CSS for elements that should change with the theme.
+        *   **FORBIDDEN:** `background-color: #ffffff;`, `color: black;`
 
 #### **7.3. The View Creation Workflow**
 
@@ -247,48 +203,10 @@ These are the foundational building blocks for every view.
 
 2.  **View Scaffolding:** Every new view file MUST follow the standard scaffolding structure of extending the default layout and defining content sections.
 
-    ```php
-    <?= $this->extend('layouts/default') ?>
-
-    <?= $this->section('styles') ?>
-    /* Custom styles are a last resort. Use Bootstrap utilities first. */
-    <style>
-        .blueprint-card { /* Standard card definition */
-            border-radius: 0.75rem;
-            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05);
-            border: none;
-        }
-    </style>
-    <?= $this->endSection() ?>
-
-    <?= $this->section('content') ?>
-    <div class="container my-5">
-        <!-- Step 1: Add Blueprint Header -->
-        
-        <!-- Step 2: Build UI with Blueprint Cards -->
-        <div class="card blueprint-card">
-            <div class="card-body p-4">
-                <!-- Content goes here -->
-            </div>
-        </div>
-    </div>
-    <?= $this->endSection() ?>
-
-    <?= $this->section('scripts') ?>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // All page-specific JavaScript goes here.
-        });
-    </script>
-    <?= $this->endSection() ?>
-    ```
-
 3.  **Component Implementation:**
-    *   **Forms:** All text inputs MUST use the Bootstrap 5 "Floating labels" pattern for consistency (`<div class="form-floating">...</div>`).
+    *   **Forms:** All text inputs MUST use the Bootstrap 5 "Floating labels" pattern (`<div class="form-floating">...</div>`).
     *   **Buttons:** Button usage MUST follow a strict hierarchy:
-        *   **Primary Action:** One `btn-primary` per form/view (e.g., "Submit", "Save").
-        *   **Secondary Actions:** Use `btn-outline-secondary` or `btn-secondary` (e.g., "Cancel", "Back").
-        *   **Destructive Actions:** Use `btn-danger` or `btn-outline-danger` (e.g., "Delete").
-    *   **Alerts/Messages:** All user feedback (success, error) MUST be handled via the `partials/flash_messages.php` partial.
-
-By following this workflow, every view will share a consistent, professional, and user-friendly DNA.
+        *   **Primary Action:** One `btn-primary` per form/view.
+        *   **Secondary Actions:** Use `btn-outline-secondary` or `btn-secondary`.
+        *   **Destructive Actions:** Use `btn-danger` or `btn-outline-danger`.
+    *   **Alerts/Messages:** All user feedback MUST be handled via the `partials/flash_messages.php` partial, which uses theme-aware Bootstrap alert classes.
