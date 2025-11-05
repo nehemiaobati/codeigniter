@@ -6,7 +6,7 @@ use App\Models\InteractionModel;
 use App\Models\EntityModel;
 use App\Entities\Interaction;
 use App\Entities\AGIEntity;
-use Config\AGI;
+use Config\Custom\AGI;
 
 /**
  * Manages the AI's memory, including storage, retrieval, and relevance scoring.

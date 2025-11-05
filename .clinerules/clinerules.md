@@ -44,6 +44,17 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
     *   All new helpers MUST be registered in `app/Config/Autoload.php`.
     *   Helpers MUST NOT contain business logic, perform database queries, or interact with external services. Such logic belongs in a Service.
 
+#### **1.7. Configuration (app/Config/)**
+*   **Role:** This directory is intended for all application configuration files.
+*   **Rules for Default Configurations:**
+    *   Standard CodeIgniter configuration files (e.g., `app/Config/App.php`, `app/Config/Database.php`) should remain in their default locations.
+    *   Sensitive or environment-specific settings MUST be managed via the `.env` file.
+*   **Rules for Custom Configurations:**
+    *   **Rule 1: Isolate Custom Files:** All custom configuration files MUST be placed in the `app/Config/Custom/` directory.
+    *   **Rule 2: Correct Namespacing:** Custom configuration files MUST use the `Config\Custom` namespace. For example, a file named `YourConfigFileName.php` would have `namespace Config\Custom;`.
+    *   **Rule 3: Accessing Custom Configs:** Custom configurations can be accessed using the `config()` helper with the fully qualified class name (e.g., `config('Config\Custom\YourConfigFileName')`) or by using a `use` statement at the top of your file (e.g., `use Config\Custom\YourConfigFileName;` followed by `new YourConfigFileName()`).
+*   **Reasoning:** This separation ensures that custom configurations are distinct from framework defaults, improving organization, maintainability, and preventing conflicts during framework updates.
+
 ---
 
 ### **Part 2: The Request & Response Protocol**
@@ -210,3 +221,42 @@ These are the foundational building blocks for every view.
         *   **Secondary Actions:** Use `btn-outline-secondary` or `btn-secondary`.
         *   **Destructive Actions:** Use `btn-danger` or `btn-outline-danger`.
     *   **Alerts/Messages:** All user feedback MUST be handled via the `partials/flash_messages.php` partial, which uses theme-aware Bootstrap alert classes.
+# Todo List (Optional - Plan Mode)
+
+While in PLAN MODE, if you've outlined concrete steps or requirements for the user, you may include a preliminary todo list using the task_progress parameter.
+
+Reminder on how to use the task_progress parameter:
+
+
+1. To create or update a todo list, include the task_progress parameter in the next tool call
+2. Review each item and update its status:
+   - Mark completed items with: - [x]
+   - Keep incomplete items as: - [ ]
+   - Add new items if you discover additional steps
+3. Modify the list as needed:
+		- Add any new steps you've discovered
+		- Reorder if the sequence has changed
+4. Ensure the list accurately reflects the current state
+
+**Remember:** Keeping the todo list updated helps track progress and ensures nothing is missed.<environment_details>
+# Visual Studio Code Visible Files
+app/Views/auth/register.php
+
+# Visual Studio Code Open Tabs
+app/Config/Custom/AGI.php
+app/Views/auth/login.php
+app/Views/auth/register.php
+app/Views/contact/contact_form.php
+app/Config/Custom/Recaptcha.php
+app/Libraries/EmbeddingService.php
+app/Libraries/MemoryService.php
+app/Libraries/RecaptchaService.php
+
+# Current Time
+05/11/2025, 2:08:40 pm (Africa/Nairobi, UTC+3:00)
+
+# Context Window Usage
+25,665 / 1,000K tokens used (3%)
+
+# Current Mode
+ACT MODE
