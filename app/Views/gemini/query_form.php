@@ -334,7 +334,19 @@
             },
             handleUsePrompt() {
                 const selectedOption = this.elements.savedPromptsSelect.options[this.elements.savedPromptsSelect.selectedIndex];
-                if (selectedOption?.value) tinymce.get('prompt').setContent(selectedOption.value);
+                const selectedPromptText = selectedOption?.value;
+
+                if (selectedPromptText) {
+                    const editor = tinymce.get('prompt');
+                    const currentContent = editor.getContent({ format: 'html' });
+
+                    if (currentContent.trim() === '') {
+                        editor.setContent(selectedPromptText);
+                    } else {
+                        const newContent = selectedPromptText + '<br><br>' + currentContent;
+                        editor.setContent(newContent);
+                    }
+                }
             },
             handleDeletePrompt() {
                 const selectedOption = this.elements.savedPromptsSelect.options[this.elements.savedPromptsSelect.selectedIndex];
