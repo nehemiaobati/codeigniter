@@ -4,7 +4,7 @@
 /vendor/
 .env
 .DS_Store
-workflows/auto-commit-push.md
+.clinerules/workflows/auto-commit-push.md
 
 # These files are redundant for pure static HTML instances and can be ignored.
 # public/index.html
