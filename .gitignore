@@ -1,16 +1,12 @@
 /system/
 /tests/
-/writable/
 /vendor/
+/writable/
 .env
+
 .DS_Store
-.clinerules/workflows/auto-commit-push.md
+.clinerules/workflows/
 
-# These files are redundant for pure static HTML instances and can be ignored.
-# public/index.html
-# public/assets
-# public/portfolio.html
 
-public/index.html
-public/assets
+public/assets/
 
