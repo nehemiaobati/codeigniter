@@ -1,3 +1,4 @@
+
 ### 1. Project Overview
 
 The Web Platform is a comprehensive, multi-functional application built on the CodeIgniter 4 framework. It serves as a portal for registered users to access a suite of powerful digital services. The platform is designed with a modular architecture, featuring a robust user authentication system, an account management dashboard with an integrated balance and payment system, and an administrative panel for user oversight.
@@ -19,10 +20,10 @@ The application integrates with several third-party APIs, including Paystack for
 
 ### 3. Installation and Setup
 
-1.  **Prerequisites:** Ensure you have PHP 8.1+, Composer, and a MySQL database server installed.
-2.  **Clone Repository:** Clone the project to your local machine.
-3.  **Install Dependencies:** Run `composer install` to download the required PHP packages, including the `nlp-tools` library.
-4.  **Configure Environment:**
+1. **Prerequisites:** Ensure you have PHP 8.1+, Composer, and a MySQL database server installed.
+2. **Clone Repository:** Clone the project to your local machine.
+3. **Install Dependencies:** Run `composer install` to download the required PHP packages, including the `nlp-tools` library.
+4. **Configure Environment:**
     - Copy the `env` file to a new file named `.env`.
     - Open `.env` and configure the following variables:
       - `CI_ENVIRONMENT`: Set to `development`.
@@ -30,12 +31,15 @@ The application integrates with several third-party APIs, including Paystack for
       - **Database:** Configure `database.default.hostname`, `database.default.database`, `database.default.username`, and `database.default.password`.
       - **API Keys:** Provide your secret keys for `PAYSTACK_SECRET_KEY`, `GEMINI_API_KEY`, `recaptcha.siteKey`, and `recaptcha.secretKey`.
       - **Email:** Set up your SMTP server details under the `email.*` variables for sending verification and password reset emails.
-5.  **Install Frontend Assets:** Download the TinyMCE community edition and place its contents in the `public/assets/tinymce/` directory to enable the rich text editor.
-6.  **Database Migration:** Run the migrations to create the necessary database tables:
+5. **Install Frontend Assets:** Download the TinyMCE community edition and place its contents in the `public/assets/tinymce/` directory to enable the rich text editor.
+6. **Database Migration:** Run the migrations to create the necessary database tables:
+
     ```bash
     php spark migrate
     ```
-7.  **Run the Application:** Start the development server:
+
+7. **Run the Application:** Start the development server:
+
     ```bash
     php spark serve
     ```
