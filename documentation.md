@@ -31,7 +31,7 @@ The application integrates with several third-party APIs, including Paystack for
     ```
 7.  **(Optional) Train Classification Models:** For future use, you can train the intent classification models. Add a `training_data.csv` file to `writable/training/` and run the command:
     ```bash
-    php spark train
+    php index.php train
     ```
 8.  **Run the Application:** Start the development server:
     ```bash
@@ -70,7 +70,7 @@ The database schema includes tables for `users`, `payments`, `prompts`, `interac
     *   **Conversational Memory (`MemoryService`):** A sophisticated hybrid search system that combines vector and keyword search to provide context to the AI.
     *   **Advanced Keyword Extraction (`TokenService`):** User input is processed through a robust NLP pipeline that strips HTML tags, tokenizes, removes stop words, and stems words to their root form. This provides highly accurate keywords for the memory system.
     *   **Token-Based Billing, Prompt Management, etc.**
-*   **Offline Model Training (`TrainingService`):** The application now includes a dedicated service and a `php spark train` command to build and save text classification models for future integration. This keeps the performance-intensive training process separate from the live web application.
+*   **Offline Model Training (`TrainingService`):** The application now includes a dedicated service and a `php index.php train` command to build and save text classification models for future integration. This keeps the performance-intensive training process separate from the live web application.
 
 ### 7. Documentation and Best Practices (`clinerules.md`)
 
