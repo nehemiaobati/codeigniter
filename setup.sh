@@ -131,7 +131,7 @@ composer install --no-dev --optimize-autoloader
 cp env .env
 
 # Define default database connection parameters for local setup
-DB_HOSTNAME="localhost"
+DB_HOSTNAME="127.0.0.1"
 DB_DRIVER="MySQLi"
 DB_PORT="3306"
 
