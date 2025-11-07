@@ -17,74 +17,24 @@ use Dompdf\Dompdf;
 use Dompdf\Options;
 use Parsedown;
 
-/**
- * Class GeminiController
- *
- * Handles interactions with the Gemini AI model, including processing user prompts,
- * managing file uploads, calculating costs, and handling responses.
- */
 class GeminiController extends BaseController
 {
-    /**
-     * @var UserModel
-     */
     protected UserModel $userModel;
-
-    /**
-     * @var GeminiService
-     */
     protected GeminiService $geminiService;
-
-    /**
-     * @var PromptModel
-     */
     protected PromptModel $promptModel;
-
-    /**
-     * @var UserSettingsModel
-     */
     protected UserSettingsModel $userSettingsModel;
 
-    /**
-     * Supported MIME types for file uploads.
-     * @var array<string>
-     */
     private const SUPPORTED_MIME_TYPES = [
         'image/png', 'image/jpeg', 'image/webp', 'audio/mpeg', 'audio/mp3',
         'audio/wav', 'video/mov', 'video/mpeg', 'video/mp4', 'video/mpg',
         'video/avi', 'video/wmv', 'video/mpegps', 'video/flv',
         'application/pdf', 'text/plain'
     ];
-
-    /**
-     * Maximum size for a single uploaded file (10 MB).
-     * @var int
-     */
     private const MAX_FILE_SIZE = 10 * 1024 * 1024;
-
-    /**
-     * USD to KSH conversion rate.
-     * @var int
-     */
     private const USD_TO_KSH_RATE = 129;
-
-    /**
-     * Default fallback cost for a query in KSH.
-     * @var float
-     */
     private const DEFAULT_DEDUCTION = 10.00;
-
-    /**
-     * Minimum required balance to attempt a query.
-     * @var float
-     */
     private const MINIMUM_BALANCE = 0.01;
 
-    /**
-     * Displays the public-facing landing page for the AI Studio.
-     *
-     * @return string The rendered view.
-     */
     public function publicPage(): string
     {
         $data = [
@@ -94,13 +44,9 @@ class GeminiController extends BaseController
             'heroTitle'       => 'Go Beyond Basic Chat',
             'heroSubtitle'    => 'Leverage the power of Google Gemini. Our AI Studio helps you write code, analyze documents, and generate creative content with conversational memory.'
         ];
-
         return view('gemini/public_page', $data);
     }
 
-    /**
-     * GeminiController constructor.
-     */
     public function __construct()
     {
         $this->userModel         = new UserModel();
@@ -109,39 +55,35 @@ class GeminiController extends BaseController
         $this->userSettingsModel = new UserSettingsModel();
     }
 
-    /**
-     * Displays the main query form with user's saved prompts and settings.
-     *
-     * @return string The rendered view.
-     */
     public function index(): string
     {
         $userId  = (int) session()->get('userId');
         $prompts = $this->promptModel->where('user_id', $userId)->findAll();
 
-        // Fetch the user's saved setting. Default to 'true' if no setting exists yet.
+        // **FIX STARTS HERE: Fetch settings and provide defaults**
         $userSetting = $this->userSettingsModel->where('user_id', $userId)->first();
+        
+        // If a user has no settings row, default assistant mode to ON and voice to OFF.
+        // If they do have a row, use the values from the database.
+        // The boolean cast in the Entity ensures '0'/'1' become false/true.
         $assistantModeEnabled = $userSetting ? $userSetting->assistant_mode_enabled : true;
+        $voiceOutputEnabled   = $userSetting ? $userSetting->voice_output_enabled : false;
+        // **FIX ENDS HERE**
 
         $data = [
-            'pageTitle'       => 'AI Studio | Afrikenkid',
-            'metaDescription' => 'Generate content, analyze PDFs, and chat with your AI assistant. Access your saved prompts and manage conversational memory.',
-            'canonicalUrl'    => url_to('gemini.index'),
-            'result'          => session()->getFlashdata('result'),
-            'error'           => session()->getFlashdata('error'),
-            'prompts'         => $prompts,
+            'pageTitle'              => 'AI Studio | Afrikenkid',
+            'metaDescription'        => 'Generate content, analyze PDFs, and chat with your AI assistant. Access your saved prompts and manage conversational memory.',
+            'canonicalUrl'           => url_to('gemini.index'),
+            'result'                 => session()->getFlashdata('result'),
+            'error'                  => session()->getFlashdata('error'),
+            'prompts'                => $prompts,
             'assistant_mode_enabled' => $assistantModeEnabled,
+            'voice_output_enabled'   => $voiceOutputEnabled,
         ];
-        // Add noindex directive for authenticated pages
         $data['robotsTag'] = 'noindex, follow';
         return view('gemini/query_form', $data);
     }
 
-    /**
-     * Handles the upload of media files for Gemini interaction.
-     *
-     * @return ResponseInterface A JSON response indicating success or failure.
-     */
     public function uploadMedia(): ResponseInterface
     {
         $userId = (int) session()->get('userId');
@@ -190,11 +132,6 @@ class GeminiController extends BaseController
             ]);
     }
 
-    /**
-     * Deletes a single temporary file from the current user's temporary directory.
-     *
-     * @return ResponseInterface
-     */
     public function deleteMedia(): ResponseInterface
     {
         $userId = (int) session()->get('userId');
@@ -224,12 +161,6 @@ class GeminiController extends BaseController
         return $this->response->setStatusCode(404)->setJSON(['status' => 'error', 'message' => 'File not found.']);
     }
 
-    /**
-     * Processes the user's prompt, generates content via Gemini API,
-     * and handles the response.
-     *
-     * @return RedirectResponse
-     */
     public function generate(): RedirectResponse
     {
         $userId = (int) session()->get('userId');
@@ -240,21 +171,19 @@ class GeminiController extends BaseController
             return redirect()->back()->withInput()->with('error', 'User not logged in or invalid user ID.');
         }
 
-        // Fetch the user's saved setting for assistant mode. Default to true if not found.
         $userSetting = $this->userSettingsModel->where('user_id', $userId)->first();
         $isAssistantMode = $userSetting ? $userSetting->assistant_mode_enabled : true;
+        $isVoiceOutputMode = $userSetting ? $userSetting->voice_output_enabled : false;
 
         $inputText = (string) $this->request->getPost('prompt');
         $uploadedFileIds = (array) $this->request->getPost('uploaded_media');
 
-        // 1. Prepare context
         $contextData = $this->_prepareContext($userId, $inputText, $isAssistantMode);
         $finalPrompt = $contextData['finalPrompt'];
         
-        // 2. Handle pre-uploaded files
         $uploadResult = $this->_handlePreUploadedFiles($uploadedFileIds, $userId);
         if (isset($uploadResult['error'])) {
-            $this->_cleanupTempFiles($uploadedFileIds, $userId); // Clean up even on error
+            $this->_cleanupTempFiles($uploadedFileIds, $userId);
             return redirect()->back()->withInput()->with('error', $uploadResult['error']);
         }
         $parts = $uploadResult['parts'];
@@ -268,70 +197,48 @@ class GeminiController extends BaseController
             return redirect()->back()->withInput()->with('error', 'Prompt or supported media is required.');
         }
 
-        // 3. Balance Check
         $balanceCheck = $this->_checkBalanceAgainstCost($user, $parts);
         if (isset($balanceCheck['error'])) {
             $this->_cleanupTempFiles($uploadedFileIds, $userId);
             return redirect()->back()->withInput()->with('error', $balanceCheck['error']);
         }
 
-        // 4. Generate content
         $apiResponse = $this->geminiService->generateContent($parts);
         $this->_logApiPayload($apiResponse);
         
-        // 5. Cleanup files immediately after API call
         $this->_cleanupTempFiles($uploadedFileIds, $userId);
 
         if (isset($apiResponse['error'])) {
             return redirect()->back()->withInput()->with('error', $apiResponse['error']);
         }
 
-        // 6. Process API response and deduct cost
+        $audioData = null;
+        $rawTextResult = $apiResponse['result'];
+        if ($isVoiceOutputMode && !empty(trim($rawTextResult))) {
+            $speechResponse = $this->geminiService->generateSpeech($rawTextResult);
+            if ($speechResponse['status']) {
+                $audioData = $speechResponse['audioData'];
+            } else {
+                session()->setFlashdata('warning', 'Could not generate voice output. ' . $speechResponse['error']);
+            }
+        }
+
         $this->_processApiResponse($user, $apiResponse, $isAssistantMode, $contextData);
 
         $parsedown  = new Parsedown();
-        $htmlResult = $parsedown->text($apiResponse['result']);
+        $htmlResult = $parsedown->text($rawTextResult);
 
-        return redirect()->back()->withInput()
+        $redirect = redirect()->back()->withInput()
             ->with('result', $htmlResult)
-            ->with('raw_result', $apiResponse['result']);
-    }
-    
+            ->with('raw_result', $rawTextResult);
+            
+        if ($audioData) {
+            $redirect->with('audio_data', $audioData);
+        }
 
-    
-    /**
-     * [ISOLATED/UNUSED] - Placeholder for future intent classification.
-     * This function is not currently used in the application flow. It demonstrates
-     * where intent classification logic would be placed. To enable this, a training
-     * pipeline and model loading mechanism would be required.
-     *
-     * @param string $text The user's input text.
-     * @return string The predicted intent, or 'unknown'.
-     */
-    private function _classifyIntent(string $text): string
-    {
-        // 1. Load the pre-trained classifier and feature factory models.
-        //    (This would typically be done once in the constructor and stored in properties).
-        //    $featureFactory = unserialize(file_get_contents(WRITEPATH . 'models/feature_factory.model'));
-        //    $classifier = unserialize(file_get_contents(WRITEPATH . 'models/classifier.model'));
-
-        // 2. Preprocess the input text using the same pipeline as the training script.
-        //    $tokenService = service('tokenService');
-        //    $processedTokens = $tokenService->processText($text);
-        //    $document = new \NlpTools\Documents\TokensDocument($processedTokens);
-
-        // 3. Classify the document to get the predicted intent.
-        //    $predictedIntent = $classifier->classify(['label1', 'label2'], $document);
-        //    return $predictedIntent;
-
-        return 'unknown'; // Default return since this is not implemented.
+        return $redirect;
     }
 
-    /**
-     * [NEW] Handles an AJAX request to update the user's assistant mode setting.
-     *
-     * @return ResponseInterface A JSON response indicating the status of the operation.
-     */
     public function updateAssistantMode(): ResponseInterface
     {
         $userId = (int) session()->get('userId');
@@ -363,15 +270,37 @@ class GeminiController extends BaseController
         ]);
     }
 
-    /**
-     * Prepares the final prompt, incorporating memory context if assistant mode is enabled.
-     *
-     * @param int    $userId          The ID of the current user.
-     * @param string $inputText       The raw text input from the user.
-     * @param bool   $isAssistantMode Whether assistant mode is active.
-     *
-     * @return array<string, mixed>
-     */
+    public function updateVoiceOutputMode(): ResponseInterface
+    {
+        $userId = (int) session()->get('userId');
+        if ($userId <= 0) {
+            return $this->response->setStatusCode(403)->setJSON([
+                'status' => 'error',
+                'message' => 'Authentication required.',
+                'csrf_token' => csrf_hash()
+            ]);
+        }
+
+        $isEnabled = $this->request->getPost('enabled') === 'true';
+
+        $setting = $this->userSettingsModel->where('user_id', $userId)->first();
+
+        if ($setting) {
+            $this->userSettingsModel->update($setting->id, ['voice_output_enabled' => $isEnabled]);
+        } else {
+            $this->userSettingsModel->save([
+                'user_id' => $userId,
+                'voice_output_enabled' => $isEnabled
+            ]);
+        }
+
+        return $this->response->setStatusCode(200)->setJSON([
+            'status' => 'success',
+            'message' => 'Setting saved.',
+            'csrf_token' => csrf_hash()
+        ]);
+    }
+    
     private function _prepareContext(int $userId, string $inputText, bool $isAssistantMode): array
     {
         $contextData = [
@@ -398,13 +327,6 @@ class GeminiController extends BaseController
         return $contextData;
     }
     
-    /**
-     * Processes an array of pre-uploaded temporary file IDs from a user-specific directory.
-     *
-     * @param array $fileIds An array of sanitized temporary file names.
-     * @param int $userId The ID of the current user.
-     * @return array<string, mixed> An array containing the API 'parts' or an 'error'.
-     */
     private function _handlePreUploadedFiles(array $fileIds, int $userId): array
     {
         $parts = [];
@@ -436,13 +358,6 @@ class GeminiController extends BaseController
         return ['parts' => $parts];
     }
     
-    /**
-     * Deletes temporary files from the specified user's directory.
-     *
-     * @param array $fileIds An array of sanitized temporary file names to delete.
-     * @param int $userId The ID of the current user.
-     * @return void
-     */
     private function _cleanupTempFiles(array $fileIds, int $userId): void
     {
         $userTempPath = WRITEPATH . 'uploads/gemini_temp/' . $userId . '/';
@@ -455,14 +370,6 @@ class GeminiController extends BaseController
         }
     }
 
-    /**
-     * Estimates input cost and checks if the user has sufficient balance.
-     *
-     * @param User  $user  The user entity.
-     * @param array $parts The parts to be sent to the API.
-     *
-     * @return array<string, string> Returns an error array if balance is insufficient.
-     */
     private function _checkBalanceAgainstCost(User $user, array $parts): array
     {
         $tokenCountResponse = $this->geminiService->countTokens($parts);
@@ -472,7 +379,7 @@ class GeminiController extends BaseController
         }
 
         $inputTokens = $tokenCountResponse['totalTokens'];
-        $costData    = $this->_calculateCost($inputTokens, 0); // Cost based on input only
+        $costData    = $this->_calculateCost($inputTokens, 0);
 
         $requiredBalance = max(self::MINIMUM_BALANCE, $costData['costInKSH']);
 
@@ -485,17 +392,6 @@ class GeminiController extends BaseController
         return [];
     }
 
-    /**
-     * Processes the API response, calculates final cost, deducts balance, and updates memory.
-     * All database writes are wrapped in a transaction.
-     *
-     * @param User  $user          The user entity.
-     * @param array $apiResponse   The response from the Gemini API.
-     * @param bool  $isAssistantMode Whether assistant mode was active.
-     * @param array $contextData   Context data from the prompt preparation step.
-     *
-     * @return void
-     */
     private function _processApiResponse(User $user, array $apiResponse, bool $isAssistantMode, array $contextData): void
     {
         $inputTokens  = (int) ($apiResponse['usage']['promptTokenCount'] ?? 0);
@@ -522,7 +418,6 @@ class GeminiController extends BaseController
         $db->transComplete();
 
         if ($db->transStatus() === false || !$deductionSuccess) {
-            // Log a critical error: The user received an AI response, but we failed to charge them or save their memory.
             log_message('critical', "Transaction failed during AI response processing for user ID: {$user->id}");
             session()->setFlashdata('error', 'Query processed, but a billing or memory error occurred. Please contact support.');
         } else {
@@ -530,14 +425,6 @@ class GeminiController extends BaseController
         }
     }
 
-    /**
-     * Calculates the cost of a query based on input and output tokens.
-     *
-     * @param int $inputTokens  The number of input tokens.
-     * @param int $outputTokens The number of output tokens.
-     *
-     * @return array<string, mixed>
-     */
     private function _calculateCost(int $inputTokens, int $outputTokens): array
     {
         if ($inputTokens === 0 && $outputTokens === 0) {
@@ -548,10 +435,8 @@ class GeminiController extends BaseController
             ];
         }
 
-        // Pricing for Gemini 2.5 Pro (160%)
-        $isTierOne = $inputTokens <= 128000;
-        $inputPricePerMillion  = $isTierOne ? 3.25 : 4.00;
-        $outputPricePerMillion = $isTierOne ? 16.00 : 24.00;
+        $inputPricePerMillion  = 7.00;
+        $outputPricePerMillion = 21.00;
 
         $inputCostUSD  = ($inputTokens / 1000000) * $inputPricePerMillion;
         $outputCostUSD = ($outputTokens / 1000000) * $outputPricePerMillion;
@@ -567,12 +452,6 @@ class GeminiController extends BaseController
         ];
     }
 
-    /**
-     * Logs the raw API payload to a file for debugging.
-     *
-     * @param array $apiResponse The API response.
-     * @return void
-     */
     private function _logApiPayload(array $apiResponse): void
     {
         $logFilePath = WRITEPATH . 'logs/gemini_payload.log';
@@ -580,11 +459,6 @@ class GeminiController extends BaseController
         file_put_contents($logFilePath, $logContent . PHP_EOL, FILE_APPEND);
     }
 
-    /**
-     * Adds a new prompt for the logged-in user.
-     *
-     * @return RedirectResponse
-     */
     public function addPrompt(): RedirectResponse
     {
         $userId = (int) session()->get('userId');
@@ -614,13 +488,6 @@ class GeminiController extends BaseController
         return redirect()->to(url_to('gemini.index'))->with('error', 'Failed to save the prompt.');
     }
 
-    /**
-     * Deletes a specific prompt owned by the logged-in user.
-     *
-     * @param int $id The ID of the prompt to delete.
-     *
-     * @return RedirectResponse
-     */
     public function deletePrompt(int $id): RedirectResponse
     {
         $userId = (int) session()->get('userId');
@@ -628,7 +495,6 @@ class GeminiController extends BaseController
             return redirect()->to(url_to('gemini.index'))->with('error', 'You must be logged in.');
         }
 
-        /** @var \App\Entities\Prompt|null $prompt */
         $prompt = $this->promptModel->find($id);
 
         if (! $prompt || (int) $prompt->user_id !== $userId) {
@@ -642,11 +508,6 @@ class GeminiController extends BaseController
         return redirect()->to(url_to('gemini.index'))->with('error', 'Failed to delete the prompt.');
     }
 
-    /**
-     * Clears all conversational memory (interactions and entities) for the logged-in user.
-     *
-     * @return RedirectResponse
-     */
     public function clearMemory(): RedirectResponse
     {
         $userId = (int) session()->get('userId');
@@ -657,7 +518,6 @@ class GeminiController extends BaseController
         $interactionModel = new InteractionModel();
         $entityModel      = new EntityModel();
 
-        // Use a transaction to ensure both tables are cleared successfully
         $db = \Config\Database::connect();
         $db->transStart();
 
@@ -667,7 +527,6 @@ class GeminiController extends BaseController
         $db->transComplete();
 
         if ($db->transStatus() === false) {
-            // Log the error and notify the user
             log_message('error', 'Failed to clear memory for user ID: ' . $userId);
             return redirect()->to(url_to('gemini.index'))->with('error', 'An error occurred while trying to clear your memory. Please try again.');
         }
@@ -675,30 +534,19 @@ class GeminiController extends BaseController
         return redirect()->to(url_to('gemini.index'))->with('success', 'Your conversational memory has been successfully cleared.');
     }
 
-/**
-     * Generates a PDF from the raw markdown response, serves it for download,
-     * and then deletes the temporary file. This method handles streaming manually
-     * to ensure file deletion occurs after the download is sent.
-     *
-     * @return ResponseInterface|RedirectResponse|void
-     */
     public function downloadPdf()
     {
         try {
-            // Allow this script to run for as long as it needs.
             set_time_limit(0);
 
-            // 1. Get and validate the raw markdown content.
             $markdownContent = $this->request->getPost('raw_response');
             if (empty($markdownContent)) {
                 return redirect()->back()->with('error', 'No content provided to generate PDF.');
             }
 
-            // 2. Convert Markdown to HTML.
             $parsedown = new Parsedown();
             $htmlContent = $parsedown->text($markdownContent);
 
-            // 3. Prepare the full HTML document for Dompdf.
             $fullHtml = '
             <!DOCTYPE html>
             <html lang="en">
@@ -721,23 +569,16 @@ class GeminiController extends BaseController
             <body>' . $htmlContent . '</body>
             </html>';
 
-            // 4. Configure and run Dompdf.
             $options = new Options();
             $options->set('defaultFont', 'DejaVu Sans');
             $options->set('isHtml5ParserEnabled', true);
             $options->set('isRemoteEnabled', true);
-            $options->set('isFontSubsettingEnabled', false);
             
             $tempDir = WRITEPATH . 'dompdf_temp';
             if (!is_dir($tempDir)) {
                 mkdir($tempDir, 0775, true);
             }
-            if (!is_writable($tempDir)) {
-                log_message('error', '[PDF Generation Failed] Dompdf temp directory is not writable: ' . $tempDir);
-                return redirect()->back()->with('error', 'Server configuration error: PDF temporary directory is not writable.');
-            }
             $options->set('tempDir', $tempDir);
-            $options->set('chroot', ROOTPATH);
     
             $dompdf = new Dompdf($options);
             $dompdf->loadHtml($fullHtml, 'UTF-8');
@@ -745,39 +586,22 @@ class GeminiController extends BaseController
             $dompdf->render();
             $output = $dompdf->output();
             
-            // 5. Save the PDF to a temporary file.
-            $fileName = 'AI-Studio Output-' . uniqid() . '.pdf';
+            $fileName = 'AI-Studio-Output-' . uniqid() . '.pdf';
             $filePath = $tempDir . '/' . $fileName;
-            if (file_put_contents($filePath, $output) === false) {
-                log_message('error', '[PDF Generation Failed] Could not write PDF to temporary file: ' . $filePath);
-                return redirect()->back()->with('error', 'Failed to save the PDF file on the server.');
-            }
+            file_put_contents($filePath, $output);
 
-            // 6. [NEW WORKFLOW] Manually stream the file for download.
-            // This ensures we have control to delete the file after sending.
             if (ob_get_level()) {
-                ob_end_clean(); // Clean any previous output buffer.
+                ob_end_clean();
             }
             
             header('Content-Type: application/pdf');
             header('Content-Disposition: attachment; filename="' . basename($filePath) . '"');
-            header('Content-Transfer-Encoding: binary');
-            header('Expires: 0');
-            header('Cache-Control: must-revalidate');
-            header('Pragma: public');
             header('Content-Length: ' . filesize($filePath));
             
-            // Stream the file and check if it was successful
-            if (readfile($filePath) === false) {
-                log_message('error', '[PDF Download Failed] Could not read file for streaming: ' . $filePath);
-                // Don't delete the file yet so we can inspect it
-                return redirect()->back()->with('error', 'Could not read the generated PDF file for download.');
-            }
+            readfile($filePath);
             
-            // 7. Delete the file after it has been successfully streamed.
             unlink($filePath);
 
-            // 8. End the script execution.
             exit(0);
 
         } catch (\Throwable $e) {
