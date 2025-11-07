@@ -13,8 +13,7 @@ use App\Models\UserModel;
 use App\Models\UserSettingsModel;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\ResponseInterface;
-use Dompdf\Dompdf;
-use Dompdf\Options;
+use App\Libraries\DocumentService;
 use Parsedown;
 
 class GeminiController extends BaseController
@@ -538,80 +537,55 @@ class GeminiController extends BaseController
         return redirect()->to(url_to('gemini.index'))->with('success', 'Your conversational memory has been successfully cleared.');
     }
 
-    public function downloadPdf()
+    /**
+     * Handles the download request for generated content in various formats (PDF, Word).
+     * It uses the DocumentService, which attempts to use Pandoc and falls back to Dompdf for PDFs.
+     *
+     * @return ResponseInterface|RedirectResponse|void
+     */
+    public function downloadDocument()
     {
-        try {
-            set_time_limit(0);
+        $markdownContent = $this->request->getPost('raw_response');
+        $format = $this->request->getPost('format');
 
-            $markdownContent = $this->request->getPost('raw_response');
-            if (empty($markdownContent)) {
-                return redirect()->back()->with('error', 'No content provided to generate PDF.');
-            }
+        if (empty($markdownContent) || !in_array($format, ['pdf', 'docx'])) {
+            return redirect()->back()->with('error', 'Invalid content or format for document generation.');
+        }
 
-            $parsedown = new Parsedown();
-            $htmlContent = $parsedown->text($markdownContent);
+        /** @var DocumentService $documentService */
+        $documentService = service('documentService');
+        $result = $documentService->generate($markdownContent, $format);
 
-            $fullHtml = '
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-                <title>AI Response</title>
-                <style>
-                    body { font-family: "DejaVu Sans", sans-serif; line-height: 1.6; color: #333; font-size: 12px; }
-                    h1, h2, h3, h4, h5, h6 { font-family: "DejaVu Sans", sans-serif; margin-bottom: 0.5em; font-weight: bold; }
-                    p { margin-bottom: 1em; }
-                    ul, ol { margin-bottom: 1em; }
-                    strong, b { font-weight: bold; }
-                    pre { background-color: #f4f4f4; padding: 10px; border: 1px solid #ddd; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; font-family: "DejaVu Sans Mono", monospace; }
-                    code { font-family: "DejaVu Sans Mono", monospace; }
-                    table { width: 100%; border-collapse: collapse; margin-bottom: 1em; }
-                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                    th { background-color: #f2f2f2; }
-                </style>
-            </head>
-            <body>' . $htmlContent . '</body>
-            </html>';
+        if (str_starts_with($result['status'], 'success')) {
+            // Pandoc success (file path) or Dompdf success (raw data)
+            $filename = 'AI-Studio-Output-' . uniqid() . '.' . ($format === 'docx' ? 'docx' : 'pdf');
 
-            $options = new Options();
-            $options->set('defaultFont', 'DejaVu Sans');
-            $options->set('isHtml5ParserEnabled', true);
-            $options->set('isRemoteEnabled', true);
-            
-            $tempDir = WRITEPATH . 'uploads/dompdf_temp';
-            if (!is_dir($tempDir)) {
-                mkdir($tempDir, 0775, true);
-            }
-            $options->set('tempDir', $tempDir);
-    
-            $dompdf = new Dompdf($options);
-            $dompdf->loadHtml($fullHtml, 'UTF-8');
-            $dompdf->setPaper('A4', 'portrait');
-            $dompdf->render();
-            $output = $dompdf->output();
-            
-            $fileName = 'AI-Studio-Output-' . uniqid() . '.pdf';
-            $filePath = $tempDir . '/' . $fileName;
-            file_put_contents($filePath, $output);
-
+            // Clean output buffer before sending the file
             if (ob_get_level()) {
                 ob_end_clean();
             }
-            
-            header('Content-Type: application/pdf');
-            header('Content-Disposition: attachment; filename="' . basename($filePath) . '"');
-            header('Content-Length: ' . filesize($filePath));
-            
-            readfile($filePath);
-            
-            unlink($filePath);
 
-            exit(0);
-
-        } catch (\Throwable $e) {
-            log_message('error', '[PDF Generation Failed] ' . $e->getMessage() . "\n" . $e->getTraceAsString());
-            return redirect()->back()->with('error', 'Could not generate the PDF due to a server error. The issue has been logged for review.');
+            if ($result['status'] === 'success' && isset($result['filePath'])) {
+                // Pandoc generated a file
+                $filePath = $result['filePath'];
+                header('Content-Type: ' . ($format === 'docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : 'application/pdf'));
+                header('Content-Disposition: attachment; filename="' . $filename . '"');
+                header('Content-Length: ' . filesize($filePath));
+                readfile($filePath);
+                unlink($filePath); // Clean up the temp file
+                exit();
+            } elseif ($result['status'] === 'success_fallback' && isset($result['fileData'])) {
+                // Dompdf generated raw data
+                return $this->response
+                    ->setStatusCode(200)
+                    ->setContentType('application/pdf')
+                    ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+                    ->setBody($result['fileData']);
+            }
         }
+
+        // If we reach here, both Pandoc and the fallback failed.
+        return redirect()->back()->with('error', $result['message'] ?? 'An unknown error occurred during document generation.');
     }
 
     /**

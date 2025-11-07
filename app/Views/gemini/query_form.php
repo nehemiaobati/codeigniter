@@ -163,8 +163,20 @@
         <div class="row g-4 mt-4">
             <div class="col-12">
                 <div class="blueprint-card p-4 p-md-5" id="results-card">
-                    <h3 class="fw-bold mb-4 d-flex justify-content-between align-items-center flex-wrap"><span>Studio Output</span>
-                        <div class="btn-group mt-2 mt-sm-0" role="group"><button id="copy-response-btn" class="btn btn-sm btn-outline-secondary" title="Copy Full Response"><i class="bi bi-clipboard"></i></button><button id="download-pdf-btn" class="btn btn-sm btn-outline-secondary" title="Download as PDF"><i class="bi bi-file-earmark-pdf"></i></button></div>
+                    <h3 class="fw-bold mb-4 d-flex justify-content-between align-items-center flex-wrap">
+                        <span>Studio Output</span>
+                        <div class="btn-group mt-2 mt-sm-0" role="group">
+                            <button id="copy-response-btn" class="btn btn-sm btn-outline-secondary" title="Copy Full Response"><i class="bi bi-clipboard"></i></button>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Download">
+                                    <i class="bi bi-download"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="#" id="download-pdf-btn">Download as PDF</a></li>
+                                    <li><a class="dropdown-item" href="#" id="download-word-btn">Download as Word (DOCX)</a></li>
+                                </ul>
+                            </div>
+                        </div>
                     </h3>
                     <div id="ai-response-wrapper"></div>
                     <textarea id="raw-response-for-copy" class="visually-hidden"><?= esc(session()->getFlashdata('raw_result') ?? strip_tags($result)) ?></textarea>
@@ -197,7 +209,11 @@
         </div>
     </div>
 </div>
-<form id="pdfDownloadForm" action="<?= url_to('gemini.download_pdf') ?>" method="post" target="_blank" class="d-none"> <?= csrf_field() ?> <textarea name="raw_response" id="pdf-raw-response"></textarea></form>
+<form id="documentDownloadForm" action="<?= url_to('gemini.download_document') ?>" method="post" target="_blank" class="d-none">
+    <?= csrf_field() ?>
+    <textarea name="raw_response" id="download-raw-response"></textarea>
+    <input type="hidden" name="format" id="download-format">
+</form>
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
@@ -241,6 +257,7 @@
                 responseWrapper: document.getElementById('ai-response-wrapper'),
                 copyBtn: document.getElementById('copy-response-btn'),
                 downloadPdfBtn: document.getElementById('download-pdf-btn'),
+                downloadWordBtn: document.getElementById('download-word-btn'),
             },
             urls: {
                 upload: "<?= route_to('gemini.upload_media') ?>",
@@ -293,7 +310,8 @@
                 this.elements.deletePromptBtn?.addEventListener('click', this.handleDeletePrompt.bind(this));
                 this.elements.savePromptModal?.addEventListener('show.bs.modal', this.handleModalShow.bind(this));
                 this.elements.copyBtn?.addEventListener('click', this.handleCopyResponse.bind(this));
-                this.elements.downloadPdfBtn?.addEventListener('click', this.handleDownloadPdf.bind(this));
+                this.elements.downloadPdfBtn?.addEventListener('click', (e) => { e.preventDefault(); this.handleDownload('pdf'); });
+                this.elements.downloadWordBtn?.addEventListener('click', (e) => { e.preventDefault(); this.handleDownload('docx'); });
                 window.addEventListener('pageshow', this.restoreButtonStates.bind(this));
             },
 
@@ -400,9 +418,10 @@
                 });
             },
 
-            handleDownloadPdf() {
-                document.getElementById('pdf-raw-response').value = document.getElementById('raw-response-for-copy').value;
-                document.getElementById('pdfDownloadForm').submit();
+            handleDownload(format) {
+                document.getElementById('download-raw-response').value = document.getElementById('raw-response-for-copy').value;
+                document.getElementById('download-format').value = format;
+                document.getElementById('documentDownloadForm').submit();
             },
 
             uploadFile(file) {

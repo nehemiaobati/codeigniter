@@ -12,6 +12,8 @@ use App\Libraries\CryptoService;
 use App\Libraries\GeminiService;
 use App\Libraries\RecaptchaService;
 use App\Libraries\FfmpegService;
+use App\Libraries\PandocService;
+use App\Libraries\DocumentService;
 
 /**
  * Services Configuration file.
@@ -162,5 +164,33 @@ class Services extends BaseService
             return static::getSharedInstance('ffmpegService');
         }
         return new FfmpegService();
+    }
+
+    /**
+     * The Pandoc service for document conversion.
+     *
+     * @param bool $getShared
+     * @return PandocService
+     */
+    public static function pandocService(bool $getShared = true): PandocService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('pandocService');
+        }
+        return new PandocService();
+    }
+
+    /**
+     * The main document generation service with fallback.
+     *
+     * @param bool $getShared
+     * @return DocumentService
+     */
+    public static function documentService(bool $getShared = true): DocumentService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('documentService');
+        }
+        return new DocumentService();
     }
 }

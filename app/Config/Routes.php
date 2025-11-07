@@ -114,8 +114,8 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->post('settings/update-assistant-mode', 'GeminiController::updateAssistantMode', ['as' => 'gemini.settings.updateAssistantMode']);
         // [NEW] Route for updating voice output setting
         $routes->post('settings/update-voice-output', 'GeminiController::updateVoiceOutputMode', ['as' => 'gemini.settings.updateVoiceOutputMode']);
-        // Route for downloading generated content as PDF
-        $routes->post('download-pdf', 'GeminiController::downloadPdf', ['as' => 'gemini.download_pdf']);
+        // [REVISED] Route for downloading generated content as PDF or Word.
+        $routes->post('download-document', 'GeminiController::downloadDocument', ['as' => 'gemini.download_document']);
     });
 
 });
