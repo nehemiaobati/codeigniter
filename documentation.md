@@ -10,7 +10,7 @@ The application integrates with several third-party APIs, including Paystack for
 
 ### 2. Core Technologies
 
-*   **Backend:** PHP 8.1+, Pandoc, CodeIgniter 4
+*   **Backend:** PHP 8.1+, Pandoc, ffmpeg, CodeIgniter 4
 *   **Frontend:** Bootstrap 5, JavaScript, HTML5, CSS3
 *   **Database:** MySQL (via MySQLi driver)
 *   **Key Libraries:** Parsedown (for Markdown rendering), TinyMCE (for rich text editing), Kint (for debugging), **NlpTools (for Natural Language Processing)**
@@ -18,7 +18,7 @@ The application integrates with several third-party APIs, including Paystack for
 
 ### 3. Installation and Setup
 
-1.  **Prerequisites:** Ensure you have PHP 8.1+, Pandoc, Composer, and a MySQL database server installed.
+1.  **Prerequisites:** Ensure you have PHP 8.1+, Pandoc, ffmpeg, Composer, and a MySQL database server installed.
 2.  **Clone Repository:** Clone the project to your local machine.
 3.  **Install Dependencies:** Run `composer install` to download the required PHP packages.
 4.  **Configure Environment:**

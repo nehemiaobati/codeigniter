@@ -23,6 +23,7 @@ Before you begin, ensure you have the following installed on your system:
 *   **Node.js & NPM:** For frontend asset management (if applicable).
 *   **Git:** For cloning the project repository.
 *   **Pandoc:** For documentation conversion. Install using your system's package manager (e.g., `sudo apt install pandoc` on Ubuntu).
+*   **ffmpeg:** For video and audio processing.
 
 ## Automated Setup Script (`setup.sh`)
 
