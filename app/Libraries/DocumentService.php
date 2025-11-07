@@ -75,7 +75,8 @@ class DocumentService
             $options->set('isHtml5ParserEnabled', true);
             $options->set('isRemoteEnabled', true);
 
-            $tempDir = WRITEPATH . 'uploads/dompdf_temp';
+            $userId = (int) session()->get('userId');
+            $tempDir = WRITEPATH . 'uploads/dompdf_temp/' . $userId;
             if (!is_dir($tempDir)) {
                 mkdir($tempDir, 0775, true);
             }

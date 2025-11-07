@@ -597,8 +597,9 @@ class GeminiController extends BaseController
     private function _processAudioData(string $base64AudioData): ?string
     {
         // 1. Define paths and ensure directories exist
-        $tempPath = WRITEPATH . 'uploads/ttsaudio_temp/';
-        $publicPath = WRITEPATH . 'uploads/ttsaudio_public/';
+        $userId = (int) session()->get('userId');
+        $tempPath = WRITEPATH . 'uploads/ttsaudio_temp/' . $userId . '/';
+        $publicPath = WRITEPATH . 'uploads/ttsaudio_public/' . $userId . '/';
         if (!is_dir($tempPath)) {
             mkdir($tempPath, 0775, true);
         }
@@ -628,7 +629,7 @@ class GeminiController extends BaseController
 
         // 5. Return public URL on success
         if ($conversionSuccess) {
-            return base_url('uploads/ttsaudio_public/' . $mp3FileName);
+            return base_url('uploads/ttsaudio_public/' . $userId . '/' . $mp3FileName);
         }
 
         log_message('error', 'Failed to convert audio file to MP3.');

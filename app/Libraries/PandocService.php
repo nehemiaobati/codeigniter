@@ -37,7 +37,8 @@ class PandocService
             return ['status' => 'error', 'message' => 'Pandoc command not found on the server.'];
         }
 
-        $tempDir = WRITEPATH . 'uploads/pandoc_temp/';
+        $userId = (int) session()->get('userId');
+        $tempDir = WRITEPATH . 'uploads/pandoc_temp/' . $userId . '/';
         if (!is_dir($tempDir)) {
             mkdir($tempDir, 0775, true);
         }
