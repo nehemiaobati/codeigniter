@@ -2,7 +2,9 @@
 
 ## Project Overview
 
-This project is a CodeIgniter 4 application designed to [**briefly describe the project's purpose here - e.g., manage user accounts, process payments, interact with AI services**]. It leverages the power and flexibility of the CodeIgniter framework to provide a robust and secure web application.
+This project is a CodeIgniter 4 application designed to serve as a comprehensive portal for registered users to access a suite of powerful digital services, including AI-driven tools and cryptocurrency data. It leverages the power and flexibility of the CodeIgniter framework to provide a robust and secure web application.
+
+For more in-depth information, please refer to the [detailed documentation](documentation.md).
 
 ## Key Features
 
@@ -13,15 +15,14 @@ This project is a CodeIgniter 4 application designed to [**briefly describe the 
 
 ## Prerequisites
 
-Before you begin, ensure you have the following installed on your Ubuntu server:
+Before you begin, ensure you have the following installed on your system:
 
-*   **Ubuntu Server:** This script is optimized for Ubuntu.
-*   **Sudo Access:** You will need root privileges to run the setup script.
-*   **PHP:** Version 8.1 or higher is required. The script installs PHP 8.2 with necessary extensions.
+*   **PHP:** Version 8.1 or higher is recommended. The `setup.sh` script installs PHP 8.2 with necessary extensions on Ubuntu.
 *   **MySQL Server:** Required for database storage.
 *   **Composer:** For managing PHP dependencies.
 *   **Node.js & NPM:** For frontend asset management (if applicable).
 *   **Git:** For cloning the project repository.
+*   **Pandoc:** For documentation conversion. Install using your system's package manager (e.g., `sudo apt install pandoc` on Ubuntu).
 
 ## Automated Setup Script (`setup.sh`)
 
@@ -80,6 +81,30 @@ After the script completes, you will need to configure the `.env` file located a
 *   **Server Updates:** Regularly update your server and its packages to patch security vulnerabilities.
 *   **Firewall:** Configure a firewall (e.g., `ufw`) to restrict access to only necessary ports.
 *   **Database Security:** Use strong, unique passwords for your database users and limit their privileges.
+
+
+## Generation with Pandoc
+
+This project utilizes Pandoc for flexible document conversion. You can use Pandoc to convert Markdown files into various formats such as HTML, PDF, or EPUB.
+
+**Basic Usage:**
+
+To convert a Markdown file to HTML:
+```bash
+pandoc README.md -o README.html
+```
+
+To convert to PDF (requires a LaTeX installation):
+```bash
+pandoc README.md -o README.pdf
+```
+
+To convert to a Microsoft Word document (.docx):
+```bash
+pandoc README.md -o README.docx
+```
+
+For more advanced conversions and options, please refer to the [Pandoc manual](https://pandoc.org/MANUAL.html).
 
 ## Contributing
 
