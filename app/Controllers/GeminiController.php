@@ -79,6 +79,7 @@ class GeminiController extends BaseController
             'prompts'                => $prompts,
             'assistant_mode_enabled' => $assistantModeEnabled,
             'voice_output_enabled'   => $voiceOutputEnabled,
+            'audio_url'              => session()->getFlashdata('audio_url'),
         ];
         $data['robotsTag'] = 'noindex, follow';
         return view('gemini/query_form', $data);
@@ -212,12 +213,15 @@ class GeminiController extends BaseController
             return redirect()->back()->withInput()->with('error', $apiResponse['error']);
         }
 
-        $audioData = null;
+        $audioUrl = null;
         $rawTextResult = $apiResponse['result'];
         if ($isVoiceOutputMode && !empty(trim($rawTextResult))) {
             $speechResponse = $this->geminiService->generateSpeech($rawTextResult);
             if ($speechResponse['status']) {
-                $audioData = $speechResponse['audioData'];
+                $audioUrl = $this->_processAudioData($speechResponse['audioData']);
+                if ($audioUrl === null) {
+                    session()->setFlashdata('warning', 'Generated voice but failed to process the audio file.');
+                }
             } else {
                 session()->setFlashdata('warning', 'Could not generate voice output. ' . $speechResponse['error']);
             }
@@ -232,8 +236,8 @@ class GeminiController extends BaseController
             ->with('result', $htmlResult)
             ->with('raw_result', $rawTextResult);
             
-        if ($audioData) {
-            $redirect->with('audio_data', $audioData);
+        if ($audioUrl) {
+            $redirect->with('audio_url', $audioUrl);
         }
 
         return $redirect;
@@ -574,7 +578,7 @@ class GeminiController extends BaseController
             $options->set('isHtml5ParserEnabled', true);
             $options->set('isRemoteEnabled', true);
             
-            $tempDir = WRITEPATH . 'dompdf_temp';
+            $tempDir = WRITEPATH . 'uploads/dompdf_temp';
             if (!is_dir($tempDir)) {
                 mkdir($tempDir, 0775, true);
             }
@@ -608,5 +612,52 @@ class GeminiController extends BaseController
             log_message('error', '[PDF Generation Failed] ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return redirect()->back()->with('error', 'Could not generate the PDF due to a server error. The issue has been logged for review.');
         }
+    }
+
+    /**
+     * Processes raw audio data: saves, converts, and returns a public URL.
+     *
+     * @param string $base64AudioData Base64 encoded raw PCM audio data.
+     * @return string|null Public URL to the converted MP3 file, or null on failure.
+     */
+    private function _processAudioData(string $base64AudioData): ?string
+    {
+        // 1. Define paths and ensure directories exist
+        $tempPath = WRITEPATH . 'uploads/ttsaudio_temp/';
+        $publicPath = WRITEPATH . 'uploads/ttsaudio_public/';
+        if (!is_dir($tempPath)) {
+            mkdir($tempPath, 0775, true);
+        }
+        if (!is_dir($publicPath)) {
+            mkdir($publicPath, 0775, true);
+        }
+
+        // 2. Save temporary raw file
+        $rawFileName = uniqid('audio_', true) . '.raw';
+        $rawFilePath = $tempPath . $rawFileName;
+        $decodedData = base64_decode($base64AudioData);
+        if (file_put_contents($rawFilePath, $decodedData) === false) {
+            log_message('error', 'Failed to save temporary raw audio file.');
+            return null;
+        }
+
+        // 3. Convert to MP3
+        $mp3FileName = str_replace('.raw', '.mp3', $rawFileName);
+        $mp3FilePath = $publicPath . $mp3FileName;
+        $ffmpegService = service('ffmpegService');
+        $conversionSuccess = $ffmpegService->convertPcmToMp3($rawFilePath, $mp3FilePath);
+
+        // 4. Cleanup temporary file
+        if (file_exists($rawFilePath)) {
+            unlink($rawFilePath);
+        }
+
+        // 5. Return public URL on success
+        if ($conversionSuccess) {
+            return base_url('uploads/ttsaudio_public/' . $mp3FileName);
+        }
+
+        log_message('error', 'Failed to convert audio file to MP3.');
+        return null;
     }
 }

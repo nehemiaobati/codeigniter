@@ -205,14 +205,14 @@
 <script src="<?= base_url('assets/tinymce/tinymce.min.js') ?>" referrerpolicy="origin"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        <?php if ($audio_data = session()->getFlashdata('audio_data')): ?>
-            const audioData = '<?= $audio_data ?>';
+        <?php if ($audio_url = session()->getFlashdata('audio_url')): ?>
+            const audioUrl = '<?= esc($audio_url, 'js') ?>';
             const audioPlayerContainer = document.getElementById('audio-player-container');
-            if (audioData && audioPlayerContainer) {
+            if (audioUrl && audioPlayerContainer) {
                 const audioPlayer = document.createElement('audio');
                 audioPlayer.controls = true;
                 audioPlayer.autoplay = true;
-                audioPlayer.src = `data:audio/mp3;base64,${audioData}`;
+                audioPlayer.src = audioUrl;
                 audioPlayer.classList.add('w-100');
                 audioPlayerContainer.innerHTML = ''; 
                 audioPlayerContainer.appendChild(audioPlayer);

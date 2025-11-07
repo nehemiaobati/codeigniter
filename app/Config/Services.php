@@ -11,6 +11,7 @@ use App\Libraries\PaystackService;
 use App\Libraries\CryptoService;
 use App\Libraries\GeminiService;
 use App\Libraries\RecaptchaService;
+use App\Libraries\FfmpegService;
 
 /**
  * Services Configuration file.
@@ -147,5 +148,19 @@ class Services extends BaseService
             return static::getSharedInstance('trainingService');
         }
         return new TrainingService();
+    }
+
+    /**
+     * The FFmpeg service for audio conversion.
+     *
+     * @param bool $getShared
+     * @return FfmpegService
+     */
+    public static function ffmpegService(bool $getShared = true): FfmpegService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('ffmpegService');
+        }
+        return new FfmpegService();
     }
 }
