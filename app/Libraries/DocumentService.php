@@ -80,6 +80,7 @@ class DocumentService
             $options->set('defaultFont', 'DejaVu Sans');
             $options->set('isHtml5ParserEnabled', true);
             $options->set('isRemoteEnabled', true);
+            $options->set('isFontSubsettingEnabled', false);
 
             $userId = (int) session()->get('userId');
             $tempDir = WRITEPATH . 'uploads/dompdf_temp/' . $userId;

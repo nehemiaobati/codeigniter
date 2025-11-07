@@ -93,3 +93,8 @@ php spark migrate
 
 # 3. Optimize CodeIgniter's framework caches
 php spark optimize
+
+
+
+N/B
+adding $options->set('isFontSubsettingEnabled', false);, you instruct DomPDF to embed the entire font file without trying to parse it and pull out individual characters. This uses a simpler code path that is much more likely to be compatible with the restricted WASI file system.
