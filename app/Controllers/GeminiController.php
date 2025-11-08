@@ -589,7 +589,8 @@ class GeminiController extends BaseController
         // If we reach here, both Pandoc and the fallback failed.
         return redirect()->back()->with('error', $result['message'] ?? 'An unknown error occurred during document generation.');
     }
-
+    
+    
     /**
      * Processes raw audio data: saves, converts, and returns a public URL.
      *
@@ -601,7 +602,10 @@ class GeminiController extends BaseController
         // 1. Define paths and ensure directories exist
         $userId = (int) session()->get('userId');
         $tempPath = WRITEPATH . 'uploads/ttsaudio_temp/' . $userId . '/';
-        $publicPath = WRITEPATH . 'uploads/ttsaudio_public/' . $userId . '/';
+
+        // --- FIX: Change the public path to be inside the /public directory ---
+        $publicPath = FCPATH . 'uploads/ttsaudio_public/' . $userId . '/';
+
         if (!is_dir($tempPath)) {
             mkdir($tempPath, 0775, true);
         }
@@ -631,6 +635,7 @@ class GeminiController extends BaseController
 
         // 5. Return public URL on success
         if ($conversionSuccess) {
+            // The base_url() function will correctly point to the public directory.
             return base_url('uploads/ttsaudio_public/' . $userId . '/' . $mp3FileName);
         }
 
