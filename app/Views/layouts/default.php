@@ -400,7 +400,7 @@
     </div>
 
 
-    <main>
+    <main class="d-flex flex-column min-vh-100">
         <div class="container my-4 flash-message-container">
             <?= $this->include('partials/flash_messages') ?>
         </div>
