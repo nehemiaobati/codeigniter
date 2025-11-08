@@ -1,5 +1,3 @@
-### `REAMDE.md`
-
 # CodeIgniter 4 Web Platform
 
 ## Project Overview
