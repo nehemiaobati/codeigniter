@@ -647,8 +647,8 @@ The most efficient way to find what needs documenting is by analyzing the differ
 
 1.  **Generate a File List:** From your feature branch, run the following command to get a list of all files that have been added (`A`), modified (`M`), or renamed (`R`):
     ```bash
-    git diff main --name-status
-    git diff main
+    git diff main --name-status  | git diff main --name-status > changed_files.txt
+    git diff main  | git diff main > code_changes.diff
     ```
 
 2.  **Map Files to Documentation Sections:** Use the output from the command above and this checklist to determine which parts of the documentation to review and update.

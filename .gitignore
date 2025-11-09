@@ -4,6 +4,9 @@
 /writable/
 .env
 
+changed_files.txt
+code_changes.diff
+
 .DS_Store
 .clinerules/workflows/
 
