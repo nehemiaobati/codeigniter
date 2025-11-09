@@ -259,7 +259,7 @@ The `.env` file is critical for configuring the application. You must fill in th
     sudo apt install certbot python3-certbot-apache
     sudo certbot --apache
     ```
-
+    
 ---
 ## **Part II: Guides & Tutorials**
 
