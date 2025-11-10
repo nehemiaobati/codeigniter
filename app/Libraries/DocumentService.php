@@ -122,7 +122,7 @@ class DocumentService
             <html lang="en">
             <head>
                 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-                <title>AI Response</title>
+                <title>AI-Studio-Output</title>
                 <style>
                     body { font-family: "DejaVu Sans", sans-serif; line-height: 1.6; color: #333; font-size: 12px; }
                     h1, h2, h3, h4, h5, h6 { font-family: "DejaVu Sans", sans-serif; margin-bottom: 0.5em; font-weight: bold; }
