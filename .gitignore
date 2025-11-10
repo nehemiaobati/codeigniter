@@ -6,6 +6,7 @@
 
 changed_files.txt
 code_changes.diff
+render_pdf.php
 
 .DS_Store
 .clinerules/workflows/
