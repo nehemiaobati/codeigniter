@@ -52,6 +52,17 @@ class HomeController extends BaseController
         return view('home/landing_page', $data);
     }
 
+    public function blog(): string
+    {
+        $data = [
+            'pageTitle' => 'Blog | Afrikenkid',
+            'metaDescription' => 'Blog',
+            'canonicalUrl' => url_to('blog'),
+        ];
+        return view('home/blog_page', $data);
+    }
+
+
     public function terms(): string
     {
         $data = [

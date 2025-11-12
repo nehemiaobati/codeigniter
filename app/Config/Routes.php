@@ -20,8 +20,14 @@ $routes->group('', static function ($routes) {
     // Home & Welcome Page
     $routes->get('/', 'HomeController::landing', ['as' => 'landing']);
 
+    // Blog Page Routs
+    $routes->get('blog', 'HomeController::blog', ['as' => 'blog']);
+
     // Documentation Page
-    $routes->get('/documentation', 'DocumentationController::index', ['as' => 'documentation']);
+    $routes->get('documentation', 'DocumentationController::index', ['as' => 'documentation']);
+    $routes->get('documentation/web', 'DocumentationController::web', ['as' => 'web']);
+    $routes->get('documentation/agi', 'DocumentationController::agi', ['as' => 'agi']);
+    
 
     // Sitemap Route for SEO
     $routes->get('sitemap.xml', 'SitemapController::index', ['as' => 'sitemap']);
