@@ -20,8 +20,10 @@ $routes->group('', static function ($routes) {
     // Home & Welcome Page
     $routes->get('/', 'HomeController::landing', ['as' => 'landing']);
 
-    // Blog Page Routs
-    $routes->get('blog', 'HomeController::blog', ['as' => 'blog']);
+    // --- BLOG ROUTES (NEW) ---
+    $routes->get('blog', 'BlogController::index', ['as' => 'blog.index']);
+    $routes->get('blog/(:segment)', 'BlogController::show/$1', ['as' => 'blog.show']);
+    // --- END BLOG ROUTES ---
 
     // Documentation Page
     $routes->get('documentation', 'DocumentationController::index', ['as' => 'documentation']);
@@ -90,6 +92,14 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->post('campaign/send', 'CampaignController::send', ['as' => 'admin.campaign.send']);
         $routes->post('campaign/save', 'CampaignController::save', ['as' => 'admin.campaign.save']);
         $routes->post('campaign/delete/(:num)', 'CampaignController::delete/$1', ['as' => 'admin.campaign.delete']); // ADDED THIS LINE
+
+        // --- BLOG MANAGEMENT ROUTES (NEW) ---
+        $routes->get('blog', 'BlogController::adminIndex', ['as' => 'admin.blog.index']);
+        $routes->get('blog/new', 'BlogController::create', ['as' => 'admin.blog.create']);
+        $routes->post('blog/store', 'BlogController::store', ['as' => 'admin.blog.store']);
+        $routes->get('blog/edit/(:num)', 'BlogController::edit/$1', ['as' => 'admin.blog.edit']);
+        $routes->post('blog/update/(:num)', 'BlogController::update/$1', ['as' => 'admin.blog.update']);
+        $routes->post('blog/delete/(:num)', 'BlogController::delete/$1', ['as' => 'admin.blog.delete']);
     });
 
     // Payment Routes
