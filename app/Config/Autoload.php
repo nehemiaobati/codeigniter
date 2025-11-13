@@ -6,15 +6,36 @@ use CodeIgniter\Config\AutoloadConfig;
 
 class Autoload extends AutoloadConfig
 {
+    /**
+     * Registers an array of namespaces for the PSR-4 autoloader.
+     *
+     * @var array<string, string>
+     */
     public $psr4 = [
         APP_NAMESPACE => APPPATH,
         //'App\Modules' => APPPATH . 'Modules', // This is the required addition
         'App\Modules\Blog' => APPPATH . 'Modules/Blog',
+        'App\Modules\Payments' => APPPATH . 'Modules/Payments', // Added for the Payments module
     ];
 
-    public $classmap = [];
-
+    /**
+     * Registers an array of files that will be included on each request.
+     *
+     * @var array<string, string>
+     */
     public $files = [];
 
+    /**
+     * Registers a mapping of class names to file paths.
+     *
+     * @var array<string, string>
+     */
+    public $classmap = [];
+
+    /**
+     * Registers a mapping of helper file names to their file paths.
+     *
+     * @var array<string, string>
+     */
     public $helpers = ['cookie_consent_helper'];
 }

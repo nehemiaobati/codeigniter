@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Modules\Payments\Models; // Updated namespace
 
 use CodeIgniter\Model;
 
@@ -12,7 +12,7 @@ class PaymentModel extends Model
     protected $table            = 'payments';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
-    protected $returnType       = \App\Entities\Payment::class;
+    protected $returnType       = \App\Modules\Payments\Entities\Payment::class; // Updated return type
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = ['user_id', 'email', 'amount', 'reference', 'status', 'paystack_response'];

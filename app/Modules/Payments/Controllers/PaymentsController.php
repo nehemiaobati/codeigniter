@@ -1,11 +1,11 @@
 <?php declare(strict_types=1);
 
-namespace App\Controllers;
+namespace App\Modules\Payments\Controllers;
 
-use App\Controllers\BaseController;
-use App\Libraries\PaystackService;
-use App\Models\PaymentModel;
-use App\Models\UserModel;
+use App\Controllers\BaseController; // BaseController is still in app/Controllers
+use App\Libraries\PaystackService; // PaystackService is in app/Libraries
+use App\Modules\Payments\Models\PaymentModel; // Updated path
+use App\Models\UserModel; // UserModel is still in app/Models
 use CodeIgniter\HTTP\RedirectResponse;
 
 class PaymentsController extends BaseController
@@ -34,7 +34,8 @@ class PaymentsController extends BaseController
         // Add noindex directive for authenticated pages
         $data['robotsTag'] = 'noindex, follow';
 
-        return view('payment/payment_form', $data); // View name updated
+        // Updated view path to reflect module structure
+        return view('App\Modules\Payments\Views\payment\payment_form', $data);
     }
 
     public function initiate(): RedirectResponse
@@ -62,6 +63,7 @@ class PaymentsController extends BaseController
             'status'    => 'pending',
         ]);
 
+        // Updated URL generation to use the route name for the verify action
         $callbackUrl = url_to('payment.verify') . '?app_reference=' . $reference;
 
         $response = $this->paystackService->initializeTransaction($email, $amount, $callbackUrl);
@@ -99,16 +101,15 @@ class PaymentsController extends BaseController
             $db = \Config\Database::connect();
             $db->transStart();
 
-// Refactored success case
-$jsonResponse = json_encode($response['data']);
-if ($jsonResponse === false) {
-    log_message('error', 'Failed to encode Paystack success response for reference: ' . $paystackReference);
-    $jsonResponse = json_encode(['error' => 'JSON encoding failed']);
-}
-$this->paymentModel->update($payment->id, [
-    'status'            => 'success',
-    'paystack_response' => $jsonResponse,
-]);
+            $jsonResponse = json_encode($response['data']);
+            if ($jsonResponse === false) {
+                log_message('error', 'Failed to encode Paystack success response for reference: ' . $paystackReference);
+                $jsonResponse = json_encode(['error' => 'JSON encoding failed']);
+            }
+            $this->paymentModel->update($payment->id, [
+                'status'            => 'success',
+                'paystack_response' => $jsonResponse,
+            ]);
 
             if ($payment->user_id) {
                 $this->userModel->addBalance((int) $payment->user_id, (string) $payment->amount);
@@ -124,16 +125,15 @@ $this->paymentModel->update($payment->id, [
             return redirect()->to(url_to('payment.index'))->with('success', 'Payment successful!');
         }
 
-// Refactored failure case
-$jsonResponse = json_encode($response['data'] ?? $response);
-if ($jsonResponse === false) {
-    log_message('error', 'Failed to encode Paystack failure response for reference: ' . $paystackReference);
-    $jsonResponse = json_encode(['error' => 'JSON encoding failed']);
-}
-$this->paymentModel->update($payment->id, [
-    'status'            => 'failed',
-    'paystack_response' => $jsonResponse,
-]);
+        $jsonResponse = json_encode($response['data'] ?? $response);
+        if ($jsonResponse === false) {
+            log_message('error', 'Failed to encode Paystack failure response for reference: ' . $paystackReference);
+            $jsonResponse = json_encode(['error' => 'JSON encoding failed']);
+        }
+        $this->paymentModel->update($payment->id, [
+            'status'            => 'failed',
+            'paystack_response' => $jsonResponse,
+        ]);
 
         return redirect()->to(url_to('payment.index'))->with('error', ['payment' => $response['message'] ?? 'Payment verification failed.']);
     }

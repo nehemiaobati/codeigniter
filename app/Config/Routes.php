@@ -91,14 +91,6 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
 
     });
 
-    // Payment Routes
-    $routes->group('payment', static function ($routes) {
-        $routes->get('/', 'PaymentsController::index', ['as' => 'payment.index']);
-        //$routes->get('initiate', 'Payments::initiate', ['as' => 'payment.initiate']); // Added GET route
-        $routes->post('initiate', 'PaymentsController::initiate', ['as' => 'payment.initiate']);
-        $routes->get('verify', 'PaymentsController::verify', ['as' => 'payment.verify']);
-    });
-
     // Crypto Routes
     $routes->group('crypto', static function ($routes) {
         $routes->get('/', 'CryptoController::index', ['as' => 'crypto.index']);
