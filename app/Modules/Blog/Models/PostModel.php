@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Modules\Blog\Models;
 
 use CodeIgniter\Model;
-use App\Entities\Post;
+use App\Modules\Blog\Entities\Post;
 
 class PostModel extends Model
 {

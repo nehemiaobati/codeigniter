@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace App\Controllers;
+namespace App\Modules\Blog\Controllers;
 
 use App\Controllers\BaseController;
-use App\Models\PostModel;
+use App\Modules\Blog\Models\PostModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
 
 class BlogController extends BaseController
@@ -27,7 +27,8 @@ class BlogController extends BaseController
             'posts'           => $this->postModel->where('status', 'published')->orderBy('published_at', 'DESC')->paginate(6),
             'pager'           => $this->postModel->pager,
         ];
-        return view('blog/index', $data);
+        return view('App\Modules\Blog\Views\blog\index', $data);
+        
     }
 
     public function show(string $slug): string
@@ -71,7 +72,7 @@ class BlogController extends BaseController
             'post'            => $post,
             'json_ld_schema'  => '<script type="application/ld+json">' . json_encode($schema) . '</script>',
         ];
-        return view('blog/post', $data);
+        return view('App\Modules\Blog\Views\blog\post', $data);
     }
 
     // --- ADMIN-ONLY METHODS ---
@@ -86,7 +87,7 @@ class BlogController extends BaseController
             'pager'     => $this->postModel->pager,
             'robotsTag' => 'noindex, nofollow',
         ];
-        return view('admin/blog/index', $data);
+        return view('App\Modules\Blog\Views\admin\blog\index', $data);
     }
 
     public function create()
@@ -100,7 +101,7 @@ class BlogController extends BaseController
             'post'       => null,
             'robotsTag'  => 'noindex, nofollow',
         ];
-        return view('admin/blog/form', $data);
+        return view('App\Modules\Blog\Views\admin\blog\form', $data);
     }
 
     public function store()
@@ -130,7 +131,7 @@ class BlogController extends BaseController
             'post'       => $post,
             'robotsTag'  => 'noindex, nofollow',
         ];
-        return view('admin/blog/form', $data);
+        return view('App\Modules\Blog\Views\admin\blog\form', $data);
     }
 
     public function update(int $id)

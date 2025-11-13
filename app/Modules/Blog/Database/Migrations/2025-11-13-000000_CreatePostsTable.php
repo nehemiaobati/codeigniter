@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace App\Database\Migrations;
+namespace App\Modules\Blog\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 

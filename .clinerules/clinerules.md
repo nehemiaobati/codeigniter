@@ -12,13 +12,15 @@ This document is the **single source of truth** for all architectural, coding, a
 
 ### **Part 1: The Four Layers of the Application**
 
+**Note:** The project's primary architectural pattern is Modular (see Part 8). The following MVC-S layers exist *within* each Module or within the core `app` directory for shared components.
+
 The project follows a strict **Model-View-Controller-Service (MVC-S)** architecture.
 
-#### **1.1. Controllers (`app/Controllers/`)**
+#### **1.1. Controllers (`app/Controllers/` or `app/Modules/[ModuleName]/Controllers/`)**
 *   **DO:** Orchestrate the request-response cycle. Call Services and Models. Return a Response or a Redirect.
 *   **DON'T:** Contain business logic. Access the database directly. Contain complex calculations.
 
-#### **1.2. Models (`app/Models/`)**
+#### **1.2. Models (`app/Models/` or `app/Modules/[ModuleName]/Models/`)**
 *   **DO:** Handle all database interactions. Use the Query Builder and Entities.
 *   **DON'T:** Contain business logic. Be called directly from a View.
 
@@ -26,11 +28,11 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
 *   **DO:** Contain all business logic (e.g., payment processing, API interactions). Be reusable. Be registered in `app/Config/Services.php`.
 *   **DON'T:** Handle HTTP-specific tasks like reading `POST` data. That is the Controller's job.
 
-#### **1.4. Views (`app/Views/`)**
+#### **1.4. Views (`app/Views/` or `app/Modules/[ModuleName]/Views/`)**
 *   **DO:** Display data passed from a Controller. Contain minimal presentation logic (loops, conditionals). Escape all output with `esc()`.
 *   **DON'T:** Perform database queries. Contain business logic.
 
-#### **1.5. Database (`app/Database/`)**
+#### **1.5. Database (`app/Database/` or `app/Modules/[ModuleName]/Database/`)**
 *   **Role:** Define and manage the database schema.
 *   **Rules:**
     *   All schema changes MUST be managed via Migration files.
@@ -62,7 +64,7 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
 This section defines the mandatory flow for user interactions.
 
 #### **2.1. Routing: Named Routes are Law**
-*   **Rule 1:** Every route in `app/Config/Routes.php` MUST be assigned a unique name (e.g., `['as' => 'users.profile']`).
+*   **Rule 1:** Every route in `app/Config/Routes.php` or a Module's `Config/Routes.php` MUST be assigned a unique name (e.g., `['as' => 'users.profile']`).
 *   **Rule 2:** All URLs in the application (views, redirects) MUST be generated using `url_to('route.name')`. Hardcoded URLs (`/users/profile`) are strictly **FORBIDDEN**.
 
 #### **2.2. The 3 Steps of a Form Submission (Post/Redirect/Get)**
@@ -221,42 +223,56 @@ These are the foundational building blocks for every view.
         *   **Secondary Actions:** Use `btn-outline-secondary` or `btn-secondary`.
         *   **Destructive Actions:** Use `btn-danger` or `btn-outline-danger`.
     *   **Alerts/Messages:** All user feedback MUST be handled via the `partials/flash_messages.php` partial, which uses theme-aware Bootstrap alert classes.
-# Todo List (Optional - Plan Mode)
 
-While in PLAN MODE, if you've outlined concrete steps or requirements for the user, you may include a preliminary todo list using the task_progress parameter.
+---
 
-Reminder on how to use the task_progress parameter:
+### **Part 8: The Modular Architecture Mandate**
 
+This section outlines the primary architectural pattern for the application. It is mandatory for all feature development and refactoring.
 
-1. To create or update a todo list, include the task_progress parameter in the next tool call
-2. Review each item and update its status:
-   - Mark completed items with: - [x]
-   - Keep incomplete items as: - [ ]
-   - Add new items if you discover additional steps
-3. Modify the list as needed:
-		- Add any new steps you've discovered
-		- Reorder if the sequence has changed
-4. Ensure the list accurately reflects the current state
+#### **8.1. The Principle of Feature Isolation**
+The application MUST be structured by **feature**, not by code type. Each distinct feature (e.g., Blog, Payments) will be a self-contained **Module**. This is done to maximize maintainability, promote code reuse, and allow for effortless deprecation of features.
 
-**Remember:** Keeping the todo list updated helps track progress and ensures nothing is missed.<environment_details>
-# Visual Studio Code Visible Files
-app/Views/auth/register.php
+#### **8.2. Module Location and Structure**
+*   **Rule 1: Canonical Location:** All modules MUST be located in the `app/Modules/` directory.
+*   **Rule 2: Standardized Structure:** Every new module MUST adhere to the following directory structure, even if some directories are initially empty.
 
-# Visual Studio Code Open Tabs
-app/Config/Custom/AGI.php
-app/Views/auth/login.php
-app/Views/auth/register.php
-app/Views/contact/contact_form.php
-app/Config/Custom/Recaptcha.php
-app/Libraries/EmbeddingService.php
-app/Libraries/MemoryService.php
-app/Libraries/RecaptchaService.php
+    ```
+    └── Blog/
+        ├── Config/
+        ├── Controllers/
+        ├── Database/
+        │   ├── Migrations/
+        │   └── Seeds/
+        ├── Entities/
+        ├── Models/
+        └── Views/
+    ```
 
-# Current Time
-05/11/2025, 2:08:40 pm (Africa/Nairobi, UTC+3:00)
+#### **8.3. The Module Creation & Refactoring Workflow**
+This is the mandatory procedure for creating or migrating a feature into a module.
 
-# Context Window Usage
-25,665 / 1,000K tokens used (3%)
+*   **Step 1: Directory Creation:** Create the module's root directory (e.g., `app/Modules/Blog/`) and its standard internal structure as defined in 8.2.
 
-# Current Mode
-ACT MODE
+*   **Step 2: Autoloader Registration (Per-Module):** The module's namespace MUST be registered individually in `app/Config/Autoload.php`. This ensures explicit and clear loading.
+    *   **Example for "Blog" Module:**
+        ```php
+        // In app/Config/Autoload.php -> $psr4 array
+        'App\Modules\Blog' => APPPATH . 'Modules/Blog',
+        ```
+
+*   **Step 3: Component Migration & Namespacing:** All PHP files related to the feature (Controllers, Models, Entities, Migrations) MUST be moved into their respective directories within the module. Their PHP namespace MUST be updated to reflect their new location.
+    *   **Example:** A controller moved to `app/Modules/Blog/Controllers/` MUST have its namespace changed to `namespace App\Modules\Blog\Controllers;`.
+
+*   **Step 4: Route Isolation:** All routes for a module MUST be defined in their own `Config/Routes.php` file within the module (e.g., `app/Modules/Blog/Config/Routes.php`). These routes are automatically discovered by CodeIgniter. The main `app/Config/Routes.php` file MUST NOT contain feature-specific routes.
+
+*   **Step 5: View Path Referencing:** When calling a view from a module's controller, the path MUST be fully qualified, starting with the module's namespace, followed by `Views`, and then the original path.
+    *   **Correct Syntax:** `return view('App\Modules\Blog\Views\blog\index', $data);`
+    *   **Breakdown:** `'App\Modules\Blog'` (Namespace) + `\Views\` (Constant) + `'blog\index'` (Path inside the module's Views directory).
+
+#### **8.4. Deprecation Protocol**
+*   **Rule:** To deprecate or disable a feature, the corresponding module directory (e.g., `app/Modules/Blog/`) MUST be deleted or renamed. The autoloader registration in `app/Config/Autoload.php` for that module MUST also be removed. No other code changes are required.
+
+#### **8.5. Core vs. Module Code**
+*   **Core Code:** The main `app/` directory is reserved for the application's core shell. This includes `BaseController`, `AuthController`, `HomeController`, shared services, layouts, partials, and core configuration.
+*   **Module Code:** All distinct business features (Blog, Payments, Crypto, AI Studio, Admin Panel) MUST be implemented as modules.
