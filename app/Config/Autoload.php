@@ -17,6 +17,7 @@ class Autoload extends AutoloadConfig
         'App\Modules\Blog' => APPPATH . 'Modules/Blog',
         'App\Modules\Payments' => APPPATH . 'Modules/Payments', // Added for the Payments module
         'App\Modules\Crypto' => APPPATH . 'Modules/Crypto', // Added for the Crypto module
+        'App\Modules\Gemini' => APPPATH . 'Modules/Gemini', // Added for the Gemini module
     ];
 
     /**

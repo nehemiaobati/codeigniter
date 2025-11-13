@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace App\Libraries;
+namespace App\Modules\Gemini\Libraries;
 
-use Config\Custom\AGI;
+use App\Modules\Gemini\Config\AGI;
 use NlpTools\Tokenizers\WhitespaceAndPunctuationTokenizer;
 use NlpTools\Stemmers\PorterStemmer;
 use NlpTools\Utils\StopWords;

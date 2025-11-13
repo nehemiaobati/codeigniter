@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace App\Libraries;
+namespace App\Modules\Gemini\Libraries;
 
 use FFMpeg\FFMpeg;
 use FFMpeg\Format\Audio\Mp3;

@@ -1,19 +1,19 @@
 <?php declare(strict_types=1);
 
-namespace App\Controllers;
+namespace App\Modules\Gemini\Controllers;
 
 use App\Controllers\BaseController;
 use App\Entities\User;
-use App\Libraries\GeminiService;
-use App\Libraries\MemoryService;
-use App\Models\EntityModel;
-use App\Models\InteractionModel;
-use App\Models\PromptModel;
+use App\Modules\Gemini\Libraries\GeminiService;
+use App\Modules\Gemini\Libraries\MemoryService;
+use App\Modules\Gemini\Models\EntityModel;
+use App\Modules\Gemini\Models\InteractionModel;
+use App\Modules\Gemini\Models\PromptModel;
 use App\Models\UserModel;
-use App\Models\UserSettingsModel;
+use App\Modules\Gemini\Models\UserSettingsModel;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\ResponseInterface;
-use App\Libraries\DocumentService;
+use App\Modules\Gemini\Libraries\DocumentService;
 use Parsedown;
 
 class GeminiController extends BaseController
@@ -43,7 +43,7 @@ class GeminiController extends BaseController
             'heroTitle'       => 'Go Beyond Basic Chat',
             'heroSubtitle'    => 'Leverage the power of Google Gemini. Our AI Studio helps you write code, analyze documents, and generate creative content with conversational memory.'
         ];
-        return view('gemini/public_page', $data);
+        return view('App\Modules\Gemini\Views\gemini\public_page.php', $data);
     }
 
     public function __construct()
@@ -81,7 +81,7 @@ class GeminiController extends BaseController
             'audio_url'              => session()->getFlashdata('audio_url'),
         ];
         $data['robotsTag'] = 'noindex, follow';
-        return view('gemini/query_form', $data);
+        return view('App\Modules\Gemini\Views\gemini\query_form', $data);
     }
 
     public function uploadMedia(): ResponseInterface

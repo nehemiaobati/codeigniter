@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Modules\Gemini\Models;
 
 use CodeIgniter\Model;
 
@@ -9,7 +9,7 @@ class PromptModel extends Model
     protected $table            = 'prompts';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
-    protected $returnType       = 'App\Entities\Prompt';
+    protected $returnType       = 'App\Modules\Gemini\Entities\Prompt';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = ['user_id', 'title', 'prompt_text'];

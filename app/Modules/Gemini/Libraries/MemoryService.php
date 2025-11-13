@@ -1,12 +1,15 @@
 <?php declare(strict_types=1);
 
-namespace App\Libraries;
+namespace App\Modules\Gemini\Libraries;
 
-use App\Models\InteractionModel;
-use App\Models\EntityModel;
-use App\Entities\Interaction;
-use App\Entities\AGIEntity;
-use Config\Custom\AGI;
+use App\Modules\Gemini\Models\InteractionModel;
+use App\Modules\Gemini\Models\EntityModel;
+use App\Modules\Gemini\Entities\Interaction;
+use App\Modules\Gemini\Entities\AGIEntity;
+use App\Modules\Gemini\Config\AGI;
+use App\Modules\Gemini\Libraries\TokenService;
+use App\Modules\Gemini\Libraries\EmbeddingService;
+
 
 /**
  * Manages the AI's memory, including storage, retrieval, and relevance scoring.

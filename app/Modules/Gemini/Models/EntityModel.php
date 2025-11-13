@@ -1,15 +1,15 @@
 <?php declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Modules\Gemini\Models;
 
 use CodeIgniter\Model;
-use App\Entities\AGIEntity;
+use App\Modules\Gemini\Entities\AGIEntity;
 
 class EntityModel extends Model
 {
     protected $table            = 'entities';
     protected $primaryKey       = 'id';
-    protected $returnType       = AGIEntity::class;
+    protected $returnType       = 'App\Modules\Gemini\Entities\AGIEntity';
     protected $useTimestamps    = true;
     protected $allowedFields    = [
         'user_id', 'entity_key', 'name', 'type', 'access_count',

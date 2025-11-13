@@ -1,6 +1,6 @@
 <?php
 
-namespace Config\Custom; // Changed namespace
+namespace App\Modules\Gemini\Config; // Updated namespace
 
 use CodeIgniter\Config\BaseConfig;
 
@@ -195,7 +195,7 @@ class AGI extends BaseConfig
         'picture', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp',
         'script', 'section', 'select', 'small', 'source', 'span', 'strong', 'style',
         'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'template', 'textarea',
-        'tfoot', 'th', 'thead', 'time', 'title', 'tr', 'track', 'u', 'ul', 'var',
+        'tfoot', 'th', 'thead', 'time', 'tr', 'track', 'u', 'ul', 'var',
         'video', 'wbr',  'nbsp'
 
 

@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace App\Libraries;
+namespace App\Modules\Gemini\Libraries; // Updated namespace
 
-use Config\Custom\AGI;
+use App\Modules\Gemini\Config\AGI;
 
 /**
  * Handles the generation of vector embeddings via the Gemini API.
@@ -17,6 +17,7 @@ class EmbeddingService
     public function __construct()
     {
         $this->apiKey = env('GEMINI_API_KEY');
+        // Update config call to use the new namespace
         $config = config(AGI::class);
         $this->modelId = $config->embeddingModel;
         $this->isEnabled = $config->enableEmbeddings;

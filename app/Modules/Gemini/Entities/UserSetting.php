@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace App\Entities;
+namespace App\Modules\Gemini\Entities;
 
 use CodeIgniter\Entity\Entity;
 
