@@ -15,3 +15,4 @@ render_pdf.php
 public/assets/
 
 
+app/Views/documentation/web_documentation.php
