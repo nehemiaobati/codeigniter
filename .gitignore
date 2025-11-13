@@ -5,7 +5,7 @@
 .env
 
 changed_files.txt
-code_changes.diff
+code_changes.txt
 render_pdf.php
 
 .DS_Store
@@ -13,4 +13,5 @@ render_pdf.php
 
 
 public/assets/
+
 
