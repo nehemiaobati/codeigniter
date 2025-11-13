@@ -1,13 +1,11 @@
-<?php
+<?php declare(strict_types=1);
 
-declare(strict_types=1);
+namespace App\Modules\Crypto\Controllers; // Updated namespace
 
-namespace App\Controllers;
-
-use App\Controllers\BaseController;
+use App\Controllers\BaseController; // Keep BaseController from core
 use App\Models\UserModel;
 use CodeIgniter\HTTP\RedirectResponse;
-use App\Libraries\CryptoService;
+use App\Libraries\CryptoService; // Assuming CryptoService is still in app/Libraries
 
 class CryptoController extends BaseController
 {
@@ -45,7 +43,8 @@ class CryptoController extends BaseController
             'canonicalUrl'    => url_to('crypto.public'),
         ];
 
-        return view('crypto/public_page', $data);
+        // Updated view path to reflect module structure
+        return view('App\Modules\Crypto\Views\crypto\public_page', $data);
     }
 
     /**
@@ -74,7 +73,8 @@ class CryptoController extends BaseController
         ];
         // Add noindex directive for authenticated pages
         $data['robotsTag'] = 'noindex, follow';
-        return view('crypto/query_form', $data); // View name updated
+        // Updated view path to reflect module structure
+        return view('App\Modules\Crypto\Views\crypto\query_form', $data);
     }
 
     /**

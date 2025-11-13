@@ -58,7 +58,6 @@ $routes->group('', static function ($routes) {
 
     // Public Service Pages
     $routes->get('ai-studio', 'GeminiController::publicPage', ['as' => 'gemini.public']);
-    $routes->get('crypto-query', 'CryptoController::publicPage', ['as' => 'crypto.public']);
 });
 
 //--------------------------------------------------------------------
