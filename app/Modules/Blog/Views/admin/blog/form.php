@@ -1,5 +1,23 @@
 <?= $this->extend('layouts/default') ?>
 
+<?= $this->section('styles') ?>
+<style>
+    .content-block {
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        position: relative;
+        background-color: var(--bs-tertiary-bg);
+    }
+    .block-controls {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        display: flex;
+        gap: 0.25rem;
+    }
+</style>
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="container my-5">
     <div class="d-flex align-items-center mb-4">
@@ -17,9 +35,55 @@
                             <input type="text" class="form-control" id="title" name="title" placeholder="Post Title" value="<?= old('title', $post->title ?? '') ?>" required>
                             <label for="title">Post Title</label>
                         </div>
-                        <div class="form-floating mb-3">
-                            <textarea class="form-control" id="body_html" name="body_html" placeholder="Paste your HTML content here..." style="height: 400px"><?= old('body_html', $post->body_html ?? '') ?></textarea>
-                            <label for="body_html">Body Content (HTML)</label>
+                        
+                        <h5 class="fw-bold">Content Builder</h5>
+                        <div id="content-builder-area" class="d-flex flex-column gap-3 mb-3">
+                            <?php
+                            $contentBlocks = old('content_type') ? [] : (isset($post->body_content) ? $post->body_content : []);
+                            if (old('content_type')) {
+                                foreach (old('content_type') as $index => $type) {
+                                    $block = ['type' => $type];
+                                    if ($type === 'text' || $type === 'image') $block['content'] = old('content_text')[$index];
+                                    if ($type === 'code') {
+                                        $block['code'] = old('content_text')[$index];
+                                        $block['language'] = old('content_language')[$index];
+                                    }
+                                    $contentBlocks[] = (object)$block;
+                                }
+                            }
+                            ?>
+                            <?php if (!empty($contentBlocks)): ?>
+                                <?php foreach ($contentBlocks as $block): ?>
+                                    <?php if ($block->type === 'text'): ?>
+                                        <div class="content-block p-3 pt-5">
+                                            <input type="hidden" name="content_type[]" value="text">
+                                            <div class="block-controls"><button type="button" class="btn btn-sm btn-outline-danger remove-block"><i class="bi bi-trash"></i></button></div>
+                                            <textarea name="content_text[]" class="form-control" rows="8" placeholder="Enter your text content (Markdown supported)"><?= esc($block->content ?? '') ?></textarea>
+                                            <input type="hidden" name="content_language[]" value="">
+                                        </div>
+                                    <?php elseif ($block->type === 'image'): ?>
+                                        <div class="content-block p-3 pt-5">
+                                            <input type="hidden" name="content_type[]" value="image">
+                                            <div class="block-controls"><button type="button" class="btn btn-sm btn-outline-danger remove-block"><i class="bi bi-trash"></i></button></div>
+                                            <input type="text" name="content_text[]" class="form-control" placeholder="Enter Image URL" value="<?= esc($block->url ?? ($block->content ?? '')) ?>">
+                                            <input type="hidden" name="content_language[]" value="">
+                                        </div>
+                                    <?php elseif ($block->type === 'code'): ?>
+                                        <div class="content-block p-3 pt-5">
+                                            <input type="hidden" name="content_type[]" value="code">
+                                            <div class="block-controls"><button type="button" class="btn btn-sm btn-outline-danger remove-block"><i class="bi bi-trash"></i></button></div>
+                                            <textarea name="content_text[]" class="form-control" rows="8" placeholder="Enter code snippet"><?= esc($block->code ?? '') ?></textarea>
+                                            <input type="text" name="content_language[]" class="form-control mt-2" placeholder="Language (e.g., php, javascript)" value="<?= esc($block->language ?? '') ?>">
+                                        </div>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-secondary" id="add-text-block"><i class="bi bi-fonts"></i> Add Text</button>
+                            <button type="button" class="btn btn-outline-secondary" id="add-image-block"><i class="bi bi-image"></i> Add Image</button>
+                            <button type="button" class="btn btn-outline-secondary" id="add-code-block"><i class="bi bi-code-slash"></i> Add Code</button>
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -31,7 +95,7 @@
                             <label for="status">Status</label>
                         </div>
                         <div class="form-floating mb-3">
-                            <input type="datetime-local" class="form-control" id="published_at" name="published_at" value="<?= old('published_at', ($post && $post->published_at) ? $post->published_at->toDateTimeString() : date('Y-m-d\TH:i')) ?>">
+                             <input type="datetime-local" class="form-control" id="published_at" name="published_at" value="<?= old('published_at', ($post->published_at ?? null) ? \CodeIgniter\I18n\Time::parse($post->published_at)->format('Y-m-d\TH:i') : date('Y-m-d\TH:i')) ?>">
                             <label for="published_at">Publish Date</label>
                         </div>
                          <div class="form-floating mb-3">
@@ -59,4 +123,37 @@
         </div>
     </div>
 </div>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const builderArea = document.getElementById('content-builder-area');
+
+    const createBlock = (type) => {
+        const block = document.createElement('div');
+        block.className = 'content-block p-3 pt-5';
+        let innerHTML = `<input type="hidden" name="content_type[]" value="${type}"><div class="block-controls"><button type="button" class="btn btn-sm btn-outline-danger remove-block"><i class="bi bi-trash"></i></button></div>`;
+        if (type === 'text') {
+            innerHTML += `<textarea name="content_text[]" class="form-control" rows="8" placeholder="Enter your text content (Markdown supported)"></textarea><input type="hidden" name="content_language[]" value="">`;
+        } else if (type === 'image') {
+            innerHTML += `<input type="text" name="content_text[]" class="form-control" placeholder="Enter Image URL"><input type="hidden" name="content_language[]" value="">`;
+        } else if (type === 'code') {
+            innerHTML += `<textarea name="content_text[]" class="form-control" rows="8" placeholder="Enter code snippet"></textarea><input type="text" name="content_language[]" class="form-control mt-2" placeholder="Language (e.g., php, javascript)">`;
+        }
+        block.innerHTML = innerHTML;
+        builderArea.appendChild(block);
+    };
+
+    document.getElementById('add-text-block').addEventListener('click', () => createBlock('text'));
+    document.getElementById('add-image-block').addEventListener('click', () => createBlock('image'));
+    document.getElementById('add-code-block').addEventListener('click', () => createBlock('code'));
+
+    builderArea.addEventListener('click', (e) => {
+        if (e.target.closest('.remove-block')) {
+            e.target.closest('.content-block').remove();
+        }
+    });
+});
+</script>
 <?= $this->endSection() ?>

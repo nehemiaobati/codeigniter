@@ -9,7 +9,7 @@ use CodeIgniter\Entity\Entity;
  * @property string $title
  * @property string $slug
  * @property ?string $excerpt
- * @property ?string $body_html
+ * @property ?array $body_content  // This will now be an array of objects
  * @property ?string $featured_image_url
  * @property string $author_name
  * @property ?string $category_name
@@ -24,5 +24,10 @@ class Post extends Entity
     protected $dates   = ['published_at', 'created_at', 'updated_at'];
     protected $casts   = [
         'id' => 'integer',
+        
+        // FIX: Changed from 'json-array' to 'json'.
+        // 'json' decodes JSON into an array of objects (if the JSON is an array of objects).
+        // 'json-array' decodes JSON into an array of associative arrays.
+        'body_content' => 'json',
     ];
 }
