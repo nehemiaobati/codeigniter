@@ -32,9 +32,12 @@ class BlogController extends BaseController
 
     public function show(string $slug): string
     {
-        $post = $this->postModel->where('slug', $slug)->where('status', 'published')->first();
-        if (!$post) {
-            throw PageNotFoundException::forPageNotFound();
+        // IMPROVEMENT: Find post regardless of status to allow admin preview.
+        $post = $this->postModel->where('slug', $slug)->first();
+
+        // IMPROVEMENT: More robust check for visibility.
+        if (!$post || ($post->status !== 'published' && !session()->get('is_admin'))) {
+            throw PageNotFoundException::forPageNotFound('The requested blog post was not found or is not published.');
         }
 
         $schema = [
@@ -119,36 +122,46 @@ class BlogController extends BaseController
 
     private function processPost(?int $id = null)
     {
-        $postData = $this->request->getPost();
-        
         $contentBlocks = [];
-        if (isset($postData['content_type'])) {
-            foreach ($postData['content_type'] as $index => $type) {
+        // IMPROVEMENT: Check that content_type is an array to prevent errors.
+        $contentTypes = $this->request->getPost('content_type');
+        
+        if (is_array($contentTypes)) {
+            foreach ($contentTypes as $index => $type) {
                 $block = ['type' => $type];
-                switch ($type) {
-                    case 'text':
-                        $block['content'] = $postData['content_text'][$index] ?? '';
-                        break;
-                    case 'image':
-                        $block['url'] = $postData['content_text'][$index] ?? '';
-                        break;
-                    case 'code':
-                        $block['code'] = $postData['content_text'][$index] ?? '';
-                        $block['language'] = $postData['content_language'][$index] ?? 'plaintext';
-                        break;
+                $text = $this->request->getPost('content_text')[$index] ?? null;
+                $language = $this->request->getPost('content_language')[$index] ?? null;
+
+                // IMPROVEMENT: Only add block if it has content.
+                if ($text !== null && trim($text) !== '') {
+                    switch ($type) {
+                        case 'text':
+                            $block['content'] = $text;
+                            $contentBlocks[] = $block;
+                            break;
+                        case 'image':
+                            $block['url'] = $text;
+                            $contentBlocks[] = $block;
+                            break;
+                        case 'code':
+                            $block['code'] = $text;
+                            $block['language'] = !empty($language) ? $language : 'plaintext';
+                            $contentBlocks[] = $block;
+                            break;
+                    }
                 }
-                $contentBlocks[] = $block;
             }
         }
         
+        // IMPROVEMENT: Use request->getPost() for safer data retrieval.
         $payload = [
-            'title'              => $postData['title'],
-            'excerpt'            => $postData['excerpt'],
-            'status'             => $postData['status'],
-            'published_at'       => $postData['published_at'],
-            'featured_image_url' => $postData['featured_image_url'],
-            'category_name'      => $postData['category_name'],
-            'meta_description'   => $postData['meta_description'],
+            'title'              => $this->request->getPost('title', FILTER_SANITIZE_STRING),
+            'excerpt'            => $this->request->getPost('excerpt', FILTER_SANITIZE_STRING),
+            'status'             => $this->request->getPost('status'),
+            'published_at'       => $this->request->getPost('published_at'),
+            'featured_image_url' => $this->request->getPost('featured_image_url', FILTER_SANITIZE_URL),
+            'category_name'      => $this->request->getPost('category_name', FILTER_SANITIZE_STRING),
+            'meta_description'   => $this->request->getPost('meta_description', FILTER_SANITIZE_STRING),
             'body_content'       => json_encode($contentBlocks)
         ];
 
@@ -159,15 +172,26 @@ class BlogController extends BaseController
         if ($this->postModel->save($payload)) {
             return redirect()->to(url_to('admin.blog.index'))->with('success', 'Post ' . ($id ? 'updated' : 'created') . ' successfully.');
         }
+        
+        // On failure, pass the model's errors back to the view.
         return redirect()->back()->withInput()->with('errors', $this->postModel->errors());
     }
 
     public function delete(int $id)
     {
         if (!session()->get('is_admin')) { return redirect()->to(url_to('home')); }
+        
+        // IMPROVEMENT: Check if post exists before attempting deletion.
+        $post = $this->postModel->find($id);
+        if (!$post) {
+            throw PageNotFoundException::forPageNotFound('Cannot delete a post that does not exist.');
+        }
+
         if ($this->postModel->delete($id)) {
             return redirect()->to(url_to('admin.blog.index'))->with('success', 'Post deleted successfully.');
         }
-        return redirect()->to(url_to('admin.blog.index'))->with('error', 'Failed to delete post.');
+        
+        // This case would typically only be hit if a database-level error occurs.
+        return redirect()->to(url_to('admin.blog.index'))->with('error', 'Failed to delete the post due to a server error.');
     }
 }
