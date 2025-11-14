@@ -13,8 +13,7 @@
     }
 
     .prompt-card {
-        height: calc(100vh - 270px);
-        min-height: 250px;
+        min-height: calc(100vh - 270px);
     }
 
     #results-card {
@@ -24,7 +23,8 @@
     .prompt-editor-wrapper {
         overflow-y: auto;
         position: relative;
-        min-height: 200px;
+        height: 250px;
+
     }
 
     .code-block-wrapper {
