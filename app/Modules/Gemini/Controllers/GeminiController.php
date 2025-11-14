@@ -238,7 +238,7 @@ class GeminiController extends BaseController
         $htmlResult = $parsedown->text($rawTextResult);
 
         $redirect = redirect()->back()->withInput()
-            ->with('result', $htmlResult)
+            ->with('result', nl2br($htmlResult))
             ->with('raw_result', $rawTextResult);
             
         if ($audioUrl) {
