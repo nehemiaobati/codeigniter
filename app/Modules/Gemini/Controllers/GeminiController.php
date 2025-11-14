@@ -234,11 +234,12 @@ class GeminiController extends BaseController
         $this->_processApiResponse($user, $apiResponse, $isAssistantMode, $contextData);
 
         $parsedown  = new Parsedown();
+        $parsedown->setBreaksEnabled(true);
         $parsedown->setSafeMode(true); // Enable built-in sanitization
         $htmlResult = $parsedown->text($rawTextResult);
 
         $redirect = redirect()->back()->withInput()
-            ->with('result', nl2br($htmlResult))
+            ->with('result', $htmlResult)
             ->with('raw_result', $rawTextResult);
             
         if ($audioUrl) {

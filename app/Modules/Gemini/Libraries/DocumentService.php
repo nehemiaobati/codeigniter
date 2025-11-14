@@ -31,10 +31,12 @@ class DocumentService
     {
         // 1. Convert Markdown to HTML
         $parsedown = new Parsedown();
+        $parsedown->setBreaksEnabled(true);
         $htmlContent = $parsedown->text($markdownContent);
 
         // Add basic styling for better output
         $fullHtml = $this->getStyledHtml($htmlContent);
+       // $fullHtml = nl2br($fullHtml); //Depricated for preserving paragraphs
 
         // 2. Try to generate with Pandoc within a try...catch block
         try {
