@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace App\Libraries;
+namespace App\Modules\Payments\Libraries;
 
 /**
  * Provides a service layer for interacting with the Paystack payment gateway API.

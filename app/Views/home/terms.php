@@ -23,11 +23,6 @@ border: none;
 <div class="card-body p-5">
 <h1 class="card-title text-center mb-5"><?= esc($pageTitle) ?></h1>
 
-code
-Code
-download
-content_copy
-expand_less
 <h2>1. Acceptance of Terms</h2>
                 <p>These Terms of Service ("Terms") constitute a legally binding agreement between you ("User," "you," or "your") and AFRIKENKID ("Company," "we," "us," or "our"). By accessing or using our Service, you confirm that you are of legal age to form a binding contract and agree to comply with all provisions herein. Your continued use of the Service following any modification to these Terms constitutes your acceptance of the revised terms. This agreement is recognized as a valid electronic contract under the Kenya Information and Communications Act.</p>
 

@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace App\Libraries;
+namespace App\Modules\Crypto\Libraries;
 
 /**
  * Handles interactions with third-party cryptocurrency APIs to fetch blockchain data.

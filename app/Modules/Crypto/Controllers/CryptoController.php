@@ -5,7 +5,7 @@ namespace App\Modules\Crypto\Controllers; // Updated namespace
 use App\Controllers\BaseController; // Keep BaseController from core
 use App\Models\UserModel;
 use CodeIgniter\HTTP\RedirectResponse;
-use App\Libraries\CryptoService; // Assuming CryptoService is still in app/Libraries
+use App\Modules\Crypto\Libraries\CryptoService; 
 
 class CryptoController extends BaseController
 {

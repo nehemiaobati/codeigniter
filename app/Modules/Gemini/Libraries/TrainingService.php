@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace App\Libraries;
+namespace App\Modules\Gemini\Libraries;
 
-use App\Libraries\TokenService;
+use App\Modules\Gemini\Libraries\TokenService;
 use NlpTools\Documents\TokensDocument;
 use NlpTools\Documents\TrainingSet;
 use NlpTools\FeatureFactories\DataAsFeatures;

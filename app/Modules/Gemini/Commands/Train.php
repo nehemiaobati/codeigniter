@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Commands;
+namespace App\Modules\Gemini\Commands;
 
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;

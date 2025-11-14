@@ -3,7 +3,7 @@
 namespace App\Modules\Payments\Controllers;
 
 use App\Controllers\BaseController; // BaseController is still in app/Controllers
-use App\Libraries\PaystackService; // PaystackService is in app/Libraries
+use App\Modules\Payments\Libraries\PaystackService; 
 use App\Modules\Payments\Models\PaymentModel; // Updated path
 use App\Models\UserModel; // UserModel is still in app/Models
 use CodeIgniter\HTTP\RedirectResponse;
