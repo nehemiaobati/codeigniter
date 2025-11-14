@@ -1,8 +1,4 @@
-# Project Constitution: CodeIgniter 4 Development Standards
-
-This document is the **single source of truth** for all architectural, coding, and security standards for this project. Its purpose is to ensure a streamlined, maintainable, and secure application. Adherence is mandatory for all contributors, human and AI.
-
-### Guiding Principles
+### **Guiding Principles**
 *   **Clarity over Cleverness:** Code must be simple, readable, and self-documenting.
 *   **Security is Not Optional:** Every line of code must be written with security as a primary concern.
 *   **Consistency is Key:** The framework and these rules provide one right way to build features. Follow it.
@@ -33,246 +29,120 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
 *   **DON'T:** Perform database queries. Contain business logic.
 
 #### **1.5. Database (`app/Database/` or `app/Modules/[ModuleName]/Database/`)**
-*   **Role:** Define and manage the database schema.
-*   **Rules:**
-    *   All schema changes MUST be managed via Migration files.
-    *   Initial or test data MUST be handled by Seeder files.
-    *   Directly altering the database schema outside of migrations is strictly FORBIDDEN.
+*   All schema changes MUST be managed via Migration files.
+*   Initial or test data MUST be handled by Seeder files.
+*   Directly altering the database schema outside of migrations is strictly FORBIDDEN.
 
 #### **1.6. Helpers (`app/Helpers/`)**
-*   **Role:** Contain simple, stateless, global procedural functions.
-*   **Rules:**
-    *   Helpers are for small, reusable tasks (e.g., formatting data, checking a specific condition) that are needed in multiple places (controllers, views).
-    *   All new helpers MUST be registered in `app/Config/Autoload.php`.
-    *   Helpers MUST NOT contain business logic, perform database queries, or interact with external services. Such logic belongs in a Service.
+*   Helpers are for small, reusable, stateless procedural functions.
+*   All new helpers MUST be registered in `app/Config/Autoload.php`.
+*   Helpers MUST NOT contain business logic, perform database queries, or interact with external services.
 
 #### **1.7. Configuration (app/Config/)**
-*   **Role:** This directory is intended for all application configuration files.
-*   **Rules for Default Configurations:**
-    *   Standard CodeIgniter configuration files (e.g., `app/Config/App.php`, `app/Config/Database.php`) should remain in their default locations.
-    *   Sensitive or environment-specific settings MUST be managed via the `.env` file.
-*   **Rules for Custom Configurations:**
-    *   **Rule 1: Isolate Custom Files:** All custom configuration files MUST be placed in the `app/Config/Custom/` directory.
-    *   **Rule 2: Correct Namespacing:** Custom configuration files MUST use the `Config\Custom` namespace. For example, a file named `YourConfigFileName.php` would have `namespace Config\Custom;`.
-    *   **Rule 3: Accessing Custom Configs:** Custom configurations can be accessed using the `config()` helper with the fully qualified class name (e.g., `config('Config\Custom\YourConfigFileName')`) or by using a `use` statement at the top of your file (e.g., `use Config\Custom\YourConfigFileName;` followed by `new YourConfigFileName()`).
-*   **Reasoning:** This separation ensures that custom configurations are distinct from framework defaults, improving organization, maintainability, and preventing conflicts during framework updates.
+*   Sensitive or environment-specific settings MUST be managed via the `.env` file.
+*   All custom configuration files MUST be placed in the `app/Config/Custom/` directory.
+*   Custom configuration files MUST use the `Config\Custom` namespace.
 
 ---
 
 ### **Part 2: The Request & Response Protocol**
 
-This section defines the mandatory flow for user interactions.
-
 #### **2.1. Routing: Named Routes are Law**
-*   **Rule 1:** Every route in `app/Config/Routes.php` or a Module's `Config/Routes.php` MUST be assigned a unique name (e.g., `['as' => 'users.profile']`).
-*   **Rule 2:** All URLs in the application (views, redirects) MUST be generated using `url_to('route.name')`. Hardcoded URLs (`/users/profile`) are strictly **FORBIDDEN**.
+*   Every route MUST be assigned a unique name (e.g., `['as' => 'users.profile']`).
+*   All URLs in the application (views, redirects) MUST be generated using `url_to('route.name')`. Hardcoded URLs are strictly **FORBIDDEN**.
 
 #### **2.2. The 3 Steps of a Form Submission (Post/Redirect/Get)**
-This **Post/Redirect/Get (PRG)** pattern is mandatory for all `POST` requests.
-
-*   **Step 1: The `POST` Action (Controller):**
-    *   The controller method processes the form data and calls the necessary services/models.
-    *   The method **MUST NOT** return a `view()`.
-
-*   **Step 2: The `Redirect` with Flash Data:**
-    *   After processing, the controller method MUST store user-facing messages in the session as "flash data" (e.g., `session()->setFlashdata('success', 'Operation successful!')`).
-    *   Standard keys are required: `success`, `error`, `warning`, `info`.
-    *   The method MUST conclude by returning a `redirect()` response (e.g., `return redirect()->to(url_to('users.show', $id));`).
-
-*   **Step 3: The `GET` Display:**
-    *   The browser follows the redirect to a new URL.
-    *   The corresponding controller method for the `GET` request renders a view.
-    *   This view reads the flash data from the session and displays the message using the `flash_messages.php` partial.
+*   **Step 1 (POST):** The controller method processes form data. It **MUST NOT** return a `view()`.
+*   **Step 2 (Redirect):** After processing, the controller stores messages in session "flash data" (`success`, `error`, `warning`, `info`) and MUST return a `redirect()` response.
+*   **Step 3 (GET):** The new page's controller renders a view, which reads and displays the flash data using the `flash_messages.php` partial.
 
 #### **2.3. Filters: The Gatekeepers**
-*   Filters (`app/Filters/`) MUST be used for all cross-cutting concerns, primarily for security and access control.
-*   **Examples:** `AuthFilter` to protect logged-in areas, `AdminFilter` for admin-only pages, `BalanceFilter` to protect paid service routes.
+*   Filters (`app/Filters/`) MUST be used for all security and access control (e.g., AuthFilter, AdminFilter, BalanceFilter).
 
 #### **2.4. Global View Data: The `BaseController`**
-*   **Rule:** For data required by the master layout or on every page (e.g., user consent status, notification counts), the data MUST be prepared and passed to the view system within `BaseController::initController()`. This centralizes logic and avoids repetition in individual controller methods.
+*   Data required on every page MUST be prepared and passed to the view system within `BaseController::initController()`.
 
 ---
 
 ### **Part 3: Code, Security, & Performance Mandates**
 
-These are non-negotiable rules for all code.
-
 #### **3.1. Code Quality & Documentation**
-*   **PSR-12 & Strict Types:** All PHP files MUST be PSR-12 compliant and start with `declare(strict_types=1);`.
-*   **PHPDoc Blocks:** Every class, property, and method MUST have a complete and accurate PHPDoc block. There are no exceptions. This includes `@param`, `@return`, and clear descriptions. For Entities, a full list of `@property` tags is required.
+*   All PHP files MUST be PSR-12 compliant and start with `declare(strict_types=1);`.
+*   Every class, property, and method MUST have a complete and accurate PHPDoc block.
 
 #### **3.2. Security**
-*   **Output Escaping:** All dynamic data rendered in a view MUST be escaped with `esc()` to prevent XSS. Example: `<?= esc($user->name) ?>`.
-*   **CSRF Protection:** CSRF protection MUST be enabled globally. All `POST` forms MUST include `csrf_field()`.
-*   **Database Safety:** The Query Builder or Entities are the ONLY permitted methods for database interaction to prevent SQL injection.
-*   **Input Validation:** All user-supplied data (`POST`, `GET`, etc.) MUST be validated using the Validation library before use.
-*   **Throttler:** The Throttler MUST be enabled on authentication and password reset routes to prevent brute-force attacks.
+*   All dynamic data rendered in a view MUST be escaped with `esc()`.
+*   CSRF protection MUST be enabled globally, and all `POST` forms MUST include `csrf_field()`.
+*   The Query Builder or Entities are the ONLY permitted methods for database interaction.
+*   All user-supplied data MUST be validated using the Validation library before use.
+*   The Throttler MUST be enabled on authentication and password reset routes.
 
 #### **3.3. Transactional Integrity: All or Nothing**
-*   **Rule 1:** All operations involving multiple database `write` actions (INSERT, UPDATE, DELETE) that are logically connected MUST be wrapped in a database transaction.
-*   **Rule 2:** All operations involving financial data (e.g., updating a user's `balance`) MUST be wrapped in a transaction, even if it is a single database call. This ensures atomicity and future-proofs the code for potential additions like audit logging.
-*   **Rule 3:** A transaction's status MUST be checked after completion. On failure, a `critical` log entry MUST be created, and a generic, safe error message MUST be shown to the user.
+*   All operations involving multiple database `write` actions (INSERT, UPDATE, DELETE) MUST be wrapped in a database transaction.
+*   All operations involving financial data (e.g., updating `balance`) MUST be wrapped in a transaction.
+*   A transaction's status MUST be checked after completion. On failure, a `critical` log entry MUST be created.
 
 #### **3.4. Performance**
-*   **Auto-Routing:** Auto-routing MUST be disabled (`$autoRoute = false`) in `app/Config/Routing.php`.
-*   **Efficient Queries:** Use pagination (`paginate()`) for lists. Avoid `findAll()` on large tables. Select only the columns needed.
-*   **Optimization Command:** The deployment script MUST run `php spark optimize`.
+*   Auto-routing MUST be disabled (`$autoRoute = false`).
+*   Use pagination (`paginate()`) for lists. Avoid `findAll()` on large tables.
+*   The deployment script MUST run `php spark optimize`.
 
 #### **3.5. Error Handling & Logging**
-*   **Production Errors:** Detailed error reporting MUST be disabled in the production `.env` file (`CI_ENVIRONMENT = production`).
-*   **Dual Logging Strategy:**
-    *   **Developer Logs:** Use `log_message('level', 'message')` for system events and errors. These are for developers only.
-    *   **User Notifications:** Use `session()->setFlashdata()` to communicate the outcome of actions to the user. These are rendered via the `flash_messages.php` partial.
+*   Detailed error reporting MUST be disabled in production.
+*   Use `log_message()` for system events and developer-facing errors.
+*   Use `session()->setFlashdata()` to communicate action outcomes to the user.
 
 ---
 
 ### **Part 4: Frontend & UI Mandates**
 
-*   **Bootstrap 5:** The project MUST use Bootstrap 5 as the sole CSS framework for consistency.
-*   **Master Layout:** All pages MUST extend the master layout file at `app/Views/layouts/default.php`.
-*   **Reusable Partials:** Common UI elements MUST be created as partial views in `app/Views/partials/`.
-    *   **Flash Messages:** All status messages MUST be rendered via `app/Views/partials/flash_messages.php`.
-    *   **Custom Components:** Sitewide components like pagination MUST have a custom view (e.g., `app/Views/pagers/bootstrap5_pagination.php`) and be configured as the default in `app/Config/Pager.php`.
-*   **Legal and Compliance:** The Privacy Policy page (`privacy.php`) MUST contain a clear, up-to-date section detailing all first-party and third-party cookies used by the application, including their purpose.
-*   **URL Generation: `route_to()` vs. `url_to()`**
-    *   **For JavaScript Background Requests:** All URLs used within `<script>` blocks for background requests (e.g., AJAX, `fetch`) MUST be generated as relative paths using `route_to('route.name')`.
-    *   **For HTML Full-Page Navigation:** All URLs used in standard HTML for full-page navigations (e.g., `<a>` tag `href` attributes, standard `<form>` `action` attributes, and controller redirects) MUST be generated as absolute paths using `url_to('route.name')`.
-    *   **Reasoning:** This strict separation is the mandatory solution to prevent CORS policy errors. `route_to()` ensures same-origin requests for JavaScript, while `url_to()` ensures predictable, absolute paths for page loads and redirects.
+*   Bootstrap 5 is the sole CSS framework.
+*   All pages MUST extend the master layout `app/Views/layouts/default.php`.
+*   Common UI elements MUST be created as partials in `app/Views/partials/`.
+*   The Privacy Policy page MUST detail all cookies used.
+*   **URL Generation:**
+    *   Use `route_to()` for JavaScript background requests (AJAX, `fetch`).
+    *   Use `url_to()` for HTML full-page navigation (`<a>` tags, `<form>` actions, redirects).
 
 ---
 
 ### **Part 5: Environment & Deployment Checklist**
 
-*   **Environment File:** All credentials and API keys MUST be in the `.env` file. The `.env` file MUST NOT be committed to version control.
-*   **Production Mode:** The `CI_ENVIRONMENT` variable in `.env` MUST be set to `production`.
-*   **Web Server Root:** The server's document root MUST point to the `/public` directory. **This is a critical security requirement.** The `app`, `system`, and `writable` directories must be located outside the web root.
-*   **Composer for Production:** Deployments MUST run `composer install --no-dev --optimize-autoloader`.
-*   **Clean Production Server:** Development directories (`tests/`) and files (`spark`, `phpunit.xml.dist`) MUST be removed from the production server.
-
----
-
-### **Part 6: AI Agent Protocol**
-
-This is the mandatory workflow for any AI agent modifying the codebase.
-
-1.  **Acknowledge and Analyze:** State the user's request and break it down into a sequence of modifications that align with this constitution.
-2.  **Declare Intent:** List all files that will be created or modified before generating any code.
-3.  **Generate Full Files:** When modifying a file, provide the complete, updated file content. Partial snippets are FORBIDDEN.
-4.  **Use Generators:** New boilerplate files (Controllers, Models, etc.) MUST be created using `php spark make:*` commands.
-5.  **Confirm Compliance:** Conclude by confirming that all changes adhere to the rules outlined in this document.
+*   All credentials and API keys MUST be in the `.env` file. The `.env` file MUST NOT be committed to version control.
+*   In production, `CI_ENVIRONMENT` MUST be set to `production`.
+*   The server's document root MUST point to the `/public` directory.
+*   Deployments MUST run `composer install --no-dev --optimize-autoloader`.
+*   Development files (`tests/`, `spark`, etc.) MUST be removed from the production server.
 
 ---
 
 ### **Part 7: The Unified Frontend Workflow (The 'Blueprint' Method)**
 
-This section enhances Part 4, providing a mandatory, step-by-step workflow for creating all user-facing views to ensure absolute consistency.
-
-#### **7.1. The Blueprint Philosophy**
-*   **Minimal:** Prioritize Bootstrap 5 utility classes over custom CSS. A new view should require little to no page-specific styling.
-*   **Consistent:** All views are built from the same core components (The Container, The Card), ensuring a predictable user experience.
-*   **Scalable:** The component-based approach allows for rapid, consistent development of new features.
-
-#### **7.2. The Core Blueprint Components**
-These are the foundational building blocks for every view.
-
-*   **A. The Container:** Every page's primary content MUST be wrapped in a single `<div class="container my-5">`. This establishes consistent vertical and horizontal spacing sitewide.
-
-*   **B. The Card (`.blueprint-card`):** All primary content, forms, and data displays MUST be placed within a "Blueprint Card." This is a standard Bootstrap card with a consistent, project-defined style.
-
-    *   **Implementation:** `<div class="card blueprint-card">...</div>`
-    *   **Mandatory Style (applied via sitewide CSS in `layouts/default.php`):**
-        ```css
-        .blueprint-card {
-            background-color: var(--card-bg);
-            border-radius: 0.75rem;
-            border: 1px solid var(--border-color);
-            /* Other base styles */
-        }
-        ```
-
-*   **C. The Header (`.blueprint-header`):** All pages MUST have a clear header section.
-
-    *   **Implementation:**
-        ```html
-        <div class="blueprint-header text-center mb-5">
-            <h1 class="fw-bold">Page Title</h1>
-            <p class="lead text-muted">A brief, helpful description of the page.</p>
-        </div>
-        ```
-
-*   **D. The Color & Theme Palette: A Strict Hierarchy**
-    *   **Principle:** All styling MUST be theme-aware. The application supports both light and dark modes, and all UI components must adapt correctly. Hardcoding colors is strictly **FORBIDDEN**.
-    *   **Rule 1: Use Theme-Aware Bootstrap Utilities First.** Always prefer Bootstrap's built-in, theme-aware utility classes for backgrounds, text, and borders. These automatically adapt to the theme.
-        *   **DO:** `class="bg-body-tertiary"`, `class="text-body-secondary"`, `class="border-subtle"`
-        *   **DON'T:** `class="bg-light"`, `class="text-muted"` (unless the color must be fixed regardless of theme).
-    *   **Rule 2: Use CSS Variables Second.** For custom components where a Bootstrap utility is not available, use the project's global CSS variables defined in `layouts/default.php`.
-        *   **DO:** `background-color: var(--card-bg);`, `color: var(--text-heading);`
-    *   **Rule 3: Hardcoded Colors are Prohibited.** Do not use explicit hex codes, `rgb()`, or color names in CSS for elements that should change with the theme.
-        *   **FORBIDDEN:** `background-color: #ffffff;`, `color: black;`
-
-#### **7.3. The View Creation Workflow**
-
-1.  **Controller Preparation:** The controller MUST pass all necessary data to the view, including mandatory SEO variables: `pageTitle`, `metaDescription`, and `canonicalUrl`.
-
-2.  **View Scaffolding:** Every new view file MUST follow the standard scaffolding structure of extending the default layout and defining content sections.
-
-3.  **Component Implementation:**
-    *   **Forms:** All text inputs MUST use the Bootstrap 5 "Floating labels" pattern (`<div class="form-floating">...</div>`).
-    *   **Buttons:** Button usage MUST follow a strict hierarchy:
-        *   **Primary Action:** One `btn-primary` per form/view.
-        *   **Secondary Actions:** Use `btn-outline-secondary` or `btn-secondary`.
-        *   **Destructive Actions:** Use `btn-danger` or `btn-outline-danger`.
-    *   **Alerts/Messages:** All user feedback MUST be handled via the `partials/flash_messages.php` partial, which uses theme-aware Bootstrap alert classes.
+*   **Philosophy:** Prioritize Bootstrap 5 utilities over custom CSS.
+*   **Core Components:**
+    *   **Container:** Page content MUST be wrapped in `<div class="container my-5">`.
+    *   **Card:** All primary content displays MUST use `<div class="card blueprint-card">`.
+    *   **Header:** All pages MUST have a `<div class="blueprint-header">`.
+    *   **Color Palette:** All styling MUST be theme-aware. Hardcoding colors is **FORBIDDEN**.
+        1.  Use theme-aware Bootstrap utilities first (e.g., `bg-body-tertiary`).
+        2.  Use project CSS variables second (e.g., `var(--card-bg)`).
+*   **Workflow:**
+    *   Controller MUST pass `pageTitle`, `metaDescription`, and `canonicalUrl` to the view.
+    *   All text inputs MUST use Bootstrap 5 "Floating labels".
+    *   Button hierarchy MUST be followed: `btn-primary` for primary, `btn-outline-secondary` for secondary, `btn-danger` for destructive actions.
 
 ---
 
 ### **Part 8: The Modular Architecture Mandate**
 
-This section outlines the primary architectural pattern for the application. It is mandatory for all feature development and refactoring.
-
-#### **8.1. The Principle of Feature Isolation**
-The application MUST be structured by **feature**, not by code type. Each distinct feature (e.g., Blog, Payments) will be a self-contained **Module**. This is done to maximize maintainability, promote code reuse, and allow for effortless deprecation of features.
-
-#### **8.2. Module Location and Structure**
-*   **Rule 1: Canonical Location:** All modules MUST be located in the `app/Modules/` directory.
-*   **Rule 2: Standardized Structure:** Every new module MUST adhere to the following directory structure, even if some directories are initially empty.
-
-    ```
-    └── Blog/
-        ├── Config/
-        ├── Controllers/
-        ├── Database/
-        │   ├── Migrations/
-        │   └── Seeds/
-        ├── Entities/
-        ├── Models/
-        └── Views/
-    ```
-
-#### **8.3. The Module Creation & Refactoring Workflow**
-This is the mandatory procedure for creating or migrating a feature into a module.
-
-*   **Step 1: Directory Creation:** Create the module's root directory (e.g., `app/Modules/Blog/`) and its standard internal structure as defined in 8.2.
-
-*   **Step 2: Autoloader Registration (Per-Module):** The module's namespace MUST be registered individually in `app/Config/Autoload.php`. This ensures explicit and clear loading.
-    *   **Example for "Blog" Module:**
-        ```php
-        // In app/Config/Autoload.php -> $psr4 array
-        'App\Modules\Blog' => APPPATH . 'Modules/Blog',
-        ```
-
-*   **Step 3: Component Migration & Namespacing:** All PHP files related to the feature (Controllers, Models, Entities, Migrations) MUST be moved into their respective directories within the module. Their PHP namespace MUST be updated to reflect their new location.
-    *   **Example:** A controller moved to `app/Modules/Blog/Controllers/` MUST have its namespace changed to `namespace App\Modules\Blog\Controllers;`.
-
-*   **Step 4: Route Isolation:** All routes for a module MUST be defined in their own `Config/Routes.php` file within the module (e.g., `app/Modules/Blog/Config/Routes.php`). These routes are automatically discovered by CodeIgniter. The main `app/Config/Routes.php` file MUST NOT contain feature-specific routes.
-
-*   **Step 5: View Path Referencing:** When calling a view from a module's controller, the path MUST be fully qualified, starting with the module's namespace, followed by `Views`, and then the original path.
-    *   **Correct Syntax:** `return view('App\Modules\Blog\Views\blog\index', $data);`
-    *   **Breakdown:** `'App\Modules\Blog'` (Namespace) + `\Views\` (Constant) + `'blog\index'` (Path inside the module's Views directory).
-
-#### **8.4. Deprecation Protocol**
-*   **Rule:** To deprecate or disable a feature, the corresponding module directory (e.g., `app/Modules/Blog/`) MUST be deleted or renamed. The autoloader registration in `app/Config/Autoload.php` for that module MUST also be removed. No other code changes are required.
-
-#### **8.5. Core vs. Module Code**
-*   **Core Code:** The main `app/` directory is reserved for the application's core shell. This includes `BaseController`, `AuthController`, `HomeController`, shared services, layouts, partials, and core configuration.
-*   **Module Code:** All distinct business features (Blog, Payments, Crypto, AI Studio, Admin Panel) MUST be implemented as modules.
+*   **Principle:** The application MUST be structured by **feature** (Module), not by code type.
+*   **Location:** All modules MUST be located in the `app/Modules/` directory.
+*   **Structure:** Every module MUST contain `Config/`, `Controllers/`, `Database/`, `Entities/`, `Models/`, and `Views/` subdirectories.
+*   **Workflow:**
+    1.  Create the module directory structure.
+    2.  Register the module's namespace individually in `app/Config/Autoload.php`. 
+    Format ("'App\Modules\[ModuleName]' => APPPATH . 'Modules/[ModuleName]',")
+    3.  Move all related PHP files into the module and update their namespaces.
+    4.  All routes for a module MUST be defined in the module's own `Config/Routes.php` file.
+    5.  When calling a module's view from its controller, the path MUST be fully qualified (e.g., `view('App\Modules\Blog\Views\blog\index', $data);`).
+*   **Core vs. Module:** The main `app/` directory is for the application's core shell. All distinct business features MUST be implemented as modules.

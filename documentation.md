@@ -27,11 +27,12 @@ PROJECT DOCUMENTATION: GENAI WEB PLATFORM
 **Part II: Guides & Tutorials**
 
 **4. Core Concepts**
-    4.1. Architectural Overview (MVC-S)
+    4.1. Architectural Overview (Modular MVC-S)
     4.2. The Request Lifecycle
     4.3. Service Container & Dependency Injection
     4.4. Directory Structure Explained
     4.5. Security Principles
+    4.6. Frontend Design (The 'Blueprint' Method)
 
 **5. Tutorial: Building Your First Feature**
     5.1. Creating a New Route
@@ -52,13 +53,14 @@ PROJECT DOCUMENTATION: GENAI WEB PLATFORM
         6.3.1. Generating Content
         6.3.2. Conversational Memory System
         6.3.3. Handling Multimedia Inputs
-        6.3.4. Document Generation (PDF/Word)
+        6.3.4. Document Generation (PDF/Word) with Fallback
     6.4. Cryptocurrency Data Service
         6.4.1. Querying Balances
         6.4.2. Fetching Transaction Histories
     6.5. Administrative Dashboard
         6.5.1. User Management
         6.5.2. Sending Email Campaigns
+        6.5.3. Viewing Application Logs
     6.6. Blog & Content Management
         6.6.1. Public-Facing Blog
         6.6.2. Admin Management Interface
@@ -72,12 +74,11 @@ PROJECT DOCUMENTATION: GENAI WEB PLATFORM
 **7. Command-Line Interface (CLI)**
     7.1. Overview of Custom Commands
     7.2. `php spark train`
-    7.3. `php spark [another:command]`
 
 **8. Configuration Reference**
     8.1. Application (`App.php`)
     8.2. Database (`Database.php`)
-    8.3. Custom Configurations (`AGI.php`, etc.)
+    8.3. Custom Configurations (`AGI.php`, `Recaptcha.php`)
 
 **9. Testing**
     9.1. Running the Test Suite
@@ -109,22 +110,35 @@ PROJECT DOCUMENTATION: GENAI WEB PLATFORM
 
 --------------------------------------------------
 
+**Part V: Documentation Maintenance Guide**
+
+**15. A Guide for the Project Owner**
+    15.1. The Philosophy of Living Documentation
+    15.2. Your Role vs. the AI's Role
+    15.3. The Documentation Update Workflow
+    15.4. Procedure: How to Review the Codebase for Changes
+    15.5. Procedure: Updating the Changelog and Managing Releases
+
+**************************************************
+
 **Part I: Getting Started**
 
 **1. Introduction**
 
 **1.1. What is GenAI Web Platform?**
 
-The GenAI Web Platform is a comprehensive, multi-functional application built on the CodeIgniter 4 framework. It serves as a portal for registered users to access a suite of powerful digital services, including AI-driven content generation and analysis, real-time cryptocurrency data queries, and robust user and content management capabilities. Designed with a modular architecture, it features a secure user authentication system, an account dashboard with an integrated balance and payment system (supporting M-Pesa, Airtel, and Card), a complete administrative panel for user oversight, and a fully integrated blog.
+The GenAI Web Platform is a comprehensive, multi-functional application built on the CodeIgniter 4 framework. It is architected using a **Modular MVC-S pattern**, where each distinct business feature (like AI, Payments, or the Blog) is encapsulated in its own self-contained module for maximum maintainability. The platform serves as a portal for registered users to access a suite of powerful digital services, including AI-driven content generation, real-time cryptocurrency data queries, and robust user and content management capabilities. Designed with a modular architecture, it features a secure user authentication system, an account dashboard with an integrated balance and payment system (supporting M-Pesa, Airtel, and Card), a complete administrative panel for user oversight, and a fully integrated blog.
 
 **1.2. Core Features & Capabilities**
 
+- **Modular Architecture:** Core features like AI, Payments, Crypto, and Blog are isolated into self-contained modules for better organization and scalability.
 - **User Authentication:** Secure registration, login, email verification, and password reset functionality.
 - **Payment Gateway Integration:** Seamless payments via Paystack, a popular African payment gateway.
 - **AI Service Integration:** Advanced text and multimedia interaction with Google's Gemini API, featuring a sophisticated conversational memory system and on-demand document generation (PDF/Word).
 - **Cryptocurrency Data Service:** Real-time balance and transaction history queries for Bitcoin (BTC) and Litecoin (LTC) addresses.
 - **Blog & Content Management:** A public-facing blog with a full administrative backend for creating, editing, and managing posts.
-- **Administrative Dashboard:** Robust tools for user management, balance adjustments, financial oversight, and sending email campaigns to all users.
+- **Administrative Dashboard:** Robust tools for user management, balance adjustments, financial oversight, log viewing, and sending email campaigns to all users.
+- **Self-Hosted Documentation:** The application serves its own documentation, which can be easily updated.
 - **Secure & Performant:** Built with modern security best practices and optimized for production environments.
 
 **1.3. Who Is This For?**
@@ -139,7 +153,7 @@ This platform is designed for developers, creators, and businesses, particularly
 - **Web Server:** Apache2
 - **Key Libraries:**
     - `google/gemini-php`: For interacting with the Gemini API.
-    - `dompdf/dompdf`: For PDF generation.
+    - `dompdf/dompdf`: For PDF generation fallback.
     - `nlp-tools/nlp-tools`: For Natural Language Processing tasks.
     - `php-ffmpeg/php-ffmpeg`: For audio and video processing.
 - **System Dependencies:** Pandoc, ffmpeg
@@ -168,7 +182,7 @@ For a fresh Ubuntu server, the fastest way to get started is with the automated 
 
 **2.3. Key Concepts at a Glance**
 
-- **MVC-S Architecture:** The application separates concerns into Models (database), Views (presentation), Controllers (request handling), and Services (business logic).
+- **Modular MVC-S Architecture:** The application is built around self-contained Modules (e.g., `Blog`, `Payments`). Within each module, concerns are separated into Models (database), Views (presentation), Controllers (request handling), and Services (business logic).
 - **Services:** Core functionality like payment processing (`PaystackService`), AI interaction (`GeminiService`), and crypto queries (`CryptoService`) are encapsulated in their own service classes for reusability.
 - **Pay-As-You-Go:** Users top up an account balance, and this balance is debited for each AI or Crypto query they perform.
 
@@ -239,23 +253,26 @@ The `.env` file is critical for configuring the application. You must fill in th
 
 **4. Core Concepts**
 
-**4.1. Architectural Overview (MVC-S)**
+**4.1. Architectural Overview (Modular MVC-S)**
 
-The project extends the traditional Model-View-Controller (MVC) pattern with a **Service layer (MVC-S)** to better organize business logic.
+The project's primary architecture is **Modular**. Each distinct business feature (e.g., Blog, Payments, Gemini) is isolated into a self-contained module within the `app/Modules/` directory. This promotes code organization, reusability, and makes features easy to add or remove.
 
-- **Models (`app/Models`)**: Handle all direct database interactions. They are responsible for querying, inserting, and updating data.
-- **Views (`app/Views`)**: Contain the presentation logic (HTML). They receive data from controllers and render it for the user.
-- **Controllers (`app/Controllers`)**: Act as the bridge between Models and Views. They handle incoming HTTP requests, orchestrate calls to services, and pass data to the appropriate view.
-- **Services (`app/Libraries`)**: Contain the core business logic. This includes interacting with third-party APIs (Paystack, Gemini), processing complex data, and performing calculations. This keeps controllers lean and focused on handling the request-response cycle.
+Within each module (and for core shared components in the `app/` directory), the project follows a **Model-View-Controller-Service (MVC-S)** pattern.
+
+- **Models (`app/Modules/[ModuleName]/Models`)**: Handle all direct database interactions for that module.
+- **Views (`app/Modules/[ModuleName]/Views`)**: Contain the presentation logic (HTML) for the module.
+- **Controllers (`app/Modules/[ModuleName]/Controllers`)**: Act as the bridge, handling HTTP requests for the module, calling services, and passing data to views.
+- **Services (`app/Modules/[ModuleName]/Libraries`)**: Contain the core business logic specific to that module. Shared, application-wide services are located in `app/Libraries/`.
 
 **4.2. The Request Lifecycle**
 
 1.  The request first hits `public/index.php`.
-2.  CodeIgniter's routing (`app/Config/Routes.php`) matches the URL to a specific controller method.
-3.  Any defined Filters (`app/Config/Filters.php`) are executed before the controller is called.
-4.  The Controller method is executed. It may validate input, call one or more Services, and retrieve data from Models.
-5.  The Controller passes the prepared data to a View.
-6.  The View is rendered into HTML and sent back to the browser as the final response.
+2.  CodeIgniter automatically discovers routes from `app/Config/Routes.php` and from the `Config/Routes.php` file inside each Module.
+3.  The routing system matches the URL to a specific controller method (either in `app/Controllers` or `app/Modules/[ModuleName]/Controllers`).
+4.  Any defined Filters (`app/Config/Filters.php`) are executed before the controller is called.
+5.  The Controller method is executed. It may validate input, call one or more Services, and retrieve data from Models.
+6.  The Controller passes the prepared data to a View.
+7.  The View is rendered into HTML and sent back to the browser as the final response.
 
 **4.3. Service Container & Dependency Injection**
 
@@ -266,99 +283,92 @@ The application uses CodeIgniter's service container to manage class instances. 
 
 **4.4. Directory Structure Explained**
 
-- `app/Commands`: Houses custom `spark` CLI commands, like the `train` command.
-- `app/Config`: Contains all application configuration files, including `Routes.php` and `Services.php`.
-- `app/Controllers`: Handles web requests. Includes `BlogController.php` for the new blog feature.
-- `app/Database`: Contains database migrations (`..._CreatePostsTable.php`) and seeders for schema management.
-- `app/Entities`: Object-oriented representations of database table rows, including `Post.php`.
-- `app/Filters`: Middleware for route protection (e.g., authentication).
-- `app/Libraries`: This directory is used for the **Service layer**, containing all core business logic, such as `DocumentService.php`.
-- `app/Models`: Handles database interactions. Includes the new `PostModel.php`.
-- `app/Views`: Contains all HTML templates, including new directories like `app/Views/blog/` and `app/Views/admin/blog/`.
-- `public/`: The web server's document root, containing the main `index.php` file and public assets.
-- `writable/`: Directory for logs, cache, and file uploads. Must be server-writable.
+- `app/Commands`: Houses custom `spark` CLI commands.
+- `app/Config`: Contains all core application configuration files.
+- `app/Controllers`: Handles core web requests like authentication and home pages.
+- `app/Database`: Contains migrations and seeders for core tables like `users`.
+- `app/Libraries`: Contains shared, application-wide **Service classes**.
+- `app/Models`: Contains core Models like `UserModel`.
+- `app/Modules/`: **This is the primary location for application features.**
+    - `Blog/`: Manages the public blog and admin CRUD interface.
+    - `Crypto/`: Handles cryptocurrency address queries.
+    - `Gemini/`: Manages all interactions with the Gemini AI API.
+    - `Payments/`: Manages the Paystack payment gateway integration.
+- `app/Views`: Contains core HTML templates, including the main `layouts/` and `partials/`.
+- `public/`: The web server's document root.
+- `writable/`: Directory for logs, cache, and file uploads.
 
 **4.5. Security Principles**
 
-The application adheres to security best practices to protect against common vulnerabilities.
-
 - **Public Webroot:** The server's document root is set to the `public/` directory, preventing direct web access to application source code.
-- **CSRF Protection:** Cross-Site Request Forgery tokens are used on all POST forms to prevent malicious submissions.
+- **CSRF Protection:** Cross-Site Request Forgery tokens are used on all POST forms.
 - **XSS Filtering:** All data rendered in views is escaped using `esc()` to prevent Cross-Site Scripting attacks.
-- **Environment Variables:** Sensitive information like API keys and database credentials are stored in the `.env` file, which is never committed to version control.
+- **Environment Variables:** Sensitive information is stored in the `.env` file and is never committed to version control.
 - **Query Builder & Entities:** All database queries use CodeIgniter's built-in methods, which automatically escape parameters to prevent SQL injection.
+
+**4.6. Frontend Design (The 'Blueprint' Method)**
+
+The project follows a strict frontend workflow called the "Blueprint Method" to ensure UI consistency.
+
+- **Bootstrap 5 Utilities First:** All styling should prioritize using Bootstrap 5's built-in utility classes (`fw-bold`, `p-4`, `mb-3`, `text-center`, `bg-body-tertiary`) over writing custom CSS.
+- **Blueprint Card:** All primary content blocks, forms, and data displays MUST be placed within a `<div class="card blueprint-card">`. This provides a consistent, theme-aware container.
+- **Blueprint Header:** Pages should use a standard header structure (`<div class="blueprint-header">`) for titles and subtitles.
+- **Theme-Aware Colors:** Hardcoding colors is forbidden. Use Bootstrap's theme-aware utilities (`text-body-secondary`, `bg-primary-subtle`) or the project's CSS variables (`var(--primary-color)`) to ensure compatibility with both light and dark modes.
 
 **5. Tutorial: Building Your First Feature**
 
-This tutorial demonstrates how to build a simple "Notes" feature following the MVC-S pattern.
+This tutorial demonstrates how to build a simple "Notes" feature. **Note:** According to the project's modular architecture, this feature should ideally be built inside its own module at `app/Modules/Notes/`.
 
 **5.1. Creating a New Route**
 
-Open `app/Config/Routes.php` and add routes for viewing and creating notes.
+Open `app/Modules/Notes/Config/Routes.php` and add routes.
 
-    $routes->group('notes', ['filter' => 'auth'], static function ($routes) {
+    $routes->group('notes', ['filter' => 'auth', 'namespace' => 'App\Modules\Notes\Controllers'], static function ($routes) {
         $routes->get('/', 'NoteController::index', ['as' => 'notes.index']);
         $routes->post('create', 'NoteController::create', ['as' => 'notes.create']);
     });
 
 **5.2. Building the Controller & Service**
 
-1.  **Create the Controller** using the command line: `php spark make:controller NoteController`
-2.  Edit `app/Controllers/NoteController.php`:
+1.  **Create the Controller:** `php spark make:controller Modules/Notes/NoteController`
+2.  Edit `app/Modules/Notes/Controllers/NoteController.php`:
 
         <?php
-        namespace App\Controllers;
+        namespace App\Modules\Notes\Controllers;
         
+        use App\Controllers\BaseController;
+
         class NoteController extends BaseController
         {
             public function index()
             {
-                // For simplicity, we call the model directly here.
-                // In a complex app, this would go through a NoteService.
-                $noteModel = new \App\Models\NoteModel();
+                $noteModel = new \App\Modules\Notes\Models\NoteModel();
                 $data['notes'] = $noteModel->where('user_id', session()->get('userId'))->findAll();
-                return view('notes/index', $data);
+                return view('App\Modules\Notes\Views\index', $data);
             }
         
             public function create()
             {
-                $noteModel = new \App\Models\NoteModel();
-                $noteModel->save([
-                    'user_id' => session()->get('userId'),
-                    'content' => $this->request->getPost('content')
-                ]);
+                // ... (logic to save note) ...
                 return redirect()->to(url_to('notes.index'))->with('success', 'Note saved!');
             }
         }
 
 **5.3. Interacting with the Database (Model & Entity)**
 
-1.  **Create a Migration:** `php spark make:migration create_notes_table`
-2.  Edit the new migration file in `app/Database/Migrations/` to define the table schema.
-3.  **Create the Model:** `php spark make:model NoteModel`
-4.  **Create the Entity:** `php spark make:entity Note`
+1.  **Create a Migration:** `php spark make:migration Modules/Notes/create_notes_table`
+2.  **Create the Model:** `php spark make:model Modules/Notes/NoteModel`
+3.  **Create the Entity:** `php spark make:entity Modules/Notes/Note`
 
 **5.4. Displaying Data in a View**
 
-Create a new file at `app/Views/notes/index.php`.
+Create `app/Modules/Notes/Views/index.php`.
 
     <?= $this->extend('layouts/default') ?>
     <?= $this->section('content') ?>
     <div class="container my-5">
         <h1>My Notes</h1>
-        <!-- Form to create a new note -->
-        <form action="<?= url_to('notes.create') ?>" method="post">
-            <?= csrf_field() ?>
-            <textarea name="content" class="form-control"></textarea>
-            <button type="submit" class="btn btn-primary mt-2">Save Note</button>
-        </form>
-    
-        <!-- List existing notes -->
-        <ul class="list-group mt-4">
-            <?php foreach($notes as $note): ?>
-                <li class="list-group-item"><?= esc($note->content) ?></li>
-            <?php endforeach; ?>
-        </ul>
+        <!-- Form and list of notes -->
     </div>
     <?= $this->endSection() ?>
 
@@ -367,45 +377,41 @@ Create a new file at `app/Views/notes/index.php`.
 **6.1. User Authentication**
 
 - **6.1.1. Registration & Login Flow**: Managed by `AuthController.php`, this feature handles user registration with validation and reCAPTCHA, credential verification for login, and session management.
-- **6.1.2. Email Verification & Password Resets**: Upon registration, a unique token is generated and emailed to the user. `AuthController::verifyEmail()` handles this token. The password reset flow also uses a secure, expiring token sent via email.
-- **6.1.3. Access Control with Filters**: The `AuthFilter` (`app/Filters/AuthFilter.php`) is applied to routes in `app/Config/Routes.php` to protect pages that require a user to be logged in.
+- **6.1.2. Email Verification & Password Resets**: A unique token is generated and emailed to the user for verification. The password reset flow uses a secure, expiring token sent via email.
+- **6.1.3. Access Control with Filters**: The `AuthFilter` (`app/Filters/AuthFilter.php`) is applied to routes to protect pages that require a user to be logged in.
 
 **6.2. Payment Gateway Integration**
 
 - **6.2.1. Configuration**: The Paystack secret key is configured in the `.env` file (`PAYSTACK_SECRET_KEY`).
-- **6.2.2. Initiating a Transaction**: `PaymentsController::initiate()` collects the amount and email, creates a local record in the `payments` table with a `pending` status, and calls `PaystackService::initializeTransaction()`. This service sends the request to Paystack, which returns a unique authorization URL. The user is then redirected to this URL to complete the payment.
-- **6.2.3. Verifying a Payment**: After payment, Paystack redirects the user to the `callback_url` (`payment/verify`). `PaymentsController::verify()` retrieves the transaction reference and uses `PaystackService::verifyTransaction()` to confirm the payment status with Paystack. If successful, the local payment record is updated to `success` and the user's balance is updated within a database transaction.
+- **6.2.2. Initiating a Transaction**: `PaymentsController::initiate()` calls `PaystackService::initializeTransaction()`. The service sends a request to Paystack, which returns a unique authorization URL. The user is then redirected to this URL.
+- **6.2.3. Verifying a Payment**: After payment, Paystack redirects the user back to the application. `PaymentsController::verify()` uses `PaystackService::verifyTransaction()` to confirm the payment status. If successful, the user's balance is updated within a database transaction.
 
 **6.3. AI Service Integration**
 
-- **6.3.1. Generating Content**: `GeminiController::generate()` is the core method. It prepares the user's prompt, adds contextual data from the memory system, and sends it to `GeminiService::generateContent()`. The service makes the API call to Google Gemini and returns the response.
-- **6.3.2. Conversational Memory System**: This advanced feature is managed by `MemoryService.php`. When a user submits a prompt, the service:
-    1.  Generates a vector embedding of the user's input using `EmbeddingService`.
-    2.  Performs a hybrid search (semantic vector search + keyword search) on past interactions stored in the database.
-    3.  Constructs a context block from the most relevant past interactions.
-    4.  Prepends this context to the user's new prompt before sending it to the AI.
-    5.  After receiving a response, it stores the new question-and-answer pair and updates the relevance scores of all memories.
-- **6.3.3. Handling Multimedia Inputs**: Users can upload files via the AI Studio. `GeminiController::uploadMedia()` handles the file, and `GeminiController::generate()` processes it, converting the file to base64 and including it in the API request to Gemini, which is a multimodal model.
-- **6.3.4. Document Generation (PDF/Word)**: From the AI Studio, users can download the generated response. `GeminiController::downloadDocument()` takes the Markdown content and a format (`pdf` or `docx`). It uses the `DocumentService` which first attempts to use `Pandoc` for high-quality conversion. If Pandoc is unavailable or fails for PDF, it falls back to using `Dompdf` for reliable PDF creation.
+- **6.3.1. Generating Content**: `GeminiController::generate()` prepares the user's prompt, adds contextual data from the memory system, and sends it to `GeminiService::generateContent()`.
+- **6.3.2. Conversational Memory System**: This feature is managed by `MemoryService.php`. It uses a hybrid search (semantic vector search + keyword search) on past interactions to construct a relevant context block, which is prepended to the user's new prompt.
+- **6.3.3. Handling Multimedia Inputs**: Users can upload files via the AI Studio. `GeminiController` handles the file, converting it to base64 and including it in the API request to the multimodal Gemini model.
+- **6.3.4. Document Generation (PDF/Word) with Fallback**: Users can download the generated response. `GeminiController::downloadDocument()` uses the `DocumentService`, which first attempts to use `Pandoc` for high-quality conversion. If Pandoc is unavailable or fails for PDF, it automatically falls back to using `Dompdf` for reliable PDF creation.
 
 **6.4. Cryptocurrency Data Service**
 
-- **6.4.1. Querying Balances**: `CryptoController::query()` calls `CryptoService::getBtcBalance()` or `getLtcBalance()`. The service makes an API call to a third-party blockchain explorer (e.g., blockchain.info, blockchair.com) and formats the response.
-- **6.4.2. Fetching Transaction Histories**: Similarly, the controller calls `CryptoService::getBtcTransactions()` or `getLtcTransactions()`. The service fetches the transaction data and formats it into a readable structure for the view.
+- **6.4.1. Querying Balances**: `CryptoController::query()` calls `CryptoService` methods, which make API calls to a third-party blockchain explorer.
+- **6.4.2. Fetching Transaction Histories**: The controller calls `CryptoService` to fetch transaction data, which is then formatted for the view.
 
 **6.5. Administrative Dashboard**
 
-- **6.5.1. User Management**: `AdminController.php` provides methods to list, search, view details, update balances, and delete users. All actions are protected to ensure only administrators can perform them. Balance updates are handled within a database transaction for data integrity.
-- **6.5.2. Sending Email Campaigns**: `CampaignController.php` allows an administrator to compose an email that is then sent to every registered user in the `users` table. The process iterates through users and sends individual emails.
+- **6.5.1. User Management**: `AdminController.php` provides methods to list, search, view details, update balances, and delete users.
+- **6.5.2. Sending Email Campaigns**: `CampaignController.php` allows an administrator to compose an email that is sent to every registered user. It also provides functionality to save, load, and delete campaign templates.
+- **6.5.3. Viewing Application Logs**: `AdminController::logs()` provides a secure interface for administrators to view and select daily log files from the `writable/logs/` directory for debugging purposes.
 
 **6.6. Blog & Content Management**
 
-- **6.6.1. Public-Facing Blog**: `BlogController.php` handles the public-facing side of the blog, including a paginated index of all published posts (`/blog`) and individual post views using SEO-friendly slugs (`/blog/your-post-slug`).
-- **6.6.2. Admin Management Interface**: The `BlogController` also contains admin-only methods for managing content. The admin panel (`/admin/blog`) provides a full CRUD (Create, Read, Update, Delete) interface for posts, allowing administrators to write, edit, publish, and delete articles.
+- **6.6.1. Public-Facing Blog**: `BlogController.php` (in the `Blog` module) handles the public-facing side, including a paginated index of all published posts and individual post views.
+- **6.6.2. Admin Management Interface**: The `BlogController` also contains admin-only methods for managing content, providing a full CRUD (Create, Read, Update, Delete) interface for posts.
 
 **6.7. Self-Hosted Documentation**
 
-- **6.7.1. Serving Documentation Pages**: `DocumentationController.php` serves static and dynamic documentation pages. It includes methods to display the main documentation index (`/documentation`), as well as separate, detailed pages for different aspects of the project, such as web architecture (`/documentation/web`) and the AI system (`/documentation/agi`).
+- **6.7.1. Serving Documentation Pages**: `DocumentationController.php` serves documentation pages. It includes methods to display the main documentation index and separate pages for different aspects of the project, such as web architecture and the AI system.
 
 --------------------------------------------------
 
@@ -413,62 +419,45 @@ Create a new file at `app/Views/notes/index.php`.
 
 **7. Command-Line Interface (CLI)**
 
-CodeIgniter's CLI tool, `spark`, is used for various development and maintenance tasks.
-
 **7.1. Overview of Custom Commands**
 
-You can list all available commands by running `php spark`. Custom application commands are located in `app/Commands/`.
+Custom application commands are located in `app/Commands/` or `app/Modules/[ModuleName]/Commands/`.
 
 **7.2. `php spark train`**
 
-This is a custom command defined in `app/Commands/Train.php`.
-
 - **Purpose:** To run the AI text classification training service offline.
-- **Action:** It invokes `TrainingService::train()`, which reads a training dataset, processes it, trains a Naive Bayes classifier, and saves the serialized model files to the `writable/nlp/` directory. This ensures that performance-intensive model training does not impact the live web application.
-
-**7.3. `php spark [another:command]`**
-
-Other essential built-in commands include:
-
-- `php spark migrate`: Applies pending database migrations.
-- `php spark db:seed <SeederName>`: Runs a database seeder to populate tables with data.
-- `php spark make:controller <Name>`: Generates a new controller file.
-- `php spark optimize`: Caches configuration and file locations for improved performance.
+- **Action:** It invokes `TrainingService::train()`, which trains a Naive Bayes classifier and saves the serialized model files to the `writable/nlp/` directory.
 
 **8. Configuration Reference**
 
 **8.1. Application (`App.php`)**
 
-Located at `app/Config/App.php`, this file contains the base configuration for the application, including the `baseURL`, `indexPage`, and `appTimezone`.
+Located at `app/Config/App.php`, this file contains the base configuration for the application.
 
 **8.2. Database (`Database.php`)**
 
-Located at `app/Config/Database.php`, this file defines the connection parameters for your databases. The `default` group is used for the main application, while the `tests` group is used for PHPUnit testing.
+Located at `app/Config/Database.php`, this file defines the database connection parameters.
 
-**8.3. Custom Configurations (`AGI.php`, etc.)**
+**8.3. Custom Configurations (`AGI.php`, `Recaptcha.php`)**
 
 Custom configuration files are placed in `app/Config/Custom/`.
 
-- `AGI.php`: Contains all settings related to the AI service, including embedding models, hybrid search parameters, and memory logic (e.g., decay scores, context budget).
-- `Recaptcha.php`: Stores the site and secret keys for the Google reCAPTCHA service, which are loaded from the `.env` file.
+- `AGI.php`: Contains settings for the AI service, including embedding models, memory logic, and hybrid search parameters.
+- `Recaptcha.php`: Stores the site and secret keys for the Google reCAPTCHA service.
 
 **9. Testing**
 
 **9.1. Running the Test Suite**
 
-The project is configured to use PHPUnit for testing. The test suite can be run using a Composer script.
-
-    composer test
-
-This command executes `phpunit` as defined in `composer.json` and uses the configuration from `phpunit.xml.dist`.
+The project uses PHPUnit. Run the test suite using `composer test`.
 
 **9.2. Writing Unit Tests**
 
-Unit tests focus on testing individual classes (like a Service or Model) in isolation. Test files should be placed in the `tests/` directory, mirroring the `app/` structure.
+Unit tests focus on testing individual classes in isolation and are placed in the `tests/` directory.
 
 **9.3. Writing Feature Tests**
 
-Feature tests are designed to test a full request-response cycle, simulating a user interacting with the application. They allow you to test controllers, views, and redirects together.
+Feature tests test a full request-response cycle, simulating user interaction.
 
 --------------------------------------------------
 
@@ -478,7 +467,7 @@ Feature tests are designed to test a full request-response cycle, simulating a u
 
 **10.1. Production Server Setup**
 
-The `setup.sh` script provides a complete, automated setup for a production-ready Ubuntu server, including installing the web server, PHP, database, and all project dependencies, as well as configuring a virtual host.
+The `setup.sh` script provides a complete, automated setup for a production-ready Ubuntu server.
 
 **10.2. Deployment Checklist**
 
@@ -491,69 +480,77 @@ The `setup.sh` script provides a complete, automated setup for a production-read
 
 **10.3. Performance Optimization**
 
-- **Caching:** The application can be configured to use various caching strategies. The `app/Config/Cache.php` file is set to use Redis as the primary handler with a file-based fallback.
-- **Autoloader Optimization:** The `--optimize-autoloader` flag in the composer install command creates an optimized class map for faster class loading.
-- **Spark Optimize Command:** `php spark optimize` caches configuration and speeds up the framework's file locator.
-- **Database Queries:** Use pagination (`paginate()`) for lists and select only necessary columns to keep database interactions efficient.
+- **Caching:** The application is configured to use Redis with a file-based fallback.
+- **Autoloader Optimization:** The `--optimize-autoloader` flag creates an optimized class map.
+- **Spark Optimize Command:** `php spark optimize` caches configuration for improved performance.
 
 **11. Troubleshooting**
 
 **11.1. Frequently Asked Questions (FAQ)**
 
-- **Why did my payment fail?** Ensure you have sufficient funds and that your payment provider (e.g., M-Pesa) is active. If the problem persists, contact support with your transaction reference.
-- **Why can't I log in after registering?** You must click the verification link sent to your email address before you can log in.
-- **Why is my AI query failing?** This could be due to insufficient balance or a temporary issue with the Gemini API. Check your balance and try again after a few moments.
+- **Why can't I log in after registering?** You must click the verification link sent to your email address.
+- **Why is my AI query failing?** Check your account balance or try again after a few moments.
 
 **11.2. Common Error Resolutions**
 
-- **"Whoops! We hit a snag."**: This is the generic production error message. Check the server logs at `writable/logs/` for the specific error details.
-- **"File upload failed."**: This usually indicates a permissions issue. Ensure the `writable/uploads/` directory and its subdirectories are writable by the web server.
-- **"Could not send email."**: Verify that your SMTP credentials in the `.env` file are correct and that your email provider is not blocking the connection.
+- **"Whoops! We hit a snag."**: Check the server logs at `writable/logs/` for specific error details.
+- **"File upload failed."**: This usually indicates a permissions issue on the `writable/uploads/` directory.
+- **"Could not send email."**: Verify your SMTP credentials in the `.env` file.
 
 **11.3. Logging & Debugging**
 
-- **Log Location:** All application logs are stored in `writable/logs/`, with a new file created for each day.
-- **Log Levels:** The logging sensitivity can be adjusted in `app/Config/Logger.php`. In a `development` environment, the threshold is low to capture all messages. In `production`, it is higher to only log errors and critical issues.
+- **Log Location:** All application logs are stored in `writable/logs/`, with a new file created daily.
+- **Log Levels:** Adjust logging sensitivity in `app/Config/Logger.php`.
 
 **12. Contributing**
 
 **12.1. Contribution Guidelines**
 
 1.  Fork the repository.
-2.  Create a new feature branch (`git checkout -b feature/AmazingFeature`).
-3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`).
-4.  Push to the branch (`git push origin feature/AmazingFeature`).
+2.  Create a new feature branch.
+3.  Commit your changes.
+4.  Push to the branch.
 5.  Open a Pull Request.
 
 **12.2. Code Style (PSR-12)**
 
-The project enforces the PSR-12 coding standard. All contributions must adhere to this standard.
+The project enforces the PSR-12 coding standard.
 
 **12.3. Submitting a Pull Request**
 
-Before submitting a pull request, ensure that your code is well-documented, follows the project's architectural patterns (MVC-S), and that all existing tests pass.
+Ensure your code is well-documented, follows the project's architectural patterns, and that all tests pass.
 
 **13. Appendices**
 
 **13.1. Glossary of Terms**
 
+- **Module:** A self-contained directory in `app/Modules/` that encapsulates a single business feature.
 - **MVC-S:** Model-View-Controller-Service, an architectural pattern that separates database logic (Model), presentation (View), request handling (Controller), and business logic (Service).
-- **Service:** A class in the `app/Libraries` directory that contains reusable business logic.
-- **Entity:** A class that represents a single row from a database table, allowing for object-oriented interaction with data.
-- **Embedding:** A numerical vector representation of text, used for semantic understanding and similarity searches in the AI memory system.
-- **Pay-as-you-go:** A pricing model where users pay only for the services they consume, rather than a fixed subscription fee.
+- **Service:** A class containing reusable business logic.
+- **Entity:** A class that represents a single row from a database table.
 
 **13.2. Changelog & Release History**
+
+**v1.2.0 - 2025-11-14**
+
+### Added
+- **Modular Architecture:** Refactored the entire application into a modular structure. Features like Blog, Payments, Crypto, and Gemini are now self-contained in `app/Modules/`.
+- **Campaign Templates:** Administrators can now save, load, and delete email campaign templates.
+- **Admin Log Viewer:** Added a new page in the admin dashboard to securely view application log files.
+- **Self-Hosted Documentation Pages:** The application now serves dedicated pages for Web and AGI documentation.
+
+### Changed
+- **Document Generation:** The AI document download feature now uses Pandoc for higher quality output and falls back to Dompdf for PDFs if Pandoc is not available.
+- **Directory Structure:** Major changes to the directory structure to support the new modular architecture.
+- **Frontend Workflow:** Standardized all views to use the "Blueprint" method for UI consistency.
 
 **v1.1.0 - 2025-11-13**
 
 ### Added
-- **Blog & Content Management System:** Added a complete public-facing blog and an administrative backend for full CRUD (Create, Read, Update, Delete) functionality for posts.
-- **AI Document Generation:** Users can now download generated AI content as a PDF or Microsoft Word (`.docx`) file from the AI Studio.
-- **Self-Hosted Documentation Pages:** The application now serves its own documentation through dedicated views.
+- **Blog & Content Management System:** Added a complete public-facing blog and an administrative backend for full CRUD functionality.
+- **AI Document Generation:** Users can download generated AI content as a PDF or Microsoft Word (`.docx`) file.
 
 ### Changed
-- Updated various controllers and views to support new features and improve UI.
 - Updated routing to include endpoints for the new blog and documentation features.
 
 **v1.0.0 (Initial Release)**
@@ -610,14 +607,14 @@ The most efficient way to find what needs documenting is by analyzing the differ
 | If This File/Directory Changed... | ...Then Review and Update These Documentation Sections |
 | :--- | :--- |
 | `setup.sh` or `.env` (new variables) | **3. Installation** (Prerequisites, Automated/Manual Setup, Environment Config) |
-| `app/Config/Routes.php` | **5. Tutorial**, **6. Feature Guides** (for new endpoints/URLs) |
-| `app/Controllers/*` | **6. Feature Guides** (logic for a specific feature) |
-| `app/Libraries/*` (Services) | **4. Core Concepts** (if a fundamental service changed), **6. Feature Guides** (detailed business logic) |
-| `app/Models/*` or `app/Entities/*` | **5. Tutorial**, **6. Feature Guides** (how data is handled for a feature) |
-| `app/Database/Migrations/*` | **5. Tutorial**, **6. Feature Guides** (mention new database tables/columns) |
-| `app/Commands/*` | **7. Command-Line Interface (CLI)** |
+| `app/Modules/[ModuleName]/Config/Routes.php` | **5. Tutorial**, **6. Feature Guides** (for new endpoints/URLs) |
+| `app/Modules/[ModuleName]/Controllers/*` | **6. Feature Guides** (logic for a specific feature) |
+| `app/Modules/[ModuleName]/Libraries/*` (Services) | **4. Core Concepts**, **6. Feature Guides** (detailed business logic) |
+| `app/Modules/[ModuleName]/Models/*` or `Entities/*` | **5. Tutorial**, **6. Feature Guides** (how data is handled for a feature) |
+| `app/Modules/[ModuleName]/Database/Migrations/*` | **5. Tutorial**, **6. Feature Guides** (mention new database tables/columns) |
+| `app/Commands/*` or `app/Modules/[ModuleName]/Commands/*` | **7. Command-Line Interface (CLI)** |
 | `app/Config/Custom/*` | **8. Configuration Reference** (document new custom settings) |
-| `app/Views/*` | Usually doesn't require a doc change unless a major new UI feature is introduced. |
+| `app/Modules/[ModuleName]/Views/*` | Usually doesn't require a doc change unless a major new UI feature is introduced. |
 | `composer.json` (new dependencies) | **1.4. Technology Stack**, **3.1. Server Requirements** |
 
 **15.5. Procedure: Updating the Changelog and Managing Releases**
