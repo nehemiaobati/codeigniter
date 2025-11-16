@@ -43,8 +43,15 @@ class CreatePaymentsTable extends Migration
                 'type' => 'JSON',
                 'null' => true,
             ],
-            'created_at datetime default current_timestamp',
-            'updated_at datetime default current_timestamp on update current_timestamp',
+            'created_at' => [
+                'type' => 'DATETIME',
+                'default' => 'CURRENT_TIMESTAMP',
+            ],
+            'updated_at' => [
+                'type' => 'DATETIME',
+                'default' => 'CURRENT_TIMESTAMP',
+                'on_update' => 'CURRENT_TIMESTAMP',
+            ],
         ]);
         $this->forge->addKey('id', true);
         $this->forge->addForeignKey('user_id', 'users', 'id', 'CASCADE', 'SET NULL');
