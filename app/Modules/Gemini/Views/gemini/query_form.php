@@ -109,7 +109,7 @@
                         <div id="mediaUploadArea" class="mb-3">
                             <input type="file" id="media-input-trigger" multiple class="d-none">
                             <label for="media-input-trigger" class="btn btn-outline-secondary w-100"><i class="bi bi-paperclip"></i> Attach Files or Drag & Drop</label>
-                            <div id="upload-list-wrapper" class="mt-3 text-start" style="max-height: 120px; overflow-y: auto; padding-right: 10px;">
+                            <div id="upload-list-wrapper" class="mt-3 text-start" style="max-height: 130px; overflow-y: auto; padding-right: 10px;">
                                 <div id="file-progress-container"></div>
                             </div>
                             <div id="uploaded-files-container"></div>
@@ -543,9 +543,20 @@
                 return new Promise((resolve, reject) => {
                     const fileId = `file-${Math.random().toString(36).substr(2, 9)}`;
                     const progressItem = document.createElement('div');
-                    progressItem.className = 'progress-item d-flex align-items-center gap-3 mb-3';
+                    progressItem.className = 'progress-item d-flex align-items-center gap-2 mb-3';
                     progressItem.id = fileId;
-                    progressItem.innerHTML = `<span class="file-name text-truncate" title="${file.name}">${file.name}</span><div class="progress flex-grow-1" style="height: 8px;"><div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div></div><span class="status-icon text-muted fs-5"><i class="bi bi-hourglass-split"></i></span>`;
+                    // REFACTOR START: Improved flexbox layout for progress item
+                    progressItem.innerHTML = `
+                        <div class="flex-grow-1" style="min-width: 0;">
+                            <div class="file-name text-truncate" title="${file.name}">${file.name}</div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="status-icon text-muted fs-5 flex-shrink-0">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>`;
+                    // REFACTOR END
                     this.elements.progressContainer.appendChild(progressItem);
 
                     const xhr = new XMLHttpRequest();
