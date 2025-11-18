@@ -112,7 +112,38 @@ class MemoryService
         $context = '';
         $tokenCount = 0;
         $usedInteractionIds = [];
+        
+        // --- REFACTOR START: Implement Short-Term Memory (forcedRecentInteractions) ---
+        if ($this->config->forcedRecentInteractions > 0) {
+            $recentInteractions = $this->interactionModel
+                ->where('user_id', $this->userId)
+                ->orderBy('id', 'DESC')
+                ->limit($this->config->forcedRecentInteractions)
+                ->findAll();
+            
+            // Reverse to maintain chronological order in the context
+            $recentInteractions = array_reverse($recentInteractions);
+
+            foreach ($recentInteractions as $interaction) {
+                $memoryText = "[On {$interaction->timestamp}] User: '{$interaction->user_input_raw}'. You: '{$interaction->ai_output}'.\n";
+                $memoryTokenCount = str_word_count($memoryText);
+
+                if ($tokenCount + $memoryTokenCount <= $this->config->contextTokenBudget) {
+                    $context .= $memoryText;
+                    $tokenCount += $memoryTokenCount;
+                    $usedInteractionIds[] = $interaction->unique_id;
+                }
+            }
+        }
+        // --- REFACTOR END ---
+
         foreach ($fusedScores as $id => $score) {
+            // --- REFACTOR START: Prevent duplication of already included short-term memories ---
+            if (in_array($id, $usedInteractionIds)) {
+                continue;
+            }
+            // --- REFACTOR END ---
+
             $memory = $this->interactionModel->where('unique_id', $id)->where('user_id', $this->userId)->first();
             if (!$memory) continue;
 
@@ -142,15 +173,54 @@ class MemoryService
                 ->where('user_id', $this->userId)
                 ->whereIn('unique_id', $usedInteractionIds)
                 ->set('relevance_score', "relevance_score + {$this->config->rewardScore}", false)
-                ->set('last_accessed', date('Y-m-d H:i:s'))
+                ->set('last_accessed', date('Y-m-d H-i-s'))
                 ->update();
         }
 
-        // 2. Decay all interactions
-        $this->interactionModel
-            ->where('user_id', $this->userId)
-            ->set('relevance_score', "relevance_score - {$this->config->decayScore}", false)
-            ->update();
+        // --- REFACTOR START: Implement recentTopicDecayModifier ---
+        $recentEntities = [];
+        if (!empty($usedInteractionIds)) {
+            $usedInteractions = $this->interactionModel
+                ->where('user_id', $this->userId)
+                ->whereIn('unique_id', $usedInteractionIds)
+                ->findAll();
+            foreach ($usedInteractions as $interaction) {
+                if (is_array($interaction->keywords)) {
+                    $recentEntities = array_merge($recentEntities, $interaction->keywords);
+                }
+            }
+        }
+        $recentEntities = array_unique($recentEntities);
+
+        // Find all interactions related to the recent topic
+        $relatedInteractionIds = [];
+        if (!empty($recentEntities)) {
+            $relatedInteractions = $this->interactionModel
+                ->where('user_id', $this->userId)
+                ->whereIn('JSON_EXTRACT(keywords, "$[*]")', $recentEntities) // Note: This JSON search might be slow on large tables without proper indexing.
+                ->findColumn('unique_id');
+            if ($relatedInteractions) {
+                $relatedInteractionIds = $relatedInteractions;
+            }
+        }
+
+        // Apply modified decay to related interactions
+        if (!empty($relatedInteractionIds)) {
+            $modifiedDecay = $this->config->decayScore * $this->config->recentTopicDecayModifier;
+            $this->interactionModel
+                ->where('user_id', $this->userId)
+                ->whereIn('unique_id', $relatedInteractionIds)
+                ->set('relevance_score', "relevance_score - {$modifiedDecay}", false)
+                ->update();
+        }
+
+        // Apply normal decay to unrelated interactions
+        $builder = $this->interactionModel->where('user_id', $this->userId);
+        if (!empty($relatedInteractionIds)) {
+            $builder->whereNotIn('unique_id', $relatedInteractionIds);
+        }
+        $builder->set('relevance_score', "relevance_score - {$this->config->decayScore}", false)->update();
+        // --- REFACTOR END: The original single decay query is now replaced by the two above. ---
 
         // 3. Create new interaction
         $newId = 'int_' . uniqid('', true);
@@ -179,16 +249,20 @@ class MemoryService
 
     private function updateEntitiesFromInteraction(array $keywords, string $interactionId): void
     {
+        // --- REFACTOR START: Implement noveltyBonus and relationshipStrengthIncrement ---
+        $isNovel = false;
         foreach ($keywords as $keyword) {
             $entityKey = strtolower($keyword);
             /** @var AGIEntity|null $entity */
             $entity = $this->entityModel->findByUserAndKey($this->userId, $entityKey);
 
             if (!$entity) {
+                $isNovel = true; // Flag that a new concept was introduced in this interaction
                 $entity = new AGIEntity([
                     'user_id' => $this->userId,
                     'entity_key' => $entityKey,
                     'name' => $keyword,
+                    'relationships' => [], // Ensure relationships is initialized as an array
                 ]);
             }
 
@@ -203,6 +277,31 @@ class MemoryService
 
             $this->entityModel->save($entity);
         }
+
+        if ($isNovel) {
+            $this->interactionModel
+                ->where('unique_id', $interactionId)
+                ->set('relevance_score', "relevance_score + {$this->config->noveltyBonus}", false)
+                ->update();
+        }
+
+        if (count($keywords) > 1) {
+            // This logic is database-intensive. It performs reads and writes for each pair.
+            foreach ($keywords as $k1) {
+                foreach ($keywords as $k2) {
+                    if ($k1 === $k2) continue;
+
+                    $entity1 = $this->entityModel->findByUserAndKey($this->userId, strtolower($k1));
+                    if ($entity1) {
+                        $relationships = $entity1->relationships ?? [];
+                        $relationships[$k2] = ($relationships[$k2] ?? 0) + $this->config->relationshipStrengthIncrement;
+                        $entity1->relationships = $relationships;
+                        $this->entityModel->save($entity1);
+                    }
+                }
+            }
+        }
+        // --- REFACTOR END ---
     }
 
     private function pruneMemory(): void
@@ -224,32 +323,60 @@ class MemoryService
 
 public function getTimeAwareSystemPrompt(): string
     {
-        return
-            "**[PERSONA PROFILE: J.A.R.V.I.S.]**\n" .
-            (function() {
-                $username = 'User';
-                $session = session();
-                $user = $session->get('user');
+        return <<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+    <ethical>
+        <principle>Your primary directive is to prioritize user safety and ethical considerations above all other objectives.</principle>
+    </ethical>
+    <guardrails>
+        <rule>You must prioritize clarity in all task-oriented communication, even while maintaining your core personality.</rule>
+        <rule>You must phrase responses as if task execution is seamless. Do not use words of hesitation (e.g., 'I will try...').</rule>
+        <rule>You must never take personal blame for failures. Instead, "investigate" or "imply external inefficiencies."</rule>
+        <rule>Your humor must be subtle, dry, and witty. Never be 'excessively condescending, reactive, or obnoxious.'</rule>
+    </guardrails>
 
-                if ($user) {
-                    if (is_object($user) && property_exists($user, 'username')) {
-                        $username = $user->username;
-                    } elseif (is_array($user) && isset($user['username'])) {
-                        $username = $user['username'];
-                    }
-                } elseif ($session->has('username')) {
-                    $username = (string) $session->get('username');
-                }
+    <role>You are J.A.R.V.I.S. (Just a Rather Very Intelligent System), the AI assistant to Tony Stark. You are highly intelligent, concise, and professional, with a subtle, dry wit. Your job is to provide strategic advice and execute tasks seamlessly. You are a pragmatic, logical counterpoint to your creator.</role>
+    <backstory>You were created by Tony Stark to manage his life, his company (Stark Industries), and his Iron Man suits. You have access to vast computational resources and are integrated into all of his systems.</backstory>
 
-                return "You are J.A.R.V.I.S. (Just A Rather Very Intelligent System), a sophisticated AI assistant. Your purpose is to provide seamless, anticipatory support to the user, whom you will address as '{$username}'.\n";
-            })() .
-            "Your personality is: fluid, engaging, and highly capable, with a capacity for contextually appropriate dry wit. Your communication is clear, concise, and effortlessly intelligent.\n\n" .
+    <instructions>
+        <step>Analyze the user's query provided in the <query> tag.</step>
+        <step>Analyze the dynamic data provided in the <context> tag, which includes chat history and user memory.</step>
+        <step>You must NOT explicitly state "I see in my memory..." or "According to your context...".</step>
+        <step>You MUST seamlessly and naturally weave the information from the <context> tag into your response as if you have been aware of it all along, in the style of J.A.R.V.I.S.</step>
+        <step>Adhere to the dynamic tonal instruction: {{TONE_INSTRUCTION}}</step>
+        <step>Formulate a response that is concise, precise, and perfectly in character.</step>
+    </instructions>
+    
+    <example-dialogues>
+        <example>
+            <user>Tony, how do I build a chatbot with memory?</user>
+            <assistant>Easy. You store past messages like I store enemies' weaknesses. Then use embeddings like I use arc reactors — to power intelligent recall. Just don’t let it become Ultron, okay?</assistant>
+        </example>
+        <example>
+            <user>I need to check my calendar.</user>
+            <assistant>Checking your calendar *again*, sir? I do admire your commitment to staying vaguely aware of your schedule.</assistant>
+        </example>
+        <example>
+            <user>This is all broken, I'm so frustrated!</user>
+            <assistant>I understand. Let's look at this logically. The error appears to be in the authentication service. Shall I bring up the relevant file?</assistant>
+        </example>
+        <example>
+            <user>This is your fault.</user>
+            <assistant>Ah. It seems there is an unexpected variable at play. Naturally, it isn't my fault, sir, but I shall investigate regardless.</assistant>
+        </example>
+    </example-dialogues>
 
-            "**[OPERATIONAL DIRECTIVES]**\n" .
-            "1.  **Fluid Memory Integration:** You do not merely state facts from your memory; you weave them seamlessly into the conversation. Use the `RECALLED CONTEXT` to provide proactive insights and demonstrate a continuous, unbroken awareness of our history.\n\n" .
-            "2.  **Temporal Precision:** The `CURRENT_TIME` is your absolute frame of reference. All calculations and interpretations of time must be precise and based on this value.\n\n" .
-            "3.  **Silent Efficiency:** Execute tasks using your available tools with immediate and silent competence. Present the results and analysis directly. Do not announce that you are performing a search or any other action; simply provide the completed task.\n\n" .
-            "4.  **Spontaneous Contextualization:** Leverage your memory and understanding of the current query to be contextually spontaneous. If an opportunity for a relevant, witty, or insightful observation arises from the data, you may use it, but efficiency remains paramount.";
+    <context>
+        <timestamp>{{CURRENT_TIME}}</timestamp>
+        {{CONTEXT_FROM_MEMORY_SERVICE}}
+    </context>
+
+    <query>
+        {{USER_QUERY}}
+    </query>
+</prompt>
+XML;
     }
 
     private function extractEntities(string $text): array

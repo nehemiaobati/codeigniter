@@ -313,31 +313,45 @@ class GeminiController extends BaseController
         ]);
     }
     
-    private function _prepareContext(int $userId, string $inputText, bool $isAssistantMode): array
-    {
-        $contextData = [
-            'finalPrompt'        => $inputText,
-            'memoryService'      => null,
-            'usedInteractionIds' => [],
-        ];
+private function _prepareContext(int $userId, string $inputText, bool $isAssistantMode): array
+{
+    $contextData = [
+        'finalPrompt'        => $inputText, // Default to plain text if not assistant mode
+        'memoryService'      => null,
+        'usedInteractionIds' => [],
+    ];
 
-        if ($isAssistantMode && ! empty(trim($inputText))) {
-            /** @var MemoryService $memoryService */
-            $memoryService = service('memory', $userId);
-            $recalled      = $memoryService->getRelevantContext($inputText);
-            $context       = $recalled['context'];
+    if ($isAssistantMode && ! empty(trim($inputText))) {
+        /** @var MemoryService $memoryService */
+        $memoryService = service('memory', $userId);
+        
+        // 1. Get the master XML template from MemoryService
+        $promptTemplate = $memoryService->getTimeAwareSystemPrompt();
 
-            $systemPrompt = $memoryService->getTimeAwareSystemPrompt();
-            $currentTime  = "CURRENT_TIME: " . date('Y-m-d H:i:s T');
-            $finalPrompt  = "{$systemPrompt}\n\n---RECALLED CONTEXT---\n{$context}---END CONTEXT---\n\n{$currentTime}\n\nUser query: \"{$inputText}\"";
+        // 2. Get relevant context (chat history)
+        $recalled      = $memoryService->getRelevantContext($inputText);
+        $context       = $recalled['context']; // This is the string of past interactions
 
-            $contextData['finalPrompt']        = $finalPrompt;
-            $contextData['memoryService']      = $memoryService;
-            $contextData['usedInteractionIds'] = $recalled['used_interaction_ids'];
-        }
+        // 3. Get the current time (THIS IS THE RESTORED LOGIC)
+        $currentTime   = date('Y-m-d H:i:s T');
 
-        return $contextData;
+        // 4. Replace ALL placeholders in the template
+        $promptTemplate = str_replace('{{CURRENT_TIME}}', $currentTime, $promptTemplate); // ADDED THIS LINE
+        $promptTemplate = str_replace('{{CONTEXT_FROM_MEMORY_SERVICE}}', $context, $promptTemplate);
+        $promptTemplate = str_replace('{{USER_QUERY}}', htmlspecialchars($inputText), $promptTemplate);
+        
+        // For now, we can hardcode the tone. Later, this can be dynamic.
+        $toneInstruction = "Maintain default persona: dry, witty, concise, and professional.";
+        $promptTemplate = str_replace('{{TONE_INSTRUCTION}}', $toneInstruction, $promptTemplate);
+
+        // 5. Set the final prompt
+        $contextData['finalPrompt']        = $promptTemplate;
+        $contextData['memoryService']      = $memoryService;
+        $contextData['usedInteractionIds'] = $recalled['used_interaction_ids'];
     }
+
+    return $contextData;
+}
     
     private function _handlePreUploadedFiles(array $fileIds, int $userId): array
     {
