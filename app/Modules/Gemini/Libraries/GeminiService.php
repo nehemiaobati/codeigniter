@@ -30,9 +30,9 @@ class GeminiService
         "gemini-3-pro-preview", // Multimodal, Thinking Level High
         "gemini-2.5-pro",       // Multimodal, Thinking Budget
         "gemini-flash-latest",
-        "gemini-flash-lite-latest",
-        "gemini-2.5-flash",     // Standard Fast
-        "gemini-2.5-flash-lite",
+        "gemini-flash-lite-latest", // Standard Fast
+        "gemini-2.5-flash",     
+        "gemini-2.5-flash-lite", // Standard Fast
         "gemini-2.0-flash",      // Fallbacks
         "gemini-2.0-flash-lite", // Fallbacks
     ];
@@ -72,7 +72,15 @@ class GeminiService
 
             // --- CHANGED: logic delegates to PayloadService ---
             // We get the decoupled full request configuration here
+            // 1. Get the config
             $config = $this->payloadService->getPayloadConfig($currentModel, $apiKey, $parts);
+
+            // 2. SAFETY CHECK: If no payload exists for this model, SKIP it.
+            if (empty($config)) {
+                log_message('warning', "GeminiService: Skipping model '$currentModel' because no payload configuration was found.");
+                continue; // Move to the next model in the priority list
+            }
+
             $apiUrl = $config['url'];
             $requestBody = $config['body'];
             // --------------------------------------------------
