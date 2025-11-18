@@ -27,8 +27,8 @@ class GeminiService
      * @var array<string>
      */
     protected array $modelPriorities = [
-        "gemini-3-pro-preview", // Multimodal, Thinking Level High
-        "gemini-2.5-pro",       // Multimodal, Thinking Budget
+        //"gemini-3-pro-preview", // Multimodal, Thinking Level High
+        //"gemini-2.5-pro",       // Multimodal, Thinking Budget
         "gemini-flash-latest",
         "gemini-flash-lite-latest", // Standard Fast
         "gemini-2.5-flash",     
