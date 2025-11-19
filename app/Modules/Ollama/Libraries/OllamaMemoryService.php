@@ -4,130 +4,202 @@ namespace App\Modules\Ollama\Libraries;
 
 use App\Modules\Ollama\Config\Ollama;
 use App\Modules\Ollama\Models\OllamaInteractionModel;
+use App\Modules\Ollama\Models\OllamaEntityModel;
 use App\Modules\Ollama\Libraries\OllamaService;
+use App\Modules\Ollama\Libraries\OllamaTokenService;
 
-/**
- * Manages context retrieval using local vector similarity and recent history.
- */
 class OllamaMemoryService
 {
     private Ollama $config;
-    private OllamaInteractionModel $model;
+    private OllamaInteractionModel $interactionModel;
+    private OllamaEntityModel $entityModel;
     private OllamaService $api;
+    private OllamaTokenService $tokenizer;
     private int $userId;
+
+    // Tuning Parameters
+    private float $hybridAlpha = 0.5;
+    private float $decayRate = 0.05;
+    private float $boostRate = 0.5;
 
     public function __construct(int $userId)
     {
         $this->userId = $userId;
         $this->config = config(Ollama::class);
-        $this->model  = new OllamaInteractionModel();
-        $this->api    = new OllamaService();
+        $this->interactionModel = new OllamaInteractionModel();
+        $this->entityModel = new OllamaEntityModel();
+        $this->api = new OllamaService();
+        $this->tokenizer = new OllamaTokenService();
     }
 
-    /**
-     * Builds the message array for the API, including system prompt and retrieved context.
-     */
     public function buildContext(string $userInput): array
     {
-        $messages = [];
-        $systemContext = "You are a helpful local AI assistant.";
-        
-        // 1. Generate embedding for current input
+        // 1. Get Embedding
         $inputVector = $this->api->embed($userInput);
+        
+        // 2. Extract Keywords
+        $keywords = $this->tokenizer->processText($userInput);
 
-        // 2. Find semantically similar past interactions (Long Term Memory)
-        if ($inputVector) {
-            $relevantMemories = $this->findSimilarInteractions($inputVector);
-            if (!empty($relevantMemories)) {
-                $systemContext .= "\n\nRelevant Context from Memory:\n" . implode("\n", $relevantMemories);
+        // 3. Hybrid Search
+        $relevantIds = $this->performHybridSearch($inputVector, $keywords);
+
+        // 4. Construct System Prompt with Memories
+        $contextText = "";
+        if (!empty($relevantIds)) {
+            $memories = $this->interactionModel
+                ->whereIn('id', $relevantIds)
+                ->findAll();
+            
+            foreach ($memories as $mem) {
+                $contextText .= "- [Memory]: User asked '{$mem->user_input}'. AI answered: '{$mem->ai_response}'\n";
             }
         }
 
-        // 3. Add System Prompt
-        $messages[] = ['role' => 'system', 'content' => $systemContext];
+        // 5. Assemble Messages
+        $messages = [];
+        
+        $systemPrompt = "You are DeepSeek R1. " .
+            "When faced with complex queries, you MUST use your internal reasoning process " .
+            "wrapped in <think></think> tags before answering.\n\n" .
+            "Relevant Context from Memory:\n" . ($contextText ?: "None available.");
+            
+        $messages[] = ['role' => 'system', 'content' => $systemPrompt];
 
-        // 4. Add Recent History (Short Term Memory)
-        $recentHistory = $this->model
+        // 6. Add recent conversational history
+        $recent = $this->interactionModel
             ->where('user_id', $this->userId)
             ->orderBy('created_at', 'DESC')
-            ->limit($this->config->historyDepth)
+            ->limit(3)
             ->findAll();
-            
-        $recentHistory = array_reverse($recentHistory); // Chronological order
-
-        foreach ($recentHistory as $chat) {
-            $messages[] = ['role' => 'user', 'content' => $chat->user_input];
-            $messages[] = ['role' => 'assistant', 'content' => $chat->ai_response];
+        
+        $recent = array_reverse($recent);
+        foreach ($recent as $r) {
+            $messages[] = ['role' => 'user', 'content' => $r->user_input];
+            $messages[] = ['role' => 'assistant', 'content' => $r->ai_response];
         }
 
-        // 5. Add Current User Input
         $messages[] = ['role' => 'user', 'content' => $userInput];
 
         return $messages;
     }
 
-    /**
-     * Saves the interaction and its embedding to the database.
-     */
     public function saveInteraction(string $input, string $response, string $modelName): void
     {
-        // Embed the combined text for better context retrieval later
+        // 1. Prepare Data
         $fullText = "User: $input | AI: $response";
         $embedding = $this->api->embed($fullText);
-        $embeddingJson = $embedding ? json_encode($embedding) : null;        
-
-        $this->model->insert([
+        $keywords = $this->tokenizer->processText($input);
+        
+        // 2. Save Interaction
+        $interactionId = $this->interactionModel->insert([
             'user_id'     => $this->userId,
             'prompt_hash' => hash('sha256', $input),
             'user_input'  => $input,
             'ai_response' => $response,
             'ai_model'    => $modelName,
-            'embedding'   => $embeddingJson 
+            'embedding'   => $embedding ? json_encode($embedding) : null,
+            'keywords'    => json_encode($keywords),
+            'relevance_score' => 1.0
         ]);
-    }
 
-    /**
-     * Cosine Similarity Search logic (PHP Implementation).
-     */
-    private function findSimilarInteractions(array $targetVector): array
-    {
-        // Fetch rows with embeddings. 
-        // Performance Note: For huge datasets, use a vector DB (pgvector/milvus). 
-        // For local personal usage, PHP array iteration is surprisingly fast up to ~5k records.
-        $candidates = $this->model
-            ->where('user_id', $this->userId)
-            ->where('embedding IS NOT NULL')
-            ->orderBy('created_at', 'DESC')
-            ->limit(100) // Optimization: Only check last 100 messages for deep context
-            ->findAll();
+        // 3. Update Knowledge Graph (Entities)
+        foreach ($keywords as $word) {
+            $entity = $this->entityModel
+                ->where('user_id', $this->userId)
+                ->where('entity_key', $word)
+                ->first();
 
-        $results = [];
-
-        foreach ($candidates as $candidate) {
-            $score = $this->cosineSimilarity($targetVector, $candidate->embedding);
-            
-            if ($score >= $this->config->similarityThreshold) {
-                $results[$score] = "- User asked: \"{$candidate->user_input}\". You answered: \"{$candidate->ai_response}\"";
+            if ($entity) {
+                // Update existing entity
+                // FIX: Ensure mentioned_in is an array before merging
+                $mentionedIn = $entity->mentioned_in ?? [];
+                if (!in_array($interactionId, $mentionedIn)) {
+                    $mentionedIn[] = $interactionId;
+                }
+                
+                $this->entityModel->update($entity->id, [
+                    'access_count' => $entity->access_count + 1,
+                    'relevance_score' => $entity->relevance_score + $this->boostRate,
+                    'mentioned_in' => json_encode($mentionedIn) // FIX: Manually JSON encode
+                ]);
+            } else {
+                // Create new entity
+                $this->entityModel->insert([
+                    'user_id' => $this->userId,
+                    'entity_key' => $word,
+                    'name' => ucfirst($word),
+                    'access_count' => 1,
+                    'relevance_score' => 1.0,
+                    'mentioned_in' => json_encode([$interactionId]) // FIX: Manually JSON encode
+                ]);
             }
         }
 
-        krsort($results); // Sort by highest score
-        return array_slice($results, 0, 3); // Return top 3 matches
+        // 4. Apply Decay (The "Forgetting" Curve)
+        // FIX: Use builder() to bypass Model validation rules for bulk updates
+        $this->interactionModel->builder()
+             ->where('user_id', $this->userId)
+             ->set('relevance_score', "relevance_score - {$this->decayRate}", false)
+             ->update();
+    }
+
+    private function performHybridSearch(?array $vector, array $keywords): array
+    {
+        $scores = [];
+
+        // A. Vector Search
+        if ($vector) {
+            $candidates = $this->interactionModel
+                ->where('user_id', $this->userId)
+                ->where('embedding IS NOT NULL')
+                ->orderBy('created_at', 'DESC')
+                ->limit(50)
+                ->findAll();
+
+            foreach ($candidates as $c) {
+                $dbVector = is_string($c->embedding) ? json_decode($c->embedding, true) : $c->embedding;
+                if (!$dbVector) continue;
+
+                $sim = $this->cosineSimilarity($vector, $dbVector);
+                $scores[$c->id] = ($scores[$c->id] ?? 0) + ($sim * $this->hybridAlpha);
+            }
+        }
+
+        // B. Keyword Search
+        if (!empty($keywords)) {
+            $entities = $this->entityModel
+                ->where('user_id', $this->userId)
+                ->whereIn('entity_key', $keywords)
+                ->findAll();
+
+            foreach ($entities as $entity) {
+                $linkedInteractions = $entity->mentioned_in ?? [];
+                // Handle case where mentioned_in might be returned as string depending on environment
+                if (is_string($linkedInteractions)) {
+                    $linkedInteractions = json_decode($linkedInteractions, true);
+                }
+
+                if (is_array($linkedInteractions)) {
+                    foreach ($linkedInteractions as $intId) {
+                        $scores[$intId] = ($scores[$intId] ?? 0) + ((1 - $this->hybridAlpha) * ($entity->relevance_score / 10));
+                    }
+                }
+            }
+        }
+
+        arsort($scores);
+        return array_keys(array_slice($scores, 0, 5, true));
     }
 
     private function cosineSimilarity(array $vecA, array $vecB): float
     {
-        $dot = 0.0;
-        $magA = 0.0;
-        $magB = 0.0;
-
+        $dot = 0.0; $magA = 0.0; $magB = 0.0;
         foreach ($vecA as $i => $val) {
             if (!isset($vecB[$i])) continue;
             $dot += $val * $vecB[$i];
             $magA += $val * $val;
             $magB += $vecB[$i] * $vecB[$i];
         }
-
         return ($magA * $magB) == 0 ? 0.0 : $dot / (sqrt($magA) * sqrt($magB));
     }
 }
