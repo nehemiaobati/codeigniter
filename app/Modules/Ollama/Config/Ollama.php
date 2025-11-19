@@ -37,7 +37,7 @@ class Ollama extends BaseConfig
      * Context Window (History)
      * How many previous interactions to include in the prompt.
      */
-    public int $historyDepth = 2;
+    public int $historyDepth = 1;
     
     /**
      * Vector Search Threshold

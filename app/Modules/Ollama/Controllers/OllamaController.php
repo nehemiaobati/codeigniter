@@ -5,6 +5,7 @@ namespace App\Modules\Ollama\Controllers;
 use App\Controllers\BaseController;
 use App\Modules\Ollama\Libraries\OllamaService;
 use App\Modules\Ollama\Libraries\OllamaMemoryService;
+use App\Modules\Ollama\Models\OllamaEntityModel;
 use App\Modules\Ollama\Models\OllamaInteractionModel;
 
 class OllamaController extends BaseController
@@ -70,6 +71,7 @@ class OllamaController extends BaseController
     {
         $userId = (int) session()->get('userId');
         model(OllamaInteractionModel::class)->where('user_id', $userId)->delete();
+        model(OllamaEntityModel::class)->where('user_id', $userId)->delete();
         
         return redirect()->back()->with('success', 'Conversation history cleared.');
     }
