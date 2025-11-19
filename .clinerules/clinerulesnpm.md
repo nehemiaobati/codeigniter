@@ -2,65 +2,55 @@
 
 ### **Extension: Hybrid Frontend Architecture (Node.js/TypeScript)**
 
-**Note:** This document builds upon the core `clinerules.md`. It specifically governs the integration of Node.js, NPM, and TypeScript modules within the CodeIgniter framework.
+**Note:** This document specifically governs the integration of Node.js, NPM, and TypeScript modules within the CodeIgniter framework.
 
 #### **9.1. Directory Structure**
-*   **Source Code:** All raw JavaScript, TypeScript, and CSS source files MUST be located in the project root `resources/[module_name]/` directory. They MUST NOT be placed directly in `public/`.
+*   **Source Code:** All raw JavaScript, TypeScript, and CSS source files MUST be located in `resources/[module_name]/`.
 *   **Compiled Output:** The build process MUST output files to `public/assets/[module_name]/`.
-*   **Public Directory:** The `public/` directory is reserved for CodeIgniter entry points and compiled assets. Raw source code MUST NEVER exist here.
+*   **Public Directory:** The `public/` directory is reserved for CodeIgniter. Raw source code MUST NEVER exist here.
 
 #### **9.2. The Build Pipeline (Vite)**
-*   **Tooling:** Vite is the mandated build tool.
-*   **Configuration:** The `vite.config.ts` MUST be configured to output specific entry points for each module (e.g., `learn`, `jarvis`) into their respective `public/assets/` subdirectories.
-*   **Git Protocols:**
-    *   `node_modules/` MUST be added to `.gitignore` and never committed.
-    *   `public/assets/` (the compiled result) MUST be committed to Git. The production server is PHP-only and cannot build frontend assets.
+*   **Configuration:** `vite.config.ts` MUST use `rollupOptions` to map specific inputs (e.g., `resources/learn/main.tsx`) to specific outputs.
+*   **Git Protocols:** `node_modules/` is gitignored. `public/assets/` (compiled) is committed.
 
-#### **9.3. Scaffolding New Modules**
-*   **Method:** You MAY use `npm create vite@latest` to generate boilerplate code, BUT you MUST NOT keep the nested project structure.
-*   **Harvest Protocol:**
-    1.  Run the generator in the root.
-    2.  Move the generated `src/` files to `resources/[module_name]/`.
-    3.  Merge new dependencies into the root `package.json`.
-    4.  Delete the generated temporary folder.
-    5.  Register the new input in root `vite.config.ts`.
+#### **9.3. The Scaffolding Protocol (Boilerplate Injection)**
+When initializing the environment or a new module, the AI MUST execute this **Automation Sequence** without pausing for user confirmation between steps:
+
+1.  **Generate:** Run `npm create vite@latest temp-vite -- --template react-ts` (Non-interactive mode).
+2.  **Harvest Configuration:**
+    *   Move `temp-vite/package.json` to Project Root (If root `package.json` exists, merge dependencies).
+    *   Move `temp-vite/tsconfig.json` (and references) to Project Root.
+    *   Move `temp-vite/vite.config.ts` to Project Root.
+3.  **Harvest Source:**
+    *   Create directory `resources/[module_name]/`.
+    *   Move contents of `temp-vite/src/` into `resources/[module_name]/`.
+4.  **Cleanup:** Delete `temp-vite/` folder, `index.html`, and `public/` (from the vite template).
+5.  **Configure:** Update `vite.config.ts` to point `input` to `resources/[module_name]/main.tsx` and `outDir` to `public/assets`.
+6.  **Install:** Run `npm install`.
 
 #### **9.4. The PHP-to-JavaScript Bridge**
-*   **Mount Points:** Views utilizing React MUST provide a unique HTML container ID (e.g., `<div id="module-root"></div>`).
-*   **Data Injection:** Data required by the frontend (CSRF tokens, API URLs, User IDs) MUST be passed via a global `window.CI_CONFIG` object injected in the PHP View. Hardcoding URLs or Keys in TypeScript is **FORBIDDEN**.
-*   **Script Loading:** Compiled scripts MUST be loaded using `base_url()` in the PHP View (e.g., `src="<?= base_url('assets/module/app.js') ?>"`).
-
-#### **9.5. API Interaction**
-*   **Communication:** The Frontend MUST communicate with the Backend via asynchronous `fetch()` calls.
-*   **Routing:** Frontend requests MUST target named CodeIgniter routes.
-*   **Security:** All AJAX/Fetch requests MUST include the CSRF token provided in `window.CI_CONFIG`.
+*   **Mount Points:** Views MUST provide a unique HTML container ID (e.g., `<div id="module-root"></div>`).
+*   **Data Injection:** Data (CSRF, URLs) MUST be passed via `window.CI_CONFIG`.
+*   **Script Loading:** Load scripts via `base_url('assets/[module_name]/app.js')`.
 
 ---
 
-### **Reference: General Functional Flow**
+### **Reference: Quick Start Workflow**
 
-This is the standard workflow for adding a new TypeScript module to the CodeIgniter project.
+To initialize a React module in one pass:
 
-#### **1. Setup Phase (One-time)**
-1.  **Initialize:** Ensure `package.json`, `tsconfig.json`, and `vite.config.ts` exist in the project root.
-2.  **Install:** Run `npm install` to populate `node_modules` (ensure this folder is gitignored).
+1.  **Execute Scaffolding Protocol (Rule 9.3):** Generates files, moves them to `resources/`, cleans up.
+2.  **Create Controller/View:** Standard CodeIgniter MVC setup.
+3.  **Build:** Run `npm run build` to confirm success.
 
-#### **2. Development Phase (New Feature)**
-1.  **Create Source:** Create a new folder `resources/[feature_name]/`.
-2.  **Entry Point:** Create `resources/[feature_name]/main.tsx`.
-3.  **Config:** Update `vite.config.ts` -> `rollupOptions` -> `input` to register the new entry point.
-4.  **Develop:** Write React/TypeScript code in `resources/`.
-5.  **Build:** Run `npm run build` locally. This compiles TS/React into standard JS in `public/assets/[feature_name]/`.
 
-#### **3. Integration Phase (MVC)**
-1.  **Controller:** Create a standard CodeIgniter Controller to serve the view.
-2.  **View:** Create a PHP View file.
-    *   Add the mount point div (e.g., `id="feature-root"`).
-    *   Add the `window.CI_CONFIG` script block (CSRF, URLs).
-    *   Add the `<script src="...">` tag pointing to the *compiled* file in `public/assets/`.
-3.  **Routes:** Register the route in `Config/Routes.php`.
+//
+@clinerulesnpm.md
+Execute the "Scaffolding Protocol" (Rule 9.3) to initialize the frontend environment and create a module named "learn".
 
-#### **4. Deployment Phase**
-1.  **Build:** Run `npm run build` on the local/dev machine.
-2.  **Commit:** Git commit the updated `resources/` (source) AND `public/assets/` (output).
-3.  **Push:** Deploy to server. (The server only serves the PHP and the pre-compiled JS).
+1. Use the `npm create vite` automation sequence.
+2. Move the generated source code into `resources/learn`.
+3. Configure `vite.config.ts` for CodeIgniter output paths immediately.
+4. Run `npm run build` to verify the pipeline is clean.
+
+Do not pause between file movements. Complete the scaffolding in one continuous task.
