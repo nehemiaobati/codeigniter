@@ -16,12 +16,21 @@
     *   `node_modules/` MUST be added to `.gitignore` and never committed.
     *   `public/assets/` (the compiled result) MUST be committed to Git. The production server is PHP-only and cannot build frontend assets.
 
-#### **9.3. The PHP-to-JavaScript Bridge**
+#### **9.3. Scaffolding New Modules**
+*   **Method:** You MAY use `npm create vite@latest` to generate boilerplate code, BUT you MUST NOT keep the nested project structure.
+*   **Harvest Protocol:**
+    1.  Run the generator in the root.
+    2.  Move the generated `src/` files to `resources/[module_name]/`.
+    3.  Merge new dependencies into the root `package.json`.
+    4.  Delete the generated temporary folder.
+    5.  Register the new input in root `vite.config.ts`.
+
+#### **9.4. The PHP-to-JavaScript Bridge**
 *   **Mount Points:** Views utilizing React MUST provide a unique HTML container ID (e.g., `<div id="module-root"></div>`).
 *   **Data Injection:** Data required by the frontend (CSRF tokens, API URLs, User IDs) MUST be passed via a global `window.CI_CONFIG` object injected in the PHP View. Hardcoding URLs or Keys in TypeScript is **FORBIDDEN**.
 *   **Script Loading:** Compiled scripts MUST be loaded using `base_url()` in the PHP View (e.g., `src="<?= base_url('assets/module/app.js') ?>"`).
 
-#### **9.4. API Interaction**
+#### **9.5. API Interaction**
 *   **Communication:** The Frontend MUST communicate with the Backend via asynchronous `fetch()` calls.
 *   **Routing:** Frontend requests MUST target named CodeIgniter routes.
 *   **Security:** All AJAX/Fetch requests MUST include the CSRF token provided in `window.CI_CONFIG`.
