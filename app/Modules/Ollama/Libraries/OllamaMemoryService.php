@@ -3,10 +3,10 @@
 namespace App\Modules\Ollama\Libraries;
 
 use App\Modules\Ollama\Config\Ollama;
+use App\Modules\Ollama\Entities\OllamaEntity;
+use App\Modules\Ollama\Entities\OllamaInteraction;
 use App\Modules\Ollama\Models\OllamaInteractionModel;
 use App\Modules\Ollama\Models\OllamaEntityModel;
-use App\Modules\Ollama\Libraries\OllamaService;
-use App\Modules\Ollama\Libraries\OllamaTokenService;
 
 class OllamaMemoryService
 {
@@ -18,62 +18,79 @@ class OllamaMemoryService
     private int $userId;
 
     // Tuning Parameters
-    private float $hybridAlpha = 0.5;
-    private float $decayRate = 0.05;
-    private float $boostRate = 0.5;
+    private const HYBRID_ALPHA = 0.5;
+    private const DECAY_RATE   = 0.05;
+    private const BOOST_RATE   = 0.5;
 
     public function __construct(int $userId)
     {
-        $this->userId = $userId;
-        $this->config = config(Ollama::class);
+        $this->userId           = $userId;
+        $this->config           = config(Ollama::class);
         $this->interactionModel = new OllamaInteractionModel();
-        $this->entityModel = new OllamaEntityModel();
-        $this->api = new OllamaService();
-        $this->tokenizer = new OllamaTokenService();
+        $this->entityModel      = new OllamaEntityModel();
+        $this->api              = new OllamaService();
+        $this->tokenizer        = new OllamaTokenService();
     }
 
-    public function buildContext(string $userInput): array
+    /**
+     * Main orchestration method for handling a user chat interaction.
+     */
+    public function processChat(string $prompt): array
     {
-        // 1. Get Embedding
+        // 1. Build Context
+        $messages = $this->buildContext($prompt);
+
+        // 2. Call API
+        $result = $this->api->chat($messages);
+
+        if (!$result['success']) {
+            return $result;
+        }
+
+        // 3. Save Memory (Fire and forget logic handled internally)
+        $this->saveInteraction($prompt, $result['response'], $result['model']);
+
+        return $result;
+    }
+
+    private function buildContext(string $userInput): array
+    {
         $inputVector = $this->api->embed($userInput);
-        
-        // 2. Extract Keywords
-        $keywords = $this->tokenizer->processText($userInput);
-
-        // 3. Hybrid Search
+        $keywords    = $this->tokenizer->processText($userInput);
         $relevantIds = $this->performHybridSearch($inputVector, $keywords);
+        
+        $systemPrompt = $this->constructSystemPrompt($relevantIds);
+        
+        return $this->assembleMessageChain($systemPrompt, $userInput);
+    }
 
-        // 4. Construct System Prompt with Memories
+    private function constructSystemPrompt(array $memoryIds): string
+    {
         $contextText = "";
-        if (!empty($relevantIds)) {
-            $memories = $this->interactionModel
-                ->whereIn('id', $relevantIds)
-                ->findAll();
-            
+        if (!empty($memoryIds)) {
+            $memories = $this->interactionModel->whereIn('id', $memoryIds)->findAll();
             foreach ($memories as $mem) {
-                $contextText .= "- [Memory]: User asked '{$mem->user_input}'. AI answered: '{$mem->ai_response}'\n";
+                $contextText .= "- [Memory]: User: '{$mem->user_input}' | AI: '{$mem->ai_response}'\n";
             }
         }
 
-        // 5. Assemble Messages
-        $messages = [];
-        
-        $systemPrompt = "You are DeepSeek R1. " .
-            "When faced with complex queries, you MUST use your internal reasoning process " .
-            "wrapped in <think></think> tags before answering.\n\n" .
-            "Relevant Context from Memory:\n" . ($contextText ?: "None available.");
-            
-        $messages[] = ['role' => 'system', 'content' => $systemPrompt];
+        return "You are DeepSeek R1. " .
+               "Use <think></think> tags for reasoning on complex queries.\n\n" .
+               "Relevant Context:\n" . ($contextText ?: "None available.");
+    }
 
-        // 6. Add recent conversational history
+    private function assembleMessageChain(string $systemPrompt, string $userInput): array
+    {
+        $messages = [['role' => 'system', 'content' => $systemPrompt]];
+
+        // Add recent history (Last 3 interactions)
         $recent = $this->interactionModel
             ->where('user_id', $this->userId)
             ->orderBy('created_at', 'DESC')
             ->limit(3)
             ->findAll();
         
-        $recent = array_reverse($recent);
-        foreach ($recent as $r) {
+        foreach (array_reverse($recent) as $r) {
             $messages[] = ['role' => 'user', 'content' => $r->user_input];
             $messages[] = ['role' => 'assistant', 'content' => $r->ai_response];
         }
@@ -83,26 +100,33 @@ class OllamaMemoryService
         return $messages;
     }
 
-    public function saveInteraction(string $input, string $response, string $modelName): void
+    private function saveInteraction(string $input, string $response, string $modelName): void
     {
-        // 1. Prepare Data
-        $fullText = "User: $input | AI: $response";
-        $embedding = $this->api->embed($fullText);
-        $keywords = $this->tokenizer->processText($input);
-        
-        // 2. Save Interaction
-        $interactionId = $this->interactionModel->insert([
-            'user_id'     => $this->userId,
-            'prompt_hash' => hash('sha256', $input),
-            'user_input'  => $input,
-            'ai_response' => $response,
-            'ai_model'    => $modelName,
-            'embedding'   => $embedding ? json_encode($embedding) : null,
-            'keywords'    => json_encode($keywords),
+        $keywords  = $this->tokenizer->processText($input);
+        $embedding = $this->api->embed("User: $input | AI: $response");
+
+        // Create Entity object to utilize Casts (auto JSON encoding)
+        $interaction = new OllamaInteraction([
+            'user_id'         => $this->userId,
+            'prompt_hash'     => hash('sha256', $input),
+            'user_input'      => $input,
+            'ai_response'     => $response,
+            'ai_model'        => $modelName,
+            'embedding'       => $embedding, // Entity cast handles array->json
+            'keywords'        => $keywords,  // Entity cast handles array->json
             'relevance_score' => 1.0
         ]);
 
-        // 3. Update Knowledge Graph (Entities)
+        $interactionId = $this->interactionModel->insert($interaction);
+
+        if ($interactionId) {
+            $this->updateKnowledgeGraph($keywords, (int)$interactionId);
+            $this->applyDecay();
+        }
+    }
+
+    private function updateKnowledgeGraph(array $keywords, int $interactionId): void
+    {
         foreach ($keywords as $word) {
             $entity = $this->entityModel
                 ->where('user_id', $this->userId)
@@ -110,36 +134,37 @@ class OllamaMemoryService
                 ->first();
 
             if ($entity) {
-                // Update existing entity
-                // FIX: Ensure mentioned_in is an array before merging
+                // Entity casts 'mentioned_in' to array automatically
                 $mentionedIn = $entity->mentioned_in ?? [];
                 if (!in_array($interactionId, $mentionedIn)) {
                     $mentionedIn[] = $interactionId;
                 }
+
+                $entity->access_count++;
+                $entity->relevance_score += self::BOOST_RATE;
+                $entity->mentioned_in     = $mentionedIn;
                 
-                $this->entityModel->update($entity->id, [
-                    'access_count' => $entity->access_count + 1,
-                    'relevance_score' => $entity->relevance_score + $this->boostRate,
-                    'mentioned_in' => json_encode($mentionedIn) // FIX: Manually JSON encode
-                ]);
+                $this->entityModel->save($entity);
             } else {
-                // Create new entity
-                $this->entityModel->insert([
-                    'user_id' => $this->userId,
-                    'entity_key' => $word,
-                    'name' => ucfirst($word),
-                    'access_count' => 1,
+                $newEntity = new OllamaEntity([
+                    'user_id'         => $this->userId,
+                    'entity_key'      => $word,
+                    'name'            => ucfirst($word),
+                    'access_count'    => 1,
                     'relevance_score' => 1.0,
-                    'mentioned_in' => json_encode([$interactionId]) // FIX: Manually JSON encode
+                    'mentioned_in'    => [$interactionId]
                 ]);
+                $this->entityModel->insert($newEntity);
             }
         }
+    }
 
-        // 4. Apply Decay (The "Forgetting" Curve)
-        // FIX: Use builder() to bypass Model validation rules for bulk updates
+    private function applyDecay(): void
+    {
+        // Direct Builder call to optimize bulk update
         $this->interactionModel->builder()
              ->where('user_id', $this->userId)
-             ->set('relevance_score', "relevance_score - {$this->decayRate}", false)
+             ->set('relevance_score', "relevance_score - " . self::DECAY_RATE, false)
              ->update();
     }
 
@@ -147,7 +172,7 @@ class OllamaMemoryService
     {
         $scores = [];
 
-        // A. Vector Search
+        // 1. Vector Search
         if ($vector) {
             $candidates = $this->interactionModel
                 ->where('user_id', $this->userId)
@@ -157,15 +182,15 @@ class OllamaMemoryService
                 ->findAll();
 
             foreach ($candidates as $c) {
-                $dbVector = is_string($c->embedding) ? json_decode($c->embedding, true) : $c->embedding;
-                if (!$dbVector) continue;
-
-                $sim = $this->cosineSimilarity($vector, $dbVector);
-                $scores[$c->id] = ($scores[$c->id] ?? 0) + ($sim * $this->hybridAlpha);
+                // Entity cast handles JSON decoding
+                if (empty($c->embedding)) continue;
+                
+                $sim = $this->cosineSimilarity($vector, $c->embedding);
+                $scores[$c->id] = ($scores[$c->id] ?? 0) + ($sim * self::HYBRID_ALPHA);
             }
         }
 
-        // B. Keyword Search
+        // 2. Keyword Search
         if (!empty($keywords)) {
             $entities = $this->entityModel
                 ->where('user_id', $this->userId)
@@ -173,15 +198,9 @@ class OllamaMemoryService
                 ->findAll();
 
             foreach ($entities as $entity) {
-                $linkedInteractions = $entity->mentioned_in ?? [];
-                // Handle case where mentioned_in might be returned as string depending on environment
-                if (is_string($linkedInteractions)) {
-                    $linkedInteractions = json_decode($linkedInteractions, true);
-                }
-
-                if (is_array($linkedInteractions)) {
-                    foreach ($linkedInteractions as $intId) {
-                        $scores[$intId] = ($scores[$intId] ?? 0) + ((1 - $this->hybridAlpha) * ($entity->relevance_score / 10));
+                if (!empty($entity->mentioned_in)) {
+                    foreach ($entity->mentioned_in as $intId) {
+                        $scores[$intId] = ($scores[$intId] ?? 0) + ((1 - self::HYBRID_ALPHA) * ($entity->relevance_score / 10));
                     }
                 }
             }
