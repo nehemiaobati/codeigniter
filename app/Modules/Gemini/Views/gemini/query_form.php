@@ -174,7 +174,7 @@
     <?php if ($result = session()->getFlashdata('result')): ?>
         <div class="card blueprint-card mt-5 shadow-lg border-primary" id="results-card">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <span class="fw-bold">AI Response</span>
+                <span class="fw-bold">Studio Output</span>
                 <div class="d-flex gap-2">
                     <button class="btn btn-sm btn-light" id="copyFullResponseBtn" title="Copy Full Text">
                         <i class="bi bi-clipboard"></i> Copy
@@ -284,7 +284,8 @@
             menubar: false,
             statusbar: false,
             plugins: 'autolink lists',
-            toolbar: 'bold italic bullist | clean',
+            toolbar: 'blocks | bold italic strikethrough | bullist numlist | link | alignleft aligncenter alignright | clean',
+            block_formats: 'Text=p; Heading 1=h1; Heading 2=h2; Heading 3=h3',
             placeholder: 'Enter your prompt here...',
             license_key: 'gpl',
             setup: (ed) => {
