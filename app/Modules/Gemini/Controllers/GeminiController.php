@@ -433,10 +433,10 @@ class GeminiController extends BaseController
         if ($input === 0 && $output === 0) {
             return ['deductionAmount' => self::DEFAULT_DEDUCTION, 'costMessage' => 'Default charge.', 'costInKSH' => self::DEFAULT_DEDUCTION];
         }
-        // Pricing Logic (Gemini 1.5 Pro approximations)
-        $tier1 = $input <= 128000;
-        $inRate = $tier1 ? 3.50 : 7.00; // USD per million
-        $outRate = $tier1 ? 10.50 : 21.00;
+        // Pricing Logic (Gemini 3 Pro Preview)
+        $tier1 = $input <= 200000;
+        $inRate = ($tier1 ? 2.00 : 4.00) * 1.60; // USD per million, +60%
+        $outRate = ($tier1 ? 12.00 : 18.00) * 1.60; // USD per million, +60%
 
         $usd = (($input / 1e6) * $inRate) + (($output / 1e6) * $outRate);
         $ksh = $usd * self::USD_TO_KSH_RATE;
