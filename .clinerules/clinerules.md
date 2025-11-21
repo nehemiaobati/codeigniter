@@ -49,7 +49,7 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
 
 #### **2.1. Routing: Named Routes are Law**
 *   Every route MUST be assigned a unique name (e.g., `['as' => 'users.profile']`).
-*   All URLs in the application (views, redirects) MUST be generated using `url_to('route.name')`. Hardcoded URLs are strictly **FORBIDDEN**.
+*   ALL URLs (HTML links, Redirects, AJAX endpoints, Fetch calls) MUST be generated using `url_to('route.name')`. CI4 Hardcoded URLs  (e.g., /users/get) are strictly **FORBIDDEN**.
 
 #### **2.2. The 3 Steps of a Form Submission (Post/Redirect/Get)**
 *   **Step 1 (POST):** The controller method processes form data. It **MUST NOT** return a `view()`.
@@ -101,7 +101,9 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
 *   Common UI elements MUST be created as partials in `app/Views/partials/`.
 *   The Privacy Policy page MUST detail all cookies used.
 *   **URL Generation:**
-    *   Use `route_to()` for JavaScript background requests (AJAX, `fetch`).
+    *   ALL URLs (HTML links, Redirects, AJAX endpoints, Fetch calls) MUST be generated using `url_to('route.name')`. CI4
+    else
+    *   Use `route_to()` for JavaScript background requests (AJAX, `fetch`). 
     *   Use `url_to()` for HTML full-page navigation (`<a>` tags, `<form>` actions, redirects).
 
 ---
