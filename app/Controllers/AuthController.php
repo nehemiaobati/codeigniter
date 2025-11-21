@@ -182,6 +182,21 @@ class AuthController extends BaseController
             'member_since' => $user->created_at, // Store creation date as member since.
         ]);
 
+        // --- NEW LOGIC STARTS HERE ---
+
+        // 1. Check if a redirect_url exists in the session
+        if ($this->session->has('redirect_url')) {
+            $redirectUrl = $this->session->get('redirect_url');
+            
+            // 2. Remove it from session so it doesn't persist
+            $this->session->remove('redirect_url');
+            
+            // 3. Redirect the user back to where they came from
+            return redirect()->to($redirectUrl)->with('success', 'Welcome back!');
+        }
+
+        // --- NEW LOGIC ENDS HERE ---
+
         // Redirect to the home page with a success message.
         return redirect()->to(url_to('home'))->with('success', 'Login Successful');
     }
