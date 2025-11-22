@@ -18,7 +18,8 @@
 
     /* Results Card - Account for Sticky Header */
     #results-card {
-        scroll-margin-top: 100px; /* Adjust based on your header height */
+        scroll-margin-top: 100px;
+        /* Adjust based on your header height */
     }
 
     /* Code Block Styling with Copy Button */
@@ -136,11 +137,17 @@
                         <input class="form-check-input setting-toggle" type="checkbox" id="assistantMode"
                             data-key="assistant_mode_enabled" <?= $assistant_mode_enabled ? 'checked' : '' ?>>
                         <label class="form-check-label" for="assistantMode">Conversational Memory</label>
+                        <div class="form-text text-muted small mt-1">
+                            Maintains context from previous messages for a continuous conversation.
+                        </div>
                     </div>
                     <div class="form-check form-switch mb-4">
                         <input class="form-check-input setting-toggle" type="checkbox" id="voiceOutput"
                             data-key="voice_output_enabled" <?= $voice_output_enabled ? 'checked' : '' ?>>
                         <label class="form-check-label" for="voiceOutput">Voice Output (TTS)</label>
+                        <div class="form-text text-muted small mt-1">
+                            Reads the AI response aloud using text-to-speech.
+                        </div>
                     </div>
 
                     <!-- Saved Prompts -->
@@ -370,8 +377,12 @@
         };
 
         const performUpload = (job) => {
-            const { file, uiElement, uniqueId } = job;
-            
+            const {
+                file,
+                uiElement,
+                uniqueId
+            } = job;
+
             // Update UI to "Uploading"
             uiElement.querySelector('.status-text').textContent = "Uploading...";
 
@@ -454,12 +465,16 @@
                 }
 
                 // 2. Add to Queue
-                uploadQueue.push({ file, uiElement, uniqueId });
+                uploadQueue.push({
+                    file,
+                    uiElement,
+                    uniqueId
+                });
             });
 
             // Reset input
             fileInput.value = '';
-            
+
             // Start processing if idle
             processQueue();
         };
