@@ -118,6 +118,17 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
 
 ---
 
+### **Part 6: Entities & Data Integrity**
+
+*   **Principle:** Arrays are for configuration; Objects are for business data. Passing associative arrays between layers is **FORBIDDEN** for business entities.
+*   **Location:** Entities MUST be located in `app/Entities/` or `app/Modules/[ModuleName]/Entities/`.
+*   **Model Configuration:** All Models MUST be configured to return Entity instances (e.g., `protected $returnType = \App\Entities\User::class;`).
+*   **Data Casting:** Entities MUST use the `$casts` property to enforce strict data types (e.g., `'is_active' => 'boolean'`, `'settings' => 'json'`).
+*   **Mutation:** Data formatting MUST be handled via Entity accessors and mutators (e.g., `setPassword(string $pass)`), never in the Controller.
+*   **Scope:** Entities are for data shaping only. They MUST NOT perform database queries or contain service-level business logic.
+
+---
+
 ### **Part 7: The Unified Frontend Workflow (The 'Blueprint' Method)**
 
 *   **Philosophy:** Prioritize Bootstrap 5 utilities over custom CSS.
@@ -148,3 +159,59 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
     4.  All routes for a module MUST be defined in the module's own `Config/Routes.php` file.
     5.  When calling a module's view from its controller, the path MUST be fully qualified (e.g., `view('App\Modules\Blog\Views\blog\index', $data);`).
 *   **Core vs. Module:** The main `app/` directory is for the application's core shell. All distinct business features MUST be implemented as modules.
+
+---
+
+### **Part 9: Error Handling, Logging, & Debugging Protocols**
+
+*   **Principle:** In Development, errors MUST be visible and loud. In Production, errors MUST be silent to the user but strictly recorded in the logs.
+*   **Source of Truth:** The `writable/logs/` directory is the first step in any investigation.
+
+#### **9.1. Logging Levels**
+*   **Use:** `log_message($level, $message, $context)`.
+*   **Context:** Logs MUST include context arrays (variables, user IDs, error traces), not just strings.
+*   **Hierarchy:**
+    *   `critical`: System unusable (DB down). Triggers immediate alert.
+    *   `error`: Runtime failure (Transaction rollback, Upload failed).
+    *   `info`: Key business events (User login, Report generated).
+
+#### **9.2. Exception Strategy**
+*   **Services:** MUST throw specific, typed Exceptions (e.g., `throw new InsufficientFundsException()`) rather than returning `false`.
+*   **Controllers:** MUST wrap Service calls in `try/catch` blocks.
+    *   Catch business exceptions to set User Flash Data (warnings).
+    *   Catch `\Throwable` for unexpected crashes to prevent white screens.
+*   **Transactions:** On failure, the `catch` block MUST rollback the transaction, log the specific error, and redirect safely.
+
+#### **9.3. Debugging Workflow**
+*   **Development Only:**
+    *   Debug Toolbar MUST be enabled (`app/Config/Boot/development.php`).
+    *   `display_errors` set to 1.
+    *   Use `d()` (Kint) for inspecting variables.
+*   **Production Only:**
+    *   `display_errors` set to 0.
+    *   Use custom view `app/Views/errors/html/production.php`.
+*   **Forbidden:** Committing `d()`, `dd()`, or `die()` statements to the repository is strictly **FORBIDDEN**.
+
+---
+
+### **Part 10: Quality Assurance & Testing**
+
+*   **Principle:** No feature is "done" until it has a passing test.
+*   **Standard:** PHPUnit is the required testing framework (`php spark test`).
+*   **Unit Tests:** MUST be written for all Services and Helpers. Database connection is **FORBIDDEN** in unit tests.
+*   **Feature Tests:** MUST be written for Controllers and API endpoints. Database interactions MUST use the `DatabaseTransactions` trait to reset state after every test.
+*   **Data Generation:** Usage of `Fabricator` to generate test data is MANDATORY. Hardcoding arrays in test files is discouraged.
+
+---
+
+### **Part 11: The Boot Protocol (SOP)**
+
+*   **Goal:** A Developer must be able to boot the project in 3 commands.
+*   **New Environment Setup:**
+    1.  `composer install`
+    2.  `php spark migrate --all` (Runs core and module migrations)
+    3.  `php spark db:seed MainSeeder` (Populates essential app data)
+*   **Production Launch:**
+    *   MUST run `composer install --no-dev --optimize-autoloader`.
+    *   MUST run `php spark optimize` to cache config and routes.
+    *   MUST point document root strictly to `/public`.
