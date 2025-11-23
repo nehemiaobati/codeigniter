@@ -155,27 +155,13 @@ class DocumentService
                 ['alignment' => 'center', 'size' => 9, 'color' => '7f8c8d']
             );
 
-
-            // Ultra-simple approach: Plain text only
-            // 1. Strip all HTML tags
-            $plainText = strip_tags($htmlContent);
-
-            // 2. Split into lines and add to document
-            // We use rtrim to remove trailing whitespace but keep leading whitespace (indentation)
-            $lines = explode("\n", $plainText);
-
-            foreach ($lines as $line) {
-                // Skip completely empty lines to avoid too much spacing, 
-                // but allow lines that are just indentation
-                if (trim($line) === '') {
-                    $section->addTextBreak(1);
-                    continue;
-                }
-
-                // Add text with basic styling
-                // We don't trim the left side to preserve code indentation
-                $section->addText(rtrim($line), ['size' => 11, 'color' => '2c3e50']);
-            }
+            // Use PHPWord's HTML parser to add content
+            // Note: This requires the HTML to be well-formed.
+            // FIX: PHPWord's addHtml method has a bug where it unescapes entities, causing invalid XML
+            // if the original content contains '&'. We pre-escape '&' to '&amp;' to workaround this.
+            // This ensures "R&D" becomes "R&amp;D" which PHPWord then handles correctly.
+            $fixedHtml = str_replace('&', '&amp;', $htmlContent);
+            \PhpOffice\PhpWord\Shared\Html::addHtml($section, $fixedHtml, false, false);
 
             // Generate to memory
             $tempFile = tempnam(sys_get_temp_dir(), 'phpword_');

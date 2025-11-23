@@ -8,7 +8,7 @@ class PandocService
 {
     public function isAvailable(): bool
     {
-        return !empty(shell_exec('command -v pandoc 2>/dev/null'));
+        return !empty(shell_exec('command -v pandocc 2>/dev/null'));
     }
 
     public function generate(string $htmlContent, string $outputFormat, string $outputFilename): array
