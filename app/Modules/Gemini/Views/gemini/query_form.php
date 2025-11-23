@@ -151,8 +151,8 @@
                     </div>
 
                     <!-- Saved Prompts -->
+                    <label class="form-label small fw-bold text-uppercase text-muted">Saved Prompts</label>
                     <?php if (!empty($prompts)): ?>
-                        <label class="form-label small fw-bold text-uppercase text-muted">Saved Prompts</label>
                         <div class="input-group mb-3">
                             <select class="form-select" id="savedPrompts">
                                 <option value="" disabled selected>Select...</option>
@@ -161,6 +161,13 @@
                                 <?php endforeach; ?>
                             </select>
                             <button class="btn btn-outline-secondary" type="button" id="usePromptBtn">Load</button>
+                            <button class="btn btn-outline-danger" type="button" id="deletePromptBtn" disabled title="Delete Saved Prompt">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    <?php else: ?>
+                        <div class="alert alert-light border mb-3 small text-muted">
+                            <i class="bi bi-info-circle me-1"></i> No saved prompts yet. Save one after generating!
                         </div>
                     <?php endif; ?>
 
@@ -199,6 +206,9 @@
                 <?= $result ?>
             </div>
             <textarea id="raw-response" class="d-none"><?= esc(session()->getFlashdata('raw_result')) ?></textarea>
+            <div class="card-footer bg-transparent border-0 text-center">
+                <small class="text-muted fst-italic"><i class="bi bi-info-circle me-1"></i> AI can make mistakes. Please verify important information.</small>
+            </div>
         </div>
     <?php endif; ?>
 </div>
@@ -208,6 +218,11 @@
     <?= csrf_field() ?>
     <input type="hidden" name="raw_response" id="dl_raw">
     <input type="hidden" name="format" id="dl_format">
+</form>
+
+<!-- Hidden Delete Prompt Form -->
+<form id="deletePromptForm" method="post" action="" class="d-none">
+    <?= csrf_field() ?>
 </form>
 
 <!-- Save Prompt Modal -->
@@ -248,7 +263,8 @@
             endpoints: {
                 upload: '<?= url_to('gemini.upload_media') ?>',
                 deleteMedia: '<?= url_to('gemini.delete_media') ?>',
-                settings: '<?= url_to('gemini.settings.update') ?>'
+                settings: '<?= url_to('gemini.settings.update') ?>',
+                deletePromptBase: '<?= url_to('gemini.prompts.delete', 0) ?>'.slice(0, -1) // Remove the '0'
             }
         };
 
@@ -549,13 +565,36 @@
             });
         }
 
-        // --- 8. Saved Prompts ---
+        // --- 8. Saved Prompts Logic (Load & Delete) ---
         const savedSelect = document.getElementById('savedPrompts');
+        const deletePromptBtn = document.getElementById('deletePromptBtn');
+
         if (savedSelect) {
+            // Enable/Disable delete button based on selection
+            savedSelect.addEventListener('change', () => {
+                const hasValue = !!savedSelect.value;
+                if (deletePromptBtn) deletePromptBtn.disabled = !hasValue;
+            });
+
+            // Load Prompt
             document.getElementById('usePromptBtn').addEventListener('click', () => {
                 const val = savedSelect.value;
                 if (val) tinymce.get('prompt').setContent(val);
             });
+
+            // Delete Prompt
+            if (deletePromptBtn) {
+                deletePromptBtn.addEventListener('click', () => {
+                    const selectedOption = savedSelect.options[savedSelect.selectedIndex];
+                    const promptId = selectedOption.dataset.id;
+
+                    if (promptId && confirm('Are you sure you want to delete this saved prompt?')) {
+                        const form = document.getElementById('deletePromptForm');
+                        form.action = appState.endpoints.deletePromptBase + promptId;
+                        form.submit();
+                    }
+                });
+            }
         }
 
         // --- 9. Code Highlighting & Copy Snippets ---
