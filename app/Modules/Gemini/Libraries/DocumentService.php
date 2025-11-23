@@ -160,11 +160,7 @@ class DocumentService
             // 1. Strip all HTML tags
             $plainText = strip_tags($htmlContent);
 
-
-            // 2. Decode HTML entities (e.g. &gt; -> >)
-            //$plainText = html_entity_decode($plainText, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-
-            // 3. Split into lines and add to document
+            // 2. Split into lines and add to document
             // We use rtrim to remove trailing whitespace but keep leading whitespace (indentation)
             $lines = explode("\n", $plainText);
 
