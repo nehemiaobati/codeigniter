@@ -145,17 +145,7 @@ class AuthController extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        // Get reCAPTCHA response from the form submission.
-        $recaptchaResponse = $this->request->getPost('g-recaptcha-response');
 
-        // Instantiate the RecaptchaService.
-        $recaptchaService = service('recaptchaService');
-
-        // Verify the reCAPTCHA response.
-        if (! $recaptchaService->verify($recaptchaResponse)) {
-            // If reCAPTCHA verification fails, add a validation error and redirect back.
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
-        }
 
         $userModel = new UserModel();
         $email = $this->request->getVar('email');
