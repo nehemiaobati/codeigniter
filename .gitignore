@@ -37,3 +37,6 @@ Thumbs.db
 # 4. Vite temporary files
 dist/
 .vite/
+
+# 5. Internal Documentation
+_technical_notes/
