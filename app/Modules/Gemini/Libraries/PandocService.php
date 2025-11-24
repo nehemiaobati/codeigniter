@@ -9,6 +9,8 @@ class PandocService
     /**
      * Safely checks if pandoc is available.
      * Returns false if shell_exec throws an error.
+     *
+     * @return bool True if pandoc is available, false otherwise.
      */
     public function isAvailable(): bool
     {
@@ -29,6 +31,14 @@ class PandocService
         }
     }
 
+    /**
+     * Generates a document using Pandoc.
+     *
+     * @param string $htmlContent The HTML content to convert.
+     * @param string $outputFormat The desired output format ('pdf' or 'docx').
+     * @param string $outputFilename The base filename for the output.
+     * @return array Result array with status and filePath or message.
+     */
     public function generate(string $htmlContent, string $outputFormat, string $outputFilename): array
     {
         $userId = session()->get('userId') ?? 0;
