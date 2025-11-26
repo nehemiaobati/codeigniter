@@ -1,126 +1,126 @@
 "PROJECT DOCUMENTATION: GENAI WEB PLATFORM
 
-**************************************************
+---
 
 **Part I: Getting Started**
 
 **1. Introduction**
-    1.1. What is GenAI Web Platform?
-    1.2. Core Features & Capabilities
-    1.3. Who Is This For?
-    1.4. Technology Stack
+1.1. What is GenAI Web Platform?
+1.2. Core Features & Capabilities
+1.3. Who Is This For?
+1.4. Technology Stack
 
 **2. Quick Start Guide**
-    2.1. Your First 5 Minutes
-    2.2. Running the Application Locally
-    2.3. Key Concepts at a Glance
+2.1. Your First 5 Minutes
+2.2. Running the Application Locally
+2.3. Key Concepts at a Glance
 
 **3. Installation**
-    3.1. Server Requirements & Prerequisites
-    3.2. Automated Installation (Recommended)
-    3.3. Manual Installation (Advanced)
-    3.4. Environment Configuration (`.env`)
-    3.5. Post-Installation Steps & Security
+3.1. Server Requirements & Prerequisites
+3.2. Automated Installation (Recommended)
+3.3. Manual Installation (Advanced)
+3.4. Environment Configuration (`.env`)
+3.5. Post-Installation Steps & Security
 
---------------------------------------------------
+---
 
 **Part II: Guides & Tutorials**
 
 **4. Core Concepts**
-    4.1. Architectural Overview (Modular MVC-S)
-    4.2. The Request Lifecycle
-    4.3. Service Container & Dependency Injection
-    4.4. Directory Structure Explained
-    4.5. Security Principles
-    4.6. Frontend Design (The 'Blueprint' Method)
+4.1. Architectural Overview (Modular MVC-S)
+4.2. The Request Lifecycle
+4.3. Service Container & Dependency Injection
+4.4. Directory Structure Explained
+4.5. Security Principles
+4.6. Frontend Design (The 'Blueprint' Method)
 
 **5. Tutorial: Building Your First Feature**
-    5.1. Creating a New Route
-    5.2. Building the Controller & Service
-    5.3. Interacting with the Database (Model & Entity)
-    5.4. Displaying Data in a View
+5.1. Creating a New Route
+5.2. Building the Controller & Service
+5.3. Interacting with the Database (Model & Entity)
+5.4. Displaying Data in a View
 
 **6. Feature Guides (Deep Dives)**
-    6.1. User Authentication
-        6.1.1. Registration & Login Flow
-        6.1.2. Email Verification & Password Resets
-        6.1.3. Access Control with Filters
-    6.2. Payment Gateway Integration
-        6.2.1. Configuration
-        6.2.2. Initiating a Transaction
-        6.2.3. Verifying a Payment
-    6.3. AI Service Integration
-        6.3.1. Generative Text & Multimodal Input
-        6.3.2. Hybrid Memory System (Vector + Keyword)
-        6.3.3. Text-to-Speech (TTS) & Audio Processing
-        6.3.4. Advanced Document Generation (Pandoc/XeTeX)
-        6.3.5. User Settings (Voice & Assistant Modes)
-    6.4. Cryptocurrency Data Service
-        6.4.1. Querying Balances
-        6.4.2. Fetching Transaction Histories
-    6.5. Administrative Dashboard
-        6.5.1. User Management
-        6.5.2. Sending Email Campaigns
-        6.5.3. Viewing Application Logs
-    6.6. Blog & Content Management
-        6.6.1. Public-Facing Blog
-        6.6.2. Admin Management Interface
-    6.7. Self-Hosted Documentation
-        6.7.1. Serving Documentation Pages
+6.1. User Authentication
+6.1.1. Registration & Login Flow
+6.1.2. Email Verification & Password Resets
+6.1.3. Access Control with Filters
+6.2. Payment Gateway Integration
+6.2.1. Configuration
+6.2.2. Initiating a Transaction
+6.2.3. Verifying a Payment
+6.3. AI Service Integration
+6.3.1. Generative Text & Multimodal Input
+6.3.2. Hybrid Memory System (Vector + Keyword)
+6.3.3. Text-to-Speech (TTS) & Audio Processing
+6.3.4. Advanced Document Generation (Pandoc/XeTeX)
+6.3.5. User Settings (Voice & Assistant Modes)
+6.4. Cryptocurrency Data Service
+6.4.1. Querying Balances
+6.4.2. Fetching Transaction Histories
+6.5. Administrative Dashboard
+6.5.1. User Management
+6.5.2. Sending Email Campaigns
+6.5.3. Viewing Application Logs
+6.6. Blog & Content Management
+6.6.1. Public-Facing Blog
+6.6.2. Admin Management Interface
+6.7. Self-Hosted Documentation
+6.7.1. Serving Documentation Pages
 
---------------------------------------------------
+---
 
 **Part III: Technical Reference**
 
 **7. Command-Line Interface (CLI)**
-    7.1. Overview of Custom Commands
-    7.2. `php spark train`
+7.1. Overview of Custom Commands
+7.2. `php spark train`
 
 **8. Configuration Reference**
-    8.1. Application (`App.php`)
-    8.2. Database (`Database.php`)
-    8.3. Custom Configurations (`AGI.php`, `Recaptcha.php`)
+8.1. Application (`App.php`)
+8.2. Database (`Database.php`)
+8.3. Custom Configurations (`AGI.php`, `Recaptcha.php`)
 
 **9. Testing**
-    9.1. Running the Test Suite
-    9.2. Writing Unit Tests
-    9.3. Writing Feature Tests
+9.1. Running the Test Suite
+9.2. Writing Unit Tests
+9.3. Writing Feature Tests
 
---------------------------------------------------
+---
 
 **Part IV: Operations & Community**
 
 **10. Deployment**
-    10.1. Production Server Setup
-    10.2. Deployment Checklist
-    10.3. Performance Optimization
+10.1. Production Server Setup
+10.2. Deployment Checklist
+10.3. Performance Optimization
 
 **11. Troubleshooting**
-    11.1. Frequently Asked Questions (FAQ)
-    11.2. Common Error Resolutions
-    11.3. Logging & Debugging
+11.1. Frequently Asked Questions (FAQ)
+11.2. Common Error Resolutions
+11.3. Logging & Debugging
 
 **12. Contributing**
-    12.1. Contribution Guidelines
-    12.2. Code Style (PSR-12)
-    12.3. Submitting a Pull Request
+12.1. Contribution Guidelines
+12.2. Code Style (PSR-12)
+12.3. Submitting a Pull Request
 
 **13. Appendices**
-    13.1. Glossary of Terms
-    13.2. Changelog & Release History
+13.1. Glossary of Terms
+13.2. Changelog & Release History
 
---------------------------------------------------
+---
 
 **Part V: Documentation Maintenance Guide**
 
 **15. A Guide for the Project Owner**
-    15.1. The Philosophy of Living Documentation
-    15.2. Your Role vs. the AI's Role
-    15.3. The Documentation Update Workflow
-    15.4. Procedure: How to Review the Codebase for Changes
-    15.5. Procedure: Updating the Changelog and Managing Releases
+15.1. The Philosophy of Living Documentation
+15.2. Your Role vs. the AI's Role
+15.3. The Documentation Update Workflow
+15.4. Procedure: How to Review the Codebase for Changes
+15.5. Procedure: Updating the Changelog and Managing Releases
 
-**************************************************
+---
 
 **Part I: Getting Started**
 
@@ -136,6 +136,7 @@ The GenAI Web Platform is a comprehensive, multi-functional application built on
 - **User Authentication:** Secure registration, login, email verification, and password reset functionality.
 - **Payment Gateway Integration:** Seamless payments via Paystack, a popular African payment gateway.
 - **AI Service Integration:** Advanced text and multimedia interaction with Google's Gemini API. Features include a **Hybrid Memory System** (combining Vector embeddings and keyword search), **Text-to-Speech** output, and **Professional Document Generation** (PDF/Word) using LaTeX engines.
+- **Local AI Integration (Ollama):** Support for running local LLMs (like Llama 3, DeepSeek) directly on the server, offering privacy-focused AI interactions with zero external API costs.
 - **Cryptocurrency Data Service:** Real-time balance and transaction history queries for Bitcoin (BTC) and Litecoin (LTC) addresses.
 - **Blog & Content Management:** A public-facing blog with a full administrative backend for creating, editing, and managing posts.
 - **Administrative Dashboard:** Robust tools for user management, balance adjustments, financial oversight, log viewing, and sending email campaigns to all users.
@@ -153,13 +154,14 @@ This platform is designed for developers, creators, and businesses, particularly
 - **Database:** MySQL 8.0+
 - **Web Server:** Apache2
 - **Key Libraries:**
-    - `google/gemini-php`: For interacting with the Gemini API.
-    - `dompdf/dompdf`: For PDF generation fallback.
-    - `nlp-tools/nlp-tools`: For Natural Language Processing (Naive Bayes classification).
-    - `php-ffmpeg/php-ffmpeg`: For audio conversion (PCM to MP3).
+  - `google/gemini-php`: For interacting with the Gemini API.
+  - `ollama/ollama`: Local LLM inference server (external dependency).
+  - `dompdf/dompdf`: For PDF generation fallback.
+  - `nlp-tools/nlp-tools`: For Natural Language Processing (Naive Bayes classification).
+  - `php-ffmpeg/php-ffmpeg`: For audio conversion (PCM to MP3).
 - **System Dependencies:**
-    - **Pandoc & TeX Live (XeTeX):** For high-fidelity PDF/Docx generation.
-    - **FFmpeg:** For audio processing.
+  - **Pandoc & TeX Live (XeTeX):** For high-fidelity PDF/Docx generation.
+  - **FFmpeg:** For audio processing.
 - **Development & Deployment:** Composer, PHPUnit, Spark CLI, Git, Bash
 
 **2. Quick Start Guide**
@@ -200,9 +202,9 @@ For a fresh Ubuntu server, the fastest way to get started is with the automated 
 - **PHP:** Version **8.2** or higher. Required extensions: `intl`, `mbstring`, `bcmath`, `curl`, `xml`, `zip`, `gd`, `imagick`.
 - **Database:** MySQL Server
 - **System Tools:**
-    - `ffmpeg`: Required for Text-to-Speech functionality.
-    - `pandoc`: Required for document generation.
-    - `texlive-xetex`, `texlive-fonts-recommended`, `lmodern`: Required for generating PDFs via Pandoc.
+  - `ffmpeg`: Required for Text-to-Speech functionality.
+  - `pandoc`: Required for document generation.
+  - `texlive-xetex`, `texlive-fonts-recommended`, `lmodern`: Required for generating PDFs via Pandoc.
 
 **3.2. Automated Installation (Recommended)**
 
@@ -250,7 +252,7 @@ The `.env` file is critical for configuring the application. You must fill in th
 2.  **Directory Security:** The `writable/uploads/ttsaudio_secure` directory contains generated user audio. Access to this is controlled via the `GeminiController::serveAudio` method to prevent unauthorized access.
 3.  **Enable HTTPS:** For production, install an SSL certificate using Certbot.
 
---------------------------------------------------
+---
 
 **Part II: Guides & Tutorials**
 
@@ -281,8 +283,12 @@ The application uses CodeIgniter's service container to manage class instances. 
 **4.4. Directory Structure Explained**
 
 - `app/Modules/Gemini/`:
-    - `Libraries/`: Contains `GeminiService`, `MemoryService`, `EmbeddingService`, `FfmpegService`, `PandocService`, `TokenService`, `TrainingService`.
-    - `Models/`: Contains `InteractionModel`, `EntityModel`, `PromptModel`, `UserSettingsModel`.
+  - `Libraries/`: Contains `GeminiService`, `MemoryService`, `EmbeddingService`, `FfmpegService`, `PandocService`, `TokenService`, `TrainingService`.
+  - `Models/`: Contains `InteractionModel`, `EntityModel`, `PromptModel`, `UserSettingsModel`.
+- `app/Modules/Ollama/`:
+  - `Libraries/`: Contains `OllamaService`, `OllamaPayloadService`.
+  - `Controllers/`: Contains `OllamaController`.
+  - `Config/`: Contains `Ollama.php` configuration.
 - `writable/nlp/`: Stores trained Naive Bayes models (`classifier.model`).
 - `writable/uploads/`: Stores temporary media, PDF generation artifacts, and secure audio files.
 
@@ -317,7 +323,7 @@ Open `app/Modules/Notes/Config/Routes.php` and add routes.
 
         <?php
         namespace App\Modules\Notes\Controllers;
-        
+
         use App\Controllers\BaseController;
 
         class NoteController extends BaseController
@@ -328,7 +334,7 @@ Open `app/Modules/Notes/Config/Routes.php` and add routes.
                 $data['notes'] = $noteModel->where('user_id', session()->get('userId'))->findAll();
                 return view('App\Modules\Notes\Views\index', $data);
             }
-        
+
             public function create()
             {
                 // ... (logic to save note) ...
@@ -374,19 +380,19 @@ This module (`App\Modules\Gemini`) is the core of the platform.
 
 - **6.3.1. Generative Text & Multimodal Input**: `GeminiController::generate()` accepts text prompts and uploaded files (images/PDFs). It uses `GeminiService` to communicate with models like `gemini-2.0-flash`. The system calculates token usage and deducts cost from the user's balance in real-time.
 - **6.3.2. Hybrid Memory System (Vector + Keyword)**: Managed by `MemoryService.php`.
-    - **Storage:** Interactions are stored in the `interactions` table. Entities (keywords) are stored in `entities`.
-    - **Retrieval:** The system uses `EmbeddingService` to get vector embeddings of the user's query. It performs a cosine similarity search (Semantic) AND a keyword-based search (Lexical).
-    - **Fusion:** Results are fused using a weighted algorithm (Alpha 0.5) to provide context that is both conceptually similar and keyword-relevant.
-    - **Short-Term Memory:** The system forces the retrieval of the most recent interactions (configurable via `AGI.php`) to maintain immediate conversational flow.
+  - **Storage:** Interactions are stored in the `interactions` table. Entities (keywords) are stored in `entities`.
+  - **Retrieval:** The system uses `EmbeddingService` to get vector embeddings of the user's query. It performs a cosine similarity search (Semantic) AND a keyword-based search (Lexical).
+  - **Fusion:** Results are fused using a weighted algorithm (Alpha 0.5) to provide context that is both conceptually similar and keyword-relevant.
+  - **Short-Term Memory:** The system forces the retrieval of the most recent interactions (configurable via `AGI.php`) to maintain immediate conversational flow.
 - **6.3.3. Text-to-Speech (TTS) & Audio Processing**:
-    - **Generation:** If `voice_output_enabled` is true, `GeminiService` requests audio data from the API.
-    - **Conversion:** The API returns raw PCM data. `FfmpegService` converts this raw data into a web-compatible MP3 file using the `ffmpeg` binary installed on the server.
+  - **Generation:** If `voice_output_enabled` is true, `GeminiService` requests audio data from the API.
+  - **Conversion:** The API returns raw PCM data. `FfmpegService` converts this raw data into a web-compatible MP3 file using the `ffmpeg` binary installed on the server.
 - **6.3.4. Advanced Document Generation (Pandoc/XeTeX)**:
-    - **Primary Method:** `DocumentService` uses `PandocService` to convert Markdown/HTML to PDF using the `xelatex` engine. This supports complex formatting.
-    - **Fallback:** If Pandoc fails, the system falls back to `Dompdf` for PDF generation.
+  - **Primary Method:** `DocumentService` uses `PandocService` to convert Markdown/HTML to PDF using the `xelatex` engine. This supports complex formatting.
+  - **Fallback:** If Pandoc fails, the system falls back to `Dompdf` for PDF generation.
 - **6.3.5. User Settings (Voice & Assistant Modes)**:
-    - Users can toggle "Conversational Memory" and "Voice Output" directly from the UI.
-    - These preferences are stored in the `user_settings` table and persist across sessions.
+  - Users can toggle "Conversational Memory" and "Voice Output" directly from the UI.
+  - These preferences are stored in the `user_settings` table and persist across sessions.
 
 **6.4. Cryptocurrency Data Service**
 
@@ -408,7 +414,13 @@ This module (`App\Modules\Gemini`) is the core of the platform.
 
 - **6.7.1. Serving Documentation Pages**: `DocumentationController.php` serves documentation pages. It includes methods to display the main documentation index and separate pages for different aspects of the project, such as web architecture and the AI system.
 
---------------------------------------------------
+**6.8. Local AI Service (Ollama)**
+
+- **6.8.1. Configuration & Model Selection**: The module connects to a local Ollama instance (default: `http://localhost:11434`). It dynamically fetches available models (e.g., `llama3`, `mistral`) and presents them in the UI for user selection.
+- **6.8.2. Chat & Assistant Mode**: Supports conversational AI with an "Assistant Mode" that maintains context. It reuses the robust memory architecture designed for Gemini.
+- **6.8.3. Multimodal Input**: Users can upload images for analysis by vision-capable local models (like `llava`), handled via `OllamaPayloadService` which manages base64 encoding.
+
+---
 
 **Part III: Technical Reference**
 
@@ -438,9 +450,9 @@ Located at `app/Config/Database.php`, this file defines the database connection 
 Custom configuration files are placed in `app/Config/Custom/` or `app/Modules/Gemini/Config/AGI.php`.
 
 - `AGI.php`: Contains settings for the AI service, including:
-    - **Memory Logic:** `rewardScore`, `decayScore`, `pruningThreshold`.
-    - **Search Tuning:** `hybridSearchAlpha` (balance between vector and keyword search).
-    - **NLP:** `nlpStopWords` (list of words to ignore during keyword extraction).
+  - **Memory Logic:** `rewardScore`, `decayScore`, `pruningThreshold`.
+  - **Search Tuning:** `hybridSearchAlpha` (balance between vector and keyword search).
+  - **NLP:** `nlpStopWords` (list of words to ignore during keyword extraction).
 - `Recaptcha.php`: Stores the site and secret keys for the Google reCAPTCHA service.
 
 **9. Testing**
@@ -457,7 +469,7 @@ Unit tests focus on testing individual classes in isolation and are placed in th
 
 Feature tests test a full request-response cycle, simulating user interaction.
 
---------------------------------------------------
+---
 
 **Part IV: Operations & Community**
 
@@ -527,9 +539,20 @@ Ensure your code is well-documented, follows the project's architectural pattern
 
 **13.2. Changelog & Release History**
 
+**v1.4.0 - 2025-11-26**
+
+### Added
+
+- **Ollama Module:** Full integration with local Ollama instances.
+  - Dynamic model selection from the UI.
+  - Support for "Assistant Mode" (conversational memory).
+  - Multimodal support (image uploads) for vision models.
+  - Credit deduction system for local model usage.
+
 **v1.3.0 - 2025-11-21**
 
 ### Added
+
 - **Text-to-Speech (TTS):** Integrated Gemini Audio capabilities. Users can now hear AI responses.
 - **FFmpeg Integration:** Added `FfmpegService` to convert raw AI audio to web-ready MP3s.
 - **Hybrid Memory System:** Upgraded memory to use both Vector Embeddings and Keyword extraction for better context retrieval.
@@ -537,6 +560,7 @@ Ensure your code is well-documented, follows the project's architectural pattern
 - **Setup Script:** Major overhaul to `setup.sh` to include `texlive`, `ffmpeg`, and `pandoc` dependencies.
 
 ### Changed
+
 - **Document Generation:** Now uses `XeTeX` engine via Pandoc for professional-grade PDF output.
 - **Gemini Service:** Refactored to support `gemini-2.0-flash` and `gemini-2.0-flash-lite`.
 - **Memory Logic:** Added "Recency Bias" to force the inclusion of the last 3 interactions in context.
@@ -544,12 +568,14 @@ Ensure your code is well-documented, follows the project's architectural pattern
 **v1.2.0 - 2025-11-14**
 
 ### Added
+
 - **Modular Architecture:** Refactored the entire application into a modular structure. Features like Blog, Payments, Crypto, and Gemini are now self-contained in `app/Modules/`.
 - **Campaign Templates:** Administrators can now save, load, and delete email campaign templates.
 - **Admin Log Viewer:** Added a new page in the admin dashboard to securely view application log files.
 - **Self-Hosted Documentation Pages:** The application now serves dedicated pages for Web and AGI documentation.
 
 ### Changed
+
 - **Document Generation:** The AI document download feature now uses Pandoc for higher quality output and falls back to Dompdf for PDFs if Pandoc is not available.
 - **Directory Structure:** Major changes to the directory structure to support the new modular architecture.
 - **Frontend Workflow:** Standardized all views to use the "Blueprint" method for UI consistency.
@@ -557,16 +583,19 @@ Ensure your code is well-documented, follows the project's architectural pattern
 **v1.1.0 - 2025-11-13**
 
 ### Added
+
 - **Blog & Content Management System:** Added a complete public-facing blog and an administrative backend for full CRUD functionality.
 - **AI Document Generation:** Users can download generated AI content as a PDF or Microsoft Word (`.docx`) file.
 
 ### Changed
+
 - Updated routing to include endpoints for the new blog and documentation features.
 
 **v1.0.0 (Initial Release)**
+
 - Core features implemented: User Authentication, Paystack Payments, Gemini AI Integration, Crypto Data Service, Admin Dashboard.
 
---------------------------------------------------
+---
 
 **Part V: Documentation Maintenance Guide**
 
@@ -576,7 +605,7 @@ This section serves as the standard operating procedure (SOP) for maintaining th
 
 **15.1. The Philosophy of Living Documentation**
 
-Treat this documentation as a core part of the codebase. It should evolve in lockstep with every feature change, bug fix, or architectural adjustment. An undocumented change is an incomplete change. The goal is to ensure that a new developer, or you in six months, can understand the *what*, *how*, and *why* of the system just by reading this document.
+Treat this documentation as a core part of the codebase. It should evolve in lockstep with every feature change, bug fix, or architectural adjustment. An undocumented change is an incomplete change. The goal is to ensure that a new developer, or you in six months, can understand the _what_, _how_, and _why_ of the system just by reading this document.
 
 **15.2. Your Role vs. the AI's Role**
 
@@ -592,13 +621,13 @@ This workflow applies to any code changes committed to the main branch.
 1.  **Identify:** Locate the relevant section in the documentation file.
 2.  **Edit:** Make the necessary correction or addition directly.
 3.  **Commit:** Commit the change with a clear message, prefixed with `docs:`.
-    - *Example:* `docs: Correct typo in Installation section 3.4`
+    - _Example:_ `docs: Correct typo in Installation section 3.4`
 
 **B. For Complex Changes (e.g., new features, architectural modifications):**
 
 1.  **Identify the Scope:** Use the procedure in section **15.4** to identify all changed files and map them to the corresponding sections of this documentation.
 2.  **Draft Updates (or Prompt the AI):** For each affected section, draft the new content. If using the AI, provide it with the list of changed files and instruct it to update the documentation accordingly.
-    - *Example Prompt for AI:* "A new email campaign feature has been added. The following files were created or modified: `CampaignController.php`, `CampaignModel.php`, `create.php` view, and the routes were updated. Please update the documentation, including a new sub-section in the Feature Guides (6.5.2) and updating the directory structure."
+    - _Example Prompt for AI:_ "A new email campaign feature has been added. The following files were created or modified: `CampaignController.php`, `CampaignModel.php`, `create.php` view, and the routes were updated. Please update the documentation, including a new sub-section in the Feature Guides (6.5.2) and updating the directory structure."
 3.  **Update Table of Contents:** If new sections or sub-sections were added, update the table of contents at the beginning of the document.
 4.  **Update Changelog:** Follow the procedure in section **15.5** to add an entry to the Changelog and determine if the version number needs to be updated.
 5.  **Review and Commit:** Read through all changes from the perspective of someone unfamiliar with the update. Is it clear? Is anything missing? Once satisfied, commit the changes.
@@ -614,18 +643,18 @@ The most efficient way to find what needs documenting is by analyzing the differ
 
 2.  **Map Files to Documentation Sections:** Use the output from the command above and this checklist to determine which parts of the documentation to review and update.
 
-| If This File/Directory Changed... | ...Then Review and Update These Documentation Sections |
-| :--- | :--- |
-| `setup.sh` or `.env` (new variables) | **3. Installation** (Prerequisites, Automated/Manual Setup, Environment Config) |
-| `app/Modules/[ModuleName]/Config/Routes.php` | **5. Tutorial**, **6. Feature Guides** (for new endpoints/URLs) |
-| `app/Modules/[ModuleName]/Controllers/*` | **6. Feature Guides** (logic for a specific feature) |
-| `app/Modules/[ModuleName]/Libraries/*` (Services) | **4. Core Concepts**, **6. Feature Guides** (detailed business logic) |
-| `app/Modules/[ModuleName]/Models/*` or `Entities/*` | **5. Tutorial**, **6. Feature Guides** (how data is handled for a feature) |
-| `app/Modules/[ModuleName]/Database/Migrations/*` | **5. Tutorial**, **6. Feature Guides** (mention new database tables/columns) |
-| `app/Commands/*` or `app/Modules/[ModuleName]/Commands/*` | **7. Command-Line Interface (CLI)** |
-| `app/Config/Custom/*` | **8. Configuration Reference** (document new custom settings) |
-| `app/Modules/[ModuleName]/Views/*` | Usually doesn't require a doc change unless a major new UI feature is introduced. |
-| `composer.json` (new dependencies) | **1.4. Technology Stack**, **3.1. Server Requirements** |
+| If This File/Directory Changed...                         | ...Then Review and Update These Documentation Sections                            |
+| :-------------------------------------------------------- | :-------------------------------------------------------------------------------- |
+| `setup.sh` or `.env` (new variables)                      | **3. Installation** (Prerequisites, Automated/Manual Setup, Environment Config)   |
+| `app/Modules/[ModuleName]/Config/Routes.php`              | **5. Tutorial**, **6. Feature Guides** (for new endpoints/URLs)                   |
+| `app/Modules/[ModuleName]/Controllers/*`                  | **6. Feature Guides** (logic for a specific feature)                              |
+| `app/Modules/[ModuleName]/Libraries/*` (Services)         | **4. Core Concepts**, **6. Feature Guides** (detailed business logic)             |
+| `app/Modules/[ModuleName]/Models/*` or `Entities/*`       | **5. Tutorial**, **6. Feature Guides** (how data is handled for a feature)        |
+| `app/Modules/[ModuleName]/Database/Migrations/*`          | **5. Tutorial**, **6. Feature Guides** (mention new database tables/columns)      |
+| `app/Commands/*` or `app/Modules/[ModuleName]/Commands/*` | **7. Command-Line Interface (CLI)**                                               |
+| `app/Config/Custom/*`                                     | **8. Configuration Reference** (document new custom settings)                     |
+| `app/Modules/[ModuleName]/Views/*`                        | Usually doesn't require a doc change unless a major new UI feature is introduced. |
+| `composer.json` (new dependencies)                        | **1.4. Technology Stack**, **3.1. Server Requirements**                           |
 
 **15.5. Procedure: Updating the Changelog and Managing Releases**
 
@@ -657,6 +686,6 @@ This project follows **Semantic Versioning (SemVer)**: `MAJOR.MINOR.PATCH`.
         ### Removed
         - Deprecated the old reporting feature.
 
-4.  **Be Concise and User-Focused:** Describe the *impact* of the change, not just the code that was altered.
+4.  **Be Concise and User-Focused:** Describe the _impact_ of the change, not just the code that was altered.
     - **Good:** "Added email notifications for successful payments."
     - **Bad:** "Modified the `PaymentsController` and created a `PaymentNotification` class.""
