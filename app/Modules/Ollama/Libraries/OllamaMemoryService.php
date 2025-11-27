@@ -24,7 +24,7 @@ class OllamaMemoryService
     private const DECAY_RATE   = 0.05;
     private const BOOST_RATE   = 0.5;
     private const CONTEXT_TOKEN_BUDGET = 4000;
-    private const FORCED_RECENT_COUNT = 5;
+    private const FORCED_RECENT_COUNT = 0;
 
     public function __construct(int $userId)
     {
@@ -140,11 +140,14 @@ class OllamaMemoryService
         $usedInteractionIds = [];
 
         // A. Forced Recent Interactions (Short-Term Memory)
-        $recentInteractions = $this->interactionModel
-            ->where('user_id', $this->userId)
-            ->orderBy('created_at', 'DESC')
-            ->limit(self::FORCED_RECENT_COUNT)
-            ->findAll();
+        $recentInteractions = [];
+        if (self::FORCED_RECENT_COUNT > 0) {
+            $recentInteractions = $this->interactionModel
+                ->where('user_id', $this->userId)
+                ->orderBy('created_at', 'DESC')
+                ->limit(self::FORCED_RECENT_COUNT)
+                ->findAll();
+        }
 
         // Reverse to maintain chronological order
         $recentInteractions = array_reverse($recentInteractions);
