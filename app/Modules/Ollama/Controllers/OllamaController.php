@@ -27,7 +27,10 @@ class OllamaController extends BaseController
     private const SUPPORTED_MIME_TYPES = [
         'image/png',
         'image/jpeg',
+        'image/jpg', // Some clients send this
         'image/webp',
+        'image/gif',
+        //'application/pdf',
     ];
     private const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
     private const MAX_FILES = 3;
@@ -134,7 +137,7 @@ class OllamaController extends BaseController
     }
 
     /**
-     * Generates content using Ollama.
+     * Generates content using Ollama with Memory Integration.
      */
     public function generate(): RedirectResponse
     {
@@ -163,16 +166,7 @@ class OllamaController extends BaseController
             return redirect()->back()->withInput()->with('error', 'Insufficient balance.');
         }
 
-        // 2. Prepare Context & Files
-        $messages = [];
-
-        // Add System Prompt if in Assistant Mode (Simplified for now)
-        if ($isAssistantMode) {
-            $messages[] = ['role' => 'system', 'content' => 'You are a helpful AI assistant.'];
-            // TODO: Retrieve history from InteractionModel if needed
-        }
-
-        // Handle Files
+        // 2. Handle Files (Multimodal)
         $images = [];
         $userTempPath = WRITEPATH . 'uploads/ollama_temp/' . $userId . '/';
         foreach ($uploadedFileIds as $fileId) {
@@ -183,68 +177,81 @@ class OllamaController extends BaseController
             }
         }
 
-        // Add User Message
-        $userMsg = ['role' => 'user', 'content' => $inputText];
+        $response = [];
+
         if (!empty($images)) {
-            $userMsg['images'] = $images;
+            // Multimodal Request (Direct API, no RAG for now)
+            $messages = [
+                ['role' => 'user', 'content' => $inputText, 'images' => $images]
+            ];
+            $response = $this->ollamaService->generateChat($selectedModel, $messages);
+        } elseif ($isAssistantMode) {
+            // Text-only Request with Assistant Mode (Use MemoryService for RAG)
+            $memoryService = new \App\Modules\Ollama\Libraries\OllamaMemoryService($userId);
+            $response = $memoryService->processChat($inputText, $selectedModel);
+        } else {
+            // Simple Text Request (Direct API, no Memory)
+            $messages = [
+                ['role' => 'user', 'content' => $inputText]
+            ];
+            $response = $this->ollamaService->generateChat($selectedModel, $messages);
         }
-        $messages[] = $userMsg;
 
-        // 3. Call API
-        $response = $this->ollamaService->generateChat($selectedModel, $messages);
-
-        if (isset($response['error'])) {
-            return redirect()->back()->withInput()->with('error', $response['error']);
+        if (isset($response['error']) || (isset($response['success']) && !$response['success'])) {
+            $msg = $response['error'] ?? 'Unknown error';
+            return redirect()->back()->withInput()->with('error', $msg);
         }
 
-        // 4. Deduct Balance
+        // Normalize response format
+        $resultText = $response['result'] ?? $response['response'] ?? '';
+
+        // 3. Deduct Balance
         $this->userModel->deductBalance((int)$user->id, (string)self::COST_PER_REQUEST);
 
-        // 5. Save Interaction (Optional, for history)
-        if ($isAssistantMode) {
-            // TODO: Save to InteractionModel
-        }
-
-        // 6. Output
+        // 4. Output
         $parsedown = new Parsedown();
         $parsedown->setSafeMode(true);
 
         return redirect()->back()->withInput()
-            ->with('result', $parsedown->text($response['result']))
-            ->with('raw_result', $response['result'])
+            ->with('result', $parsedown->text($resultText))
+            ->with('raw_result', $resultText)
             ->with('success', 'Generated successfully. Cost: ' . self::COST_PER_REQUEST . ' credits.');
     }
 
-    // --- Settings & Prompts (Reused Logic) ---
-
     public function updateSetting(): ResponseInterface
     {
-        // Reuse Gemini logic or implement similar
-        // For brevity, assuming similar implementation to GeminiController::updateSetting
-        // ... (Implementation omitted for brevity, can be copied if needed)
-        return $this->response->setJSON(['status' => 'success', 'csrf_token' => csrf_hash()]);
-    }
-
-    public function addPrompt(): RedirectResponse
-    {
         $userId = (int) session()->get('userId');
-        $this->promptModel->save([
-            'user_id' => $userId,
-            'title' => $this->request->getPost('title'),
-            'prompt_text' => $this->request->getPost('prompt_text')
-        ]);
-        return redirect()->back()->with('success', 'Prompt saved.');
-    }
+        $key = $this->request->getPost('setting_key');
+        $enabled = $this->request->getPost('enabled') === 'true';
 
-    public function deletePrompt(int $id): RedirectResponse
-    {
-        $this->promptModel->delete($id);
-        return redirect()->back()->with('success', 'Prompt deleted.');
+        if (!in_array($key, ['assistant_mode_enabled', 'voice_output_enabled'])) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Invalid setting']);
+        }
+
+        $setting = $this->userSettingsModel->where('user_id', $userId)->first();
+        if (!$setting) {
+            $setting = new \App\Modules\Gemini\Entities\UserSetting();
+            $setting->user_id = $userId;
+        }
+
+        $setting->$key = $enabled;
+        $this->userSettingsModel->save($setting);
+
+        return $this->response->setJSON(['status' => 'success', 'csrf_token' => csrf_hash()]);
     }
 
     public function clearMemory(): RedirectResponse
     {
-        // Reuse Gemini logic
+        $userId = (int) session()->get('userId');
+
+        // Clear Interactions
+        $interactionModel = new \App\Modules\Ollama\Models\OllamaInteractionModel();
+        $interactionModel->where('user_id', $userId)->delete();
+
+        // Clear Entities
+        $entityModel = new \App\Modules\Ollama\Models\OllamaEntityModel();
+        $entityModel->where('user_id', $userId)->delete();
+
         return redirect()->back()->with('success', 'Memory cleared.');
     }
 }

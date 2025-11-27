@@ -151,19 +151,21 @@ class OllamaService
      */
     public function embed(string $input): array
     {
-        $url = rtrim($this->config->baseUrl, '/') . '/api/embeddings';
-        // Note: 'nomic-embed-text' or 'mxbai-embed-large' are better for embeddings than llama3,
-        // but we'll default to the configured model if not specified.
-        // Ideally, add a specific embeddingModel to config.
+        // Use the new /api/embed endpoint (Ollama 0.1.26+)
+        $url = rtrim($this->config->baseUrl, '/') . '/api/embed';
+
         $payload = [
-            'model'  => $this->config->defaultModel,
-            'prompt' => $input
+            'model'  => $this->config->embeddingModel,
+            'input'  => $input // 'input' instead of 'prompt' for /api/embed
         ];
 
         try {
+            log_message('info', 'Ollama Embed Request: ' . json_encode($payload));
+
             $response = $this->client->post($url, [
-                'body'    => json_encode($payload),
-                'headers' => ['Content-Type' => 'application/json']
+                'body'        => json_encode($payload),
+                'headers'     => ['Content-Type' => 'application/json'],
+                'http_errors' => false // Prevent exception on 4xx/5xx to capture body
             ]);
 
             if ($response->getStatusCode() !== 200) {
@@ -172,7 +174,23 @@ class OllamaService
             }
 
             $data = json_decode($response->getBody(), true);
-            return $data['embedding'] ?? [];
+
+            // /api/embed returns 'embeddings' (array of arrays)
+            $embedding = [];
+            if (isset($data['embeddings']) && is_array($data['embeddings'])) {
+                $embedding = $data['embeddings'][0] ?? [];
+            } elseif (isset($data['embedding'])) {
+                // Fallback for older versions or different response shapes
+                $embedding = $data['embedding'];
+            }
+
+            if (empty($embedding)) {
+                log_message('error', 'Ollama Embed Empty Response: ' . json_encode($data));
+            } else {
+                log_message('info', 'Ollama Embed Success. Vector Size: ' . count($embedding));
+            }
+
+            return $embedding;
         } catch (\Exception $e) {
             log_message('error', 'Ollama Embed Failed: ' . $e->getMessage());
             return [];

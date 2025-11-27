@@ -23,4 +23,10 @@ class Ollama extends BaseConfig
      * Default: 120
      */
     public int $timeout = 120;
+
+    /**
+     * The model to use for embeddings.
+     * Default: hf.co/nomic-ai/nomic-embed-text-v1.5-GGUF:Q8_0
+     */
+    public string $embeddingModel = 'hf.co/nomic-ai/nomic-embed-text-v1.5-GGUF:Q8_0';
 }
