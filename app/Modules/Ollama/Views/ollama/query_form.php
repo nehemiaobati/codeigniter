@@ -7,8 +7,20 @@
         --code-bg: #282c34;
     }
 
-    .prompt-card {
-        min-height: calc(100vh - 210px);
+    /* Desktop-only full height */
+    @media (min-width: 992px) {
+        .prompt-card {
+            min-height: calc(100vh - 210px);
+        }
+    }
+
+    /* Mobile Toast Centering */
+    @media (max-width: 991.98px) {
+        .toast-container {
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            right: auto !important;
+        }
     }
 
     .prompt-editor-wrapper {
@@ -47,9 +59,15 @@
     /* Upload Area & File Items */
     #mediaUploadArea {
         border: 2px dashed var(--bs-border-color);
-        padding: 2rem;
+        padding: 1rem;
         background: var(--bs-tertiary-bg);
         transition: 0.2s;
+    }
+
+    @media (min-width: 992px) {
+        #mediaUploadArea {
+            padding: 2rem;
+        }
     }
 
     #mediaUploadArea.dragover {
@@ -70,7 +88,7 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
-<div class="container my-5">
+<div class="container my-3 my-lg-5">
     <!-- Header -->
     <div class="blueprint-header text-center mb-4">
         <h1 class="fw-bold"><i class="bi bi-cpu text-success"></i> Local AI Studio (Ollama)</h1>
@@ -293,6 +311,11 @@
             toolbar: 'blocks | bold italic strikethrough | bullist numlist | link | alignleft aligncenter alignright | clean',
             placeholder: 'Ask Ollama something...',
             license_key: 'gpl',
+            mobile: {
+                menubar: false,
+                toolbar: 'bold italic | bullist numlist | link',
+                height: 300
+            },
             setup: (ed) => {
                 ed.on('change', () => ed.save());
             }
