@@ -125,8 +125,31 @@
 
                 <div class="card blueprint-card prompt-card">
                     <div class="card-body p-0 d-flex flex-column">
+                        <!-- Tabs -->
+                        <div class="card-header bg-transparent border-bottom-0 pt-3 px-3 pb-0">
+                            <ul class="nav nav-tabs card-header-tabs" id="generationTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="text-tab" data-bs-toggle="tab" data-bs-target="#text-pane" type="button" role="tab" data-type="text" data-model="gemini-2.0-flash">
+                                        <i class="bi bi-chat-text me-2"></i>Text
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="image-tab" data-bs-toggle="tab" data-bs-target="#image-pane" type="button" role="tab" data-type="image" data-model="imagen-4.0-generate-001">
+                                        <i class="bi bi-image me-2"></i>Image
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="video-tab" data-bs-toggle="tab" data-bs-target="#video-pane" type="button" role="tab" data-type="video" data-model="veo-2.0-generate-001">
+                                        <i class="bi bi-camera-video me-2"></i>Video
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+
                         <!-- Editor -->
                         <div class="prompt-editor-wrapper p-3 flex-grow-1">
+                            <input type="hidden" name="model_id" id="selectedModelId" value="gemini-2.0-flash">
+                            <input type="hidden" name="generation_type" id="generationType" value="text">
                             <textarea id="prompt" name="prompt" class="visually-hidden"><?= old('prompt') ?></textarea>
                         </div>
 
@@ -688,6 +711,168 @@
                 });
             }, 100);
         }
+
+        // --- 12. Generative Media Logic (Tabs & Polling) ---
+        const tabButtons = document.querySelectorAll('#generationTabs button[data-bs-toggle="tab"]');
+        const modelInput = document.getElementById('selectedModelId');
+        const typeInput = document.getElementById('generationType');
+        const form = document.getElementById('geminiForm');
+        const generateBtn = document.getElementById('generateBtn');
+
+        // Tab Switching
+        tabButtons.forEach(btn => {
+            btn.addEventListener('shown.bs.tab', (e) => {
+                const type = e.target.dataset.type;
+                const model = e.target.dataset.model;
+                modelInput.value = model;
+                typeInput.value = type;
+
+                // Update Placeholder
+                const editor = tinymce.get('prompt');
+                if (type === 'image') {
+                    editor.getBody().setAttribute('data-placeholder', 'Describe the image you want to generate...');
+                } else if (type === 'video') {
+                    editor.getBody().setAttribute('data-placeholder', 'Describe the video you want to create (e.g., A cinematic drone shot of...)');
+                } else {
+                    editor.getBody().setAttribute('data-placeholder', 'Enter your prompt here...');
+                }
+            });
+        });
+
+        // Form Submission Intercept
+        form.addEventListener('submit', async (e) => {
+            const type = typeInput.value;
+
+            // Allow normal submission for Text (handled by existing logic or backend)
+            // BUT if we want to handle Media via AJAX, we must intercept.
+            if (type === 'text') return;
+
+            e.preventDefault();
+
+            const promptVal = tinymce.get('prompt').getContent({
+                format: 'text'
+            }).trim();
+            if (!promptVal) {
+                showToast('Please enter a prompt.');
+                return;
+            }
+
+            // UI Loading State
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Generating...';
+
+            const formData = new FormData();
+            formData.append(appState.csrfName, appState.csrfHash);
+            formData.append('prompt', promptVal);
+            formData.append('model_id', modelInput.value);
+
+            try {
+                const res = await fetch('<?= url_to('gemini.media.generate') ?>', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                });
+
+                const data = await res.json();
+                if (data.token) refreshCsrf(data.token); // Update CSRF if returned
+
+                if (data.status === 'error') {
+                    showToast(data.message || 'Generation failed.');
+                    resetBtn();
+                    return;
+                }
+
+                if (data.type === 'image') {
+                    // Show Image Result
+                    showMediaResult(data.url, 'image');
+                    resetBtn();
+                } else if (data.type === 'video') {
+                    // Start Polling
+                    pollVideo(data.op_id);
+                }
+
+            } catch (err) {
+                console.error(err);
+                showToast('Network error.');
+                resetBtn();
+            }
+        });
+
+        const resetBtn = () => {
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '<i class="bi bi-sparkles"></i> Generate';
+        };
+
+        const showMediaResult = (url, type) => {
+            // Create or Update Result Card
+            let resultContainer = document.getElementById('media-result-container');
+            if (!resultContainer) {
+                resultContainer = document.createElement('div');
+                resultContainer.id = 'media-result-container';
+                resultContainer.className = 'card blueprint-card mt-4 shadow-lg border-primary';
+                resultContainer.innerHTML = `
+                    <div class="card-header bg-primary text-white fw-bold">Generated Media</div>
+                    <div class="card-body text-center p-4" id="media-content-area"></div>
+                `;
+                document.querySelector('.col-lg-8').appendChild(resultContainer);
+            }
+
+            const contentArea = document.getElementById('media-content-area');
+            if (type === 'image') {
+                contentArea.innerHTML = `<img src="${url}" class="img-fluid rounded shadow-sm" alt="Generated Image">`;
+            } else if (type === 'video') {
+                contentArea.innerHTML = `
+                    <video controls autoplay loop class="w-100 rounded shadow-sm">
+                        <source src="${url}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>`;
+            }
+
+            resultContainer.scrollIntoView({
+                behavior: 'smooth'
+            });
+        };
+
+        const pollVideo = async (opId) => {
+            generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing Video...';
+
+            const pollInterval = setInterval(async () => {
+                try {
+                    const formData = new FormData();
+                    formData.append(appState.csrfName, appState.csrfHash);
+                    formData.append('op_id', opId);
+
+                    const res = await fetch('<?= url_to('gemini.media.poll') ?>', {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: formData
+                    });
+
+                    const data = await res.json();
+                    if (data.token) refreshCsrf(data.token);
+
+                    if (data.status === 'completed') {
+                        clearInterval(pollInterval);
+                        showMediaResult(data.url, 'video');
+                        resetBtn();
+                    } else if (data.status === 'failed') {
+                        clearInterval(pollInterval);
+                        showToast(data.message || 'Video generation failed.');
+                        resetBtn();
+                    }
+                    // If pending, continue polling
+
+                } catch (err) {
+                    console.error(err);
+                    // Don't stop polling immediately on network glitch, but maybe count errors?
+                    // For now, let's just log.
+                }
+            }, 5000); // Poll every 5 seconds
+        };
     });
 </script>
 <?= $this->endSection() ?>

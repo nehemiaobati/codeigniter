@@ -203,11 +203,12 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
 
 #### **9.2. Exception Strategy**
 
-- **Services:** MUST throw specific, typed Exceptions (e.g., `throw new InsufficientFundsException()`) rather than returning `false`.
-- **Controllers:** MUST wrap Service calls in `try/catch` blocks.
-  - Catch business exceptions to set User Flash Data (warnings).
+- **Primary:** Services SHOULD return a standardized error array: `['status' => 'error', 'message' => 'Human readable message']`.
+- **Alternative:** For custom workflows, Services MAY throw specific, typed Exceptions (e.g., `throw new InsufficientFundsException()`).
+- **Controllers:** MUST validate the returned `status` OR wrap Service calls in `try/catch` blocks.
+  - If `status` is 'error', set User Flash Data (warnings) and redirect.
   - Catch `\Throwable` for unexpected crashes to prevent white screens.
-- **Transactions:** On failure, the `catch` block MUST rollback the transaction, log the specific error, and redirect safely.
+- **Transactions:** On failure, the handler MUST rollback the transaction, log the specific error, and redirect safely.
 
 #### **9.3. Debugging Workflow**
 

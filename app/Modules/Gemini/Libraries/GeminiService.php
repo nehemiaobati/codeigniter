@@ -46,8 +46,7 @@ class GeminiService
     {
         $this->apiKey = env('GEMINI_API_KEY') ?? getenv('GEMINI_API_KEY');
         // Initialize the specific configuration service
-        $this->payloadService = new ModelPayloadService();
-        // Alternatively use service('modelPayloadService') if registered in Services.php
+        $this->payloadService = service('modelPayloadService');
     }
 
     /**
