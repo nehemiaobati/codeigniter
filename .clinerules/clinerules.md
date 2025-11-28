@@ -85,11 +85,15 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
 
 #### **3.2. Security**
 
-- All dynamic data rendered in a view MUST be escaped with `esc()`.
-- CSRF protection MUST be enabled globally, and all `POST` forms MUST include `csrf_field()`.
-- The Query Builder or Entities are the ONLY permitted methods for database interaction.
-- All user-supplied data MUST be validated using the Validation library before use.
-- The Throttler MUST be enabled on authentication and password reset routes.
+- **Data Escaping:** All dynamic data rendered in a view MUST be escaped with `esc()`.
+- **CSRF Protection:**
+  - MUST be enabled globally.
+  - All HTML `POST` forms MUST include `csrf_field()`.
+  - **Backend Responsibility:** The Backend MUST include a fresh CSRF token in every JSON response (success or error) to allow the frontend to refresh its token (e.g., `['token' => csrf_hash()]`).
+  - **Frontend Handling:** All AJAX/Fetch requests MUST check for and update the CSRF token from the response payload to prevent "disallowed action" errors on subsequent requests.
+- **Database Interaction:** The Query Builder or Entities are the ONLY permitted methods.
+- **Validation:** All user-supplied data MUST be validated using the Validation library before use.
+- **Throttling:** The Throttler MUST be enabled on authentication and password reset routes.
 
 #### **3.3. Transactional Integrity: All or Nothing**
 
