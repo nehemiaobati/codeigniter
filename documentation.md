@@ -136,6 +136,7 @@ The GenAI Web Platform is a comprehensive, multi-functional application built on
 - **User Authentication:** Secure registration, login, email verification, and password reset functionality.
 - **Payment Gateway Integration:** Seamless payments via Paystack, a popular African payment gateway.
 - **AI Service Integration:** Advanced text and multimedia interaction with Google's Gemini API. Features include a **Hybrid Memory System** (combining Vector embeddings and keyword search), **Text-to-Speech** output, and **Professional Document Generation** (PDF/Word) using LaTeX engines.
+- **Advanced Media Generation:** Support for generating high-quality images (Imagen 4.0) and videos (Veo 2.0) directly from text prompts.
 - **Local AI Integration (Ollama):** Support for running local LLMs (like Llama 3, DeepSeek) directly on the server, offering privacy-focused AI interactions with zero external API costs.
 - **Cryptocurrency Data Service:** Real-time balance and transaction history queries for Bitcoin (BTC) and Litecoin (LTC) addresses.
 - **Blog & Content Management:** A public-facing blog with a full administrative backend for creating, editing, and managing posts.
@@ -154,7 +155,7 @@ This platform is designed for developers, creators, and businesses, particularly
 - **Database:** MySQL 8.0+
 - **Web Server:** Apache2
 - **Key Libraries:**
-  - `google/gemini-php`: For interacting with the Gemini API.
+  - `google/gemini-php`: For interacting with the Gemini API (supports Gemini 2.5, Imagen 4.0, Veo 2.0).
   - `ollama/ollama`: Local LLM inference server (external dependency).
   - `dompdf/dompdf`: For PDF generation fallback.
   - `nlp-tools/nlp-tools`: For Natural Language Processing (Naive Bayes classification).
@@ -283,7 +284,7 @@ The application uses CodeIgniter's service container to manage class instances. 
 **4.4. Directory Structure Explained**
 
 - `app/Modules/Gemini/`:
-  - `Libraries/`: Contains `GeminiService`, `MemoryService`, `EmbeddingService`, `FfmpegService`, `PandocService`, `TokenService`, `TrainingService`.
+  - `Libraries/`: Contains `GeminiService`, `MediaGenerationService`, `ModelPayloadService`, `MemoryService`, `EmbeddingService`, `FfmpegService`, `PandocService`, `TokenService`, `TrainingService`.
   - `Models/`: Contains `InteractionModel`, `EntityModel`, `PromptModel`, `UserSettingsModel`.
 - `app/Modules/Ollama/`:
   - `Libraries/`: Contains `OllamaService`, `OllamaPayloadService`.
@@ -378,7 +379,7 @@ Create `app/Modules/Notes/Views/index.php`.
 
 This module (`App\Modules\Gemini`) is the core of the platform.
 
-- **6.3.1. Generative Text & Multimodal Input**: `GeminiController::generate()` accepts text prompts and uploaded files (images/PDFs). It uses `GeminiService` to communicate with models like `gemini-2.0-flash`. The system calculates token usage and deducts cost from the user's balance in real-time.
+- **6.3.1. Generative Text & Multimodal Input**: `GeminiController::generate()` accepts text prompts and uploaded files (images/PDFs). It uses `GeminiService` to communicate with models like `gemini-2.5-flash`. The system uses `ModelPayloadService` to dynamically construct payloads for different model architectures. Token usage is calculated and costs are deducted from the user's balance in real-time.
 - **6.3.2. Hybrid Memory System (Vector + Keyword)**: Managed by `MemoryService.php`.
   - **Storage:** Interactions are stored in the `interactions` table. Entities (keywords) are stored in `entities`.
   - **Retrieval:** The system uses `EmbeddingService` to get vector embeddings of the user's query. It performs a cosine similarity search (Semantic) AND a keyword-based search (Lexical).
@@ -393,6 +394,12 @@ This module (`App\Modules\Gemini`) is the core of the platform.
 - **6.3.5. User Settings (Voice & Assistant Modes)**:
   - Users can toggle "Conversational Memory" and "Voice Output" directly from the UI.
   - These preferences are stored in the `user_settings` table and persist across sessions.
+- **6.3.6. Media Generation (Image & Video)**:
+  - **Service:** `MediaGenerationService` handles interactions with image (Imagen 4.0, Gemini 2.5 Flash Image) and video (Veo 2.0) models.
+  - **Process:**
+    - **Images:** Generated synchronously. The system decodes the base64 response, saves the image to `writable/uploads/generated/`, and logs the transaction.
+    - **Videos:** Generated asynchronously. The system initiates a long-running operation with Veo 2.0, returns an operation ID, and polls for completion. Once ready, the video is downloaded and saved.
+  - **Cost Management:** Costs are estimated and deducted based on the specific model's pricing (e.g., per image or per second of video).
 
 **6.4. Cryptocurrency Data Service**
 
@@ -538,6 +545,19 @@ Ensure your code is well-documented, follows the project's architectural pattern
 - **PCM:** Pulse-Code Modulation, a raw audio format returned by Gemini API.
 
 **13.2. Changelog & Release History**
+
+**v1.5.0 - 2025-11-29**
+
+### Added
+
+- **Advanced Media Generation:**
+  - Integrated `MediaGenerationService` for generating images and videos.
+  - Added support for **Imagen 4.0** (Standard, Ultra, Fast) for high-fidelity image generation.
+  - Added support for **Veo 2.0** for AI video generation.
+  - Implemented asynchronous polling for long-running video generation tasks.
+- **Model Payload Service:**
+  - Created `ModelPayloadService` to decouple API payload construction from the main service, allowing for easier addition of new models with unique requirements.
+- **Gemini 2.5 Support:** Updated `GeminiService` to prioritize `gemini-2.5-flash` and `gemini-2.5-pro` models.
 
 **v1.4.0 - 2025-11-26**
 
