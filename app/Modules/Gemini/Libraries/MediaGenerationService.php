@@ -46,32 +46,36 @@ class MediaGenerationService
      * @var array<string, array>
      */
     protected $mediaConfigs = [
-        'gemini-2.5-flash-image' => [
-            'type' => 'image_generation_content',
-            'cost' => 0.03,
-            'name' => 'Gemini 2.5 Flash (Image & Text)'
-        ],
-        'imagen-4.0-generate-001' => [
+        'imagen-4.0-generate-preview-06-06' => [
             'type' => 'image',
             'cost' => 0.04,
-            'name' => 'Imagen 4.0 Standard'
+            'name' => 'Imagen 4.0 Preview'
+        ],
+        'imagen-4.0-ultra-generate-preview-06-06' => [
+            'type' => 'image',
+            'cost' => 0.06,
+            'name' => 'Imagen 4.0 Ultra Preview'
         ],
         'imagen-4.0-ultra-generate-001' => [
             'type' => 'image',
             'cost' => 0.06,
             'name' => 'Imagen 4.0 Ultra'
         ],
-        'imagen-4.0-fast-generate-001' => [
-            'type' => 'image',
-            'cost' => 0.02,
-            'name' => 'Imagen 4.0 Fast'
-        ],
         'gemini-3-pro-image-preview' => [
             'type' => 'image_generation_content',
             'cost' => 0.05,
             'name' => 'Gemini 3 Pro (Image & Text)'
         ],
-
+        'gemini-2.5-flash-image' => [
+            'type' => 'image_generation_content',
+            'cost' => 0.03,
+            'name' => 'Gemini 2.5 Flash (Image & Text)'
+        ],
+        'gemini-2.5-flash-image-preview' => [
+            'type' => 'image_generation_content',
+            'cost' => 0.03,
+            'name' => 'Gemini 2.5 Flash Image Preview'
+        ],
         'veo-2.0-generate-001' => [
             'type' => 'video',
             'cost' => 0.10,

@@ -139,6 +139,7 @@ class ModelPayloadService
                 break;
 
             case 'gemini-2.5-flash-image':
+            case 'gemini-2.5-flash-image-preview':
                 $payload = [
                     "contents" => [
                         ["role" => "user", "parts" => $parts]
@@ -150,10 +151,10 @@ class ModelPayloadService
                 break;
 
             // -------------------------------------------------------
-            // IMAGEN 4.0 (Standard/Ultra/Fast)
+            // IMAGEN 4.0 (Standard/Ultra)
             // -------------------------------------------------------
-            case 'imagen-3.0-generate-002': // Fallback
-            case 'imagen-4.0-generate-001':
+            case 'imagen-4.0-generate-preview-06-06':
+            case 'imagen-4.0-ultra-generate-preview-06-06':
             case 'imagen-4.0-ultra-generate-001':
                 // Extract prompt
                 $promptText = '';
@@ -172,30 +173,6 @@ class ModelPayloadService
                         "personGeneration" => "ALLOW_ALL",
                         "aspectRatio" => "1:1",
                         "imageSize" => "1K",
-                    ]
-                ];
-                $apiMethod = 'predict';
-                $url = "https://generativelanguage.googleapis.com/v1beta/models/{$modelId}:{$apiMethod}?key=" . urlencode($apiKey);
-                break;
-
-            case 'imagen-4.0-fast-generate-001':
-                // Extract prompt
-                $promptText = '';
-                foreach ($parts as $part) {
-                    if (isset($part['text'])) $promptText .= $part['text'] . ' ';
-                }
-                $promptText = trim($promptText);
-
-                $payload = [
-                    "instances" => [
-                        ["prompt" => $promptText]
-                    ],
-                    "parameters" => [
-                        "outputMimeType" => "image/jpeg",
-                        "sampleCount" => 1,
-                        "personGeneration" => "ALLOW_ALL",
-                        "aspectRatio" => "1:1",
-                        // No imageSize for Fast model in script
                     ]
                 ];
                 $apiMethod = 'predict';
