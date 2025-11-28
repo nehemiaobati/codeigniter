@@ -70,12 +70,19 @@ class MediaController extends BaseController
         try {
             $result = $this->mediaService->generateMedia($userId, $prompt, $modelId);
 
-            // The service returns a standardized array with 'status' ('success', 'pending', 'error').
-            // We pass this directly to the frontend for handling.
+            // Append CSRF token to response for frontend refresh
+            $result['token'] = csrf_hash();
+
             return $this->respond($result);
         } catch (\Exception $e) {
             log_message('error', '[MediaController::generate] ' . $e->getMessage());
-            return $this->failServerError('An unexpected error occurred during media generation.');
+
+            // Return error with CSRF token to keep frontend in sync
+            return $this->respond([
+                'status' => 'error',
+                'message' => 'An unexpected error occurred during media generation.',
+                'token' => csrf_hash()
+            ], 500);
         }
     }
 
@@ -94,10 +101,19 @@ class MediaController extends BaseController
 
         try {
             $result = $this->mediaService->pollVideoStatus($opId);
+
+            // Append CSRF token
+            $result['token'] = csrf_hash();
+
             return $this->respond($result);
         } catch (\Exception $e) {
             log_message('error', '[MediaController::poll] ' . $e->getMessage());
-            return $this->failServerError('Polling failed due to a server error.');
+
+            return $this->respond([
+                'status' => 'error',
+                'message' => 'Polling failed due to a server error.',
+                'token' => csrf_hash()
+            ], 500);
         }
     }
 

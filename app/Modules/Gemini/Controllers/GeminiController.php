@@ -96,6 +96,10 @@ class GeminiController extends BaseController
         $prompts = $this->promptModel->where('user_id', $userId)->findAll();
         $userSetting = $this->userSettingsModel->where('user_id', $userId)->first();
 
+        // Fetch Media Configs for Dynamic Tabs
+        $mediaService = service('mediaGenerationService');
+        $mediaConfigs = $mediaService->getMediaConfig();
+
         $data = [
             'pageTitle'              => 'AI Workspace | Afrikenkid',
             'metaDescription'        => 'Your personal AI workspace for content creation and data analysis.',
@@ -109,6 +113,7 @@ class GeminiController extends BaseController
             'maxFileSize'            => self::MAX_FILE_SIZE,
             'maxFiles'               => self::MAX_FILES,
             'supportedMimeTypes'     => json_encode(self::SUPPORTED_MIME_TYPES),
+            'mediaConfigs'           => $mediaConfigs, // Pass to view
         ];
         $data['robotsTag'] = 'noindex, follow';
 

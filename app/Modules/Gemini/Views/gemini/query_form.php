@@ -128,21 +128,36 @@
                         <!-- Tabs -->
                         <div class="card-header bg-transparent border-bottom-0 pt-3 px-3 pb-0">
                             <ul class="nav nav-tabs card-header-tabs" id="generationTabs" role="tablist">
+                                <!-- Text Tab (Always First) -->
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link active" id="text-tab" data-bs-toggle="tab" data-bs-target="#text-pane" type="button" role="tab" data-type="text" data-model="gemini-2.0-flash">
                                         <i class="bi bi-chat-text me-2"></i>Text
                                     </button>
                                 </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="image-tab" data-bs-toggle="tab" data-bs-target="#image-pane" type="button" role="tab" data-type="image" data-model="imagen-4.0-generate-001">
-                                        <i class="bi bi-image me-2"></i>Image
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="video-tab" data-bs-toggle="tab" data-bs-target="#video-pane" type="button" role="tab" data-type="video" data-model="veo-2.0-generate-001">
-                                        <i class="bi bi-camera-video me-2"></i>Video
-                                    </button>
-                                </li>
+
+                                <!-- Dynamic Media Tabs -->
+                                <?php if (!empty($mediaConfigs)): ?>
+                                    <?php foreach ($mediaConfigs as $modelId => $config): ?>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link"
+                                                id="<?= esc($config['type']) ?>-tab-<?= md5($modelId) ?>"
+                                                data-bs-toggle="tab"
+                                                data-bs-target="#<?= esc($config['type']) ?>-pane"
+                                                type="button"
+                                                role="tab"
+                                                data-type="<?= esc($config['type']) === 'image_generation_content' ? 'image' : esc($config['type']) ?>"
+                                                data-model="<?= esc($modelId) ?>"
+                                                title="<?= esc($config['name']) ?> ($<?= esc($config['cost']) ?>)">
+                                                <?php if (strpos($config['type'], 'image') !== false): ?>
+                                                    <i class="bi bi-image me-2"></i>
+                                                <?php elseif ($config['type'] === 'video'): ?>
+                                                    <i class="bi bi-camera-video me-2"></i>
+                                                <?php endif; ?>
+                                                <?= esc($config['name']) ?>
+                                            </button>
+                                        </li>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
                             </ul>
                         </div>
 
@@ -776,7 +791,11 @@
                 });
 
                 const data = await res.json();
-                if (data.token) refreshCsrf(data.token); // Update CSRF if returned
+
+                // CRITICAL: Always refresh CSRF token if returned, regardless of success/error
+                if (data.token) {
+                    refreshCsrf(data.token);
+                }
 
                 if (data.status === 'error') {
                     showToast(data.message || 'Generation failed.');
