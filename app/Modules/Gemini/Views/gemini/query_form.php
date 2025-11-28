@@ -85,6 +85,39 @@
         height: 4px;
         margin-top: 4px;
     }
+
+    /* Model Selection Cards */
+    /* Model Selection Cards */
+    .model-card {
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 2px solid transparent;
+        position: relative;
+        /* For z-index */
+    }
+
+    .model-card:hover {
+        transform: translateY(-4px);
+        background-color: var(--bs-gray-100);
+        z-index: 10;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .model-card.active {
+        border-color: var(--bs-primary);
+        background-color: var(--bs-primary-bg-subtle);
+    }
+
+    .model-icon {
+        font-size: 1.5rem;
+    }
+
+    /* Fix Tab Focus Overflow */
+    .nav-tabs .nav-link:focus {
+        box-shadow: none;
+        /* Remove default wide focus ring */
+        border-color: var(--bs-primary-border-subtle);
+    }
 </style>
 <?= $this->endSection() ?>
 
@@ -128,37 +161,68 @@
                         <!-- Tabs -->
                         <div class="card-header bg-transparent border-bottom-0 pt-3 px-3 pb-0">
                             <ul class="nav nav-tabs card-header-tabs" id="generationTabs" role="tablist">
-                                <!-- Text Tab (Always First) -->
+                                <!-- Text Tab -->
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link active" id="text-tab" data-bs-toggle="tab" data-bs-target="#text-pane" type="button" role="tab" data-type="text" data-model="gemini-2.0-flash">
                                         <i class="bi bi-chat-text me-2"></i>Text
                                     </button>
                                 </li>
+                                <!-- Image Tab -->
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="image-tab" data-bs-toggle="tab" data-bs-target="#image-pane" type="button" role="tab" data-type="image">
+                                        <i class="bi bi-image me-2"></i>Image
+                                    </button>
+                                </li>
+                                <!-- Video Tab -->
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="video-tab" data-bs-toggle="tab" data-bs-target="#video-pane" type="button" role="tab" data-type="video">
+                                        <i class="bi bi-camera-video me-2"></i>Video
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
 
-                                <!-- Dynamic Media Tabs -->
+                        <!-- Model Selection Area -->
+                        <div id="model-selection-area" class="p-3 border-bottom d-none">
+                            <div class="small fw-bold text-muted mb-2 text-uppercase">Select Model</div>
+
+                            <!-- Image Models Grid -->
+                            <div id="image-models-grid" class="row g-2 d-none">
                                 <?php if (!empty($mediaConfigs)): ?>
                                     <?php foreach ($mediaConfigs as $modelId => $config): ?>
-                                        <li class="nav-item" role="presentation">
-                                            <button class="nav-link"
-                                                id="<?= esc($config['type']) ?>-tab-<?= md5($modelId) ?>"
-                                                data-bs-toggle="tab"
-                                                data-bs-target="#<?= esc($config['type']) ?>-pane"
-                                                type="button"
-                                                role="tab"
-                                                data-type="<?= esc($config['type']) === 'image_generation_content' ? 'image' : esc($config['type']) ?>"
-                                                data-model="<?= esc($modelId) ?>"
-                                                title="<?= esc($config['name']) ?> ($<?= esc($config['cost']) ?>)">
-                                                <?php if (strpos($config['type'], 'image') !== false): ?>
-                                                    <i class="bi bi-image me-2"></i>
-                                                <?php elseif ($config['type'] === 'video'): ?>
-                                                    <i class="bi bi-camera-video me-2"></i>
-                                                <?php endif; ?>
-                                                <?= esc($config['name']) ?>
-                                            </button>
-                                        </li>
+                                        <?php if (strpos($config['type'], 'image') !== false): ?>
+                                            <div class="col-6 col-md-4">
+                                                <div class="card model-card h-100" data-model="<?= esc($modelId) ?>" data-type="image">
+                                                    <div class="card-body p-2 text-center">
+                                                        <div class="model-icon text-primary mb-1"><i class="bi bi-image"></i></div>
+                                                        <div class="small fw-bold text-truncate"><?= esc($config['name']) ?></div>
+                                                        <div class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill mt-1">$<?= esc($config['cost']) ?></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
-                            </ul>
+                            </div>
+
+                            <!-- Video Models Grid -->
+                            <div id="video-models-grid" class="row g-2 d-none">
+                                <?php if (!empty($mediaConfigs)): ?>
+                                    <?php foreach ($mediaConfigs as $modelId => $config): ?>
+                                        <?php if ($config['type'] === 'video'): ?>
+                                            <div class="col-6 col-md-4">
+                                                <div class="card model-card h-100" data-model="<?= esc($modelId) ?>" data-type="video">
+                                                    <div class="card-body p-2 text-center">
+                                                        <div class="model-icon text-danger mb-1"><i class="bi bi-camera-video"></i></div>
+                                                        <div class="small fw-bold text-truncate"><?= esc($config['name']) ?></div>
+                                                        <div class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill mt-1">$<?= esc($config['cost']) ?></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
                         </div>
 
                         <!-- Editor -->
@@ -734,23 +798,67 @@
         const form = document.getElementById('geminiForm');
         const generateBtn = document.getElementById('generateBtn');
 
+        const modelSelectionArea = document.getElementById('model-selection-area');
+        const imageModelsGrid = document.getElementById('image-models-grid');
+        const videoModelsGrid = document.getElementById('video-models-grid');
+        const modelCards = document.querySelectorAll('.model-card');
+
+        // Helper to select a model card
+        const selectModelCard = (modelId) => {
+            modelCards.forEach(card => {
+                if (card.dataset.model === modelId) {
+                    card.classList.add('active');
+                    modelInput.value = modelId;
+                } else {
+                    card.classList.remove('active');
+                }
+            });
+        };
+
         // Tab Switching
         tabButtons.forEach(btn => {
             btn.addEventListener('shown.bs.tab', (e) => {
                 const type = e.target.dataset.type;
-                const model = e.target.dataset.model;
-                modelInput.value = model;
                 typeInput.value = type;
 
-                // Update Placeholder
+                // Reset UI
+                modelSelectionArea.classList.add('d-none');
+                imageModelsGrid.classList.add('d-none');
+                videoModelsGrid.classList.add('d-none');
+
                 const editor = tinymce.get('prompt');
-                if (type === 'image') {
-                    editor.getBody().setAttribute('data-placeholder', 'Describe the image you want to generate...');
-                } else if (type === 'video') {
-                    editor.getBody().setAttribute('data-placeholder', 'Describe the video you want to create (e.g., A cinematic drone shot of...)');
-                } else {
+
+                if (type === 'text') {
+                    modelInput.value = 'gemini-2.0-flash'; // Default text model
                     editor.getBody().setAttribute('data-placeholder', 'Enter your prompt here...');
+                } else {
+                    // Show Selection Area
+                    modelSelectionArea.classList.remove('d-none');
+
+                    if (type === 'image') {
+                        imageModelsGrid.classList.remove('d-none');
+                        editor.getBody().setAttribute('data-placeholder', 'Describe the image you want to generate...');
+
+                        // Auto-select first image model if none active
+                        const firstImage = imageModelsGrid.querySelector('.model-card');
+                        if (firstImage) selectModelCard(firstImage.dataset.model);
+
+                    } else if (type === 'video') {
+                        videoModelsGrid.classList.remove('d-none');
+                        editor.getBody().setAttribute('data-placeholder', 'Describe the video you want to create...');
+
+                        // Auto-select first video model
+                        const firstVideo = videoModelsGrid.querySelector('.model-card');
+                        if (firstVideo) selectModelCard(firstVideo.dataset.model);
+                    }
                 }
+            });
+        });
+
+        // Model Card Click Event
+        modelCards.forEach(card => {
+            card.addEventListener('click', () => {
+                selectModelCard(card.dataset.model);
             });
         });
 
