@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules\Gemini\Controllers;
 
 use App\Controllers\BaseController;
@@ -7,19 +9,43 @@ use App\Modules\Gemini\Libraries\MediaGenerationService;
 use CodeIgniter\API\ResponseTrait;
 
 /**
+ * Controller for managing media generation requests (Images and Videos).
+ *
+ * This controller handles:
+ * - Validation of media generation requests.
+ * - Orchestration of calls to the MediaGenerationService.
+ * - Polling for status updates on asynchronous tasks (e.g., video generation).
+ * - Secure serving of generated media files.
+ *
  * @property \CodeIgniter\HTTP\IncomingRequest $request
  */
 class MediaController extends BaseController
 {
     use ResponseTrait;
 
+    /**
+     * Service for handling media generation logic.
+     * @var MediaGenerationService
+     */
     protected $mediaService;
 
+    /**
+     * Constructor.
+     * Initializes the MediaGenerationService.
+     */
     public function __construct()
     {
         $this->mediaService = service('mediaGenerationService');
     }
 
+    /**
+     * Handles the request to generate media.
+     *
+     * Validates the input prompt and model ID, then delegates the generation
+     * task to the MediaGenerationService.
+     *
+     * @return \CodeIgniter\HTTP\ResponseInterface JSON response containing the result or error details.
+     */
     public function generate()
     {
         $rules = [
@@ -35,7 +61,7 @@ class MediaController extends BaseController
         $prompt = $this->request->getVar('prompt');
         $modelId = $this->request->getVar('model_id');
 
-        // Optional: Check if model ID is valid
+        // Validate that the requested model ID exists in the configuration
         $configs = $this->mediaService->getMediaConfig();
         if (!array_key_exists($modelId, $configs)) {
             return $this->fail('Invalid model ID selected.');
@@ -44,15 +70,20 @@ class MediaController extends BaseController
         try {
             $result = $this->mediaService->generateMedia($userId, $prompt, $modelId);
 
-            // Service returns ['status' => 'error/success', ...]. 
-            // We return this directly so the frontend can handle 'status' === 'error' correctly.
+            // The service returns a standardized array with 'status' ('success', 'pending', 'error').
+            // We pass this directly to the frontend for handling.
             return $this->respond($result);
         } catch (\Exception $e) {
             log_message('error', '[MediaController::generate] ' . $e->getMessage());
-            return $this->failServerError('An unexpected error occurred.');
+            return $this->failServerError('An unexpected error occurred during media generation.');
         }
     }
 
+    /**
+     * Polls the status of a long-running operation (e.g., video generation).
+     *
+     * @return \CodeIgniter\HTTP\ResponseInterface JSON response with the current status.
+     */
     public function poll()
     {
         $opId = $this->request->getVar('op_id');
@@ -66,13 +97,27 @@ class MediaController extends BaseController
             return $this->respond($result);
         } catch (\Exception $e) {
             log_message('error', '[MediaController::poll] ' . $e->getMessage());
-            return $this->failServerError('Polling failed.');
+            return $this->failServerError('Polling failed due to a server error.');
         }
     }
 
+    /**
+     * Serves a generated media file securely.
+     *
+     * Ensures that files are served with the correct MIME type and headers.
+     * Access control is implicitly handled by the path structure (user ID in path),
+     * but additional checks could be added here if strict sharing controls are needed.
+     *
+     * @param string $filename The name of the file to serve.
+     * @return void Outputs the file content directly.
+     * @throws \CodeIgniter\Exceptions\PageNotFoundException If the file does not exist.
+     */
     public function serve($filename)
     {
         $userId = (int) session()->get('userId');
+
+        // Sanitize filename to prevent directory traversal
+        $filename = basename($filename);
         $path = WRITEPATH . 'uploads/generated/' . $userId . '/' . $filename;
 
         if (!file_exists($path)) {
@@ -82,6 +127,8 @@ class MediaController extends BaseController
         $mime = mime_content_type($path);
         header('Content-Type: ' . $mime);
         header('Content-Length: ' . filesize($path));
+
+        // Use readfile for efficient output buffering
         readfile($path);
         exit;
     }

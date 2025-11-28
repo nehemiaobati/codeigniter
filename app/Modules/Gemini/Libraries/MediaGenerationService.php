@@ -1,18 +1,56 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules\Gemini\Libraries;
 
 use App\Models\UserModel;
 use CodeIgniter\I18n\Time;
 
+/**
+ * Service for generating media (images and videos) using Google's Generative AI models.
+ *
+ * This service handles:
+ * - Configuration of supported media models (Imagen, Veo).
+ * - Cost estimation and user balance verification.
+ * - Payload construction via ModelPayloadService.
+ * - Execution of API requests for media generation.
+ * - Handling of asynchronous video generation (polling).
+ * - Storage of generated media and transaction logging.
+ */
 class MediaGenerationService
 {
+    /**
+     * Service for constructing model-specific API payloads.
+     * @var \App\Modules\Gemini\Libraries\ModelPayloadService
+     */
     protected $modelPayloadService;
+
+    /**
+     * Model for managing user data and balances.
+     * @var UserModel
+     */
     protected $userModel;
+
+    /**
+     * Database connection instance.
+     * @var \CodeIgniter\Database\BaseConnection
+     */
     protected $db;
 
-    // Configuration for Media Models
+    /**
+     * Configuration for supported media generation models.
+     *
+     * Includes model identifiers, types, estimated costs (USD), and display names.
+     *
+     * @var array<string, array>
+     */
     protected $mediaConfigs = [
+        'gemini-2.5-flash-image' => [
+            'type' => 'image_generation_content',
+            'cost' => 0.03,
+            'name' => 'Gemini 2.5 Flash (Image & Text)'
+        ],
         'imagen-4.0-generate-001' => [
             'type' => 'image',
             'cost' => 0.04,
@@ -30,50 +68,60 @@ class MediaGenerationService
         ],
         'gemini-3-pro-image-preview' => [
             'type' => 'image_generation_content',
-            'cost' => 0.05, // Estimate
+            'cost' => 0.05,
             'name' => 'Gemini 3 Pro (Image & Text)'
         ],
-        'gemini-2.5-flash-image' => [
-            'type' => 'image_generation_content',
-            'cost' => 0.03, // Estimate
-            'name' => 'Gemini 2.5 Flash (Image & Text)'
-        ],
+
         'veo-2.0-generate-001' => [
             'type' => 'video',
-            'cost' => 0.10, // Estimated cost, adjust as needed
+            'cost' => 0.10,
             'name' => 'Veo 2.0'
         ]
     ];
 
+    /**
+     * Constructor.
+     * Initializes dependencies.
+     */
     public function __construct()
     {
         $this->modelPayloadService = service('modelPayloadService');
-        $this->userModel = new UserModel(); // Assuming this handles user balance
+        $this->userModel = new UserModel();
         $this->db = \Config\Database::connect();
     }
 
     /**
-     * Generates media (Image or Video) based on the model ID.
+     * Generates media (Image or Video) based on the specified model.
+     *
+     * This method orchestrates the entire generation process:
+     * 1. Validates the model ID.
+     * 2. Checks if the user has sufficient balance.
+     * 3. Constructs the API payload.
+     * 4. Executes the API request.
+     * 5. Processes the response based on the media type.
+     *
+     * @param int $userId The ID of the user requesting generation.
+     * @param string $prompt The text prompt for generation.
+     * @param string $modelId The identifier of the model to use.
+     * @return array An associative array containing 'status' and result data or error message.
      */
-    public function generateMedia(int $userId, string $prompt, string $modelId)
+    public function generateMedia(int $userId, string $prompt, string $modelId): array
     {
         if (!isset($this->mediaConfigs[$modelId])) {
             return ['status' => 'error', 'message' => 'Invalid model ID.'];
         }
 
         $config = $this->mediaConfigs[$modelId];
-        $cost = $config['cost'];
+        $costUSD = $config['cost'];
 
         // 1. Check Balance
-        $user = $this->userModel->find($userId); // You might need to adjust this based on actual User Model
+        $user = $this->userModel->find($userId);
 
-        // Convert cost to KSH if needed, assuming cost in config is USD
-        // Using fixed rate from GeminiController for consistency, or just assume credits = USD/KSH
-        // For now, assuming user->balance is in KSH and cost is USD.
+        // Convert cost to KSH (Fixed Rate: 1 USD = 129 KSH)
         $usdToKsh = 129;
-        $costKsh = $cost * $usdToKsh;
+        $costKsh = $costUSD * $usdToKsh;
 
-        if ($user->balance < $costKsh) {
+        if (!$user || $user->balance < $costKsh) {
             return ['status' => 'error', 'message' => 'Insufficient credits.'];
         }
 
@@ -93,7 +141,7 @@ class MediaGenerationService
             $response = $client->post($payloadData['url'], [
                 'headers' => ['Content-Type' => 'application/json'],
                 'body'    => $payloadData['body'],
-                'http_errors' => false // Don't throw exceptions for 4xx/5xx, handle manually
+                'http_errors' => false
             ]);
 
             $httpCode = $response->getStatusCode();
@@ -121,18 +169,28 @@ class MediaGenerationService
                 return $this->handleImageGenerationContentResponse($userId, $modelId, $prompt, $responseData, $costKsh);
             }
 
-            return ['status' => 'error', 'message' => 'Unknown media type.'];
+            return ['status' => 'error', 'message' => 'Unknown media type configuration.'];
         } catch (\Exception $e) {
             log_message('error', 'Gemini Media Exception: ' . $e->getMessage());
             return ['status' => 'error', 'message' => 'HTTP Request failed: ' . $e->getMessage()];
         }
     }
 
-    protected function handleImageGenerationContentResponse($userId, $modelId, $prompt, $responseData, $cost)
+    /**
+     * Handles the response for 'image_generation_content' type models (e.g., Gemini 3 Pro).
+     *
+     * Extracts the image data from the 'candidates' structure, saves it to disk,
+     * deducts the user's balance, and logs the transaction.
+     *
+     * @param int $userId
+     * @param string $modelId
+     * @param string $prompt
+     * @param array $responseData
+     * @param float $cost
+     * @return array
+     */
+    protected function handleImageGenerationContentResponse(int $userId, string $modelId, string $prompt, array $responseData, float $cost): array
     {
-        // Response structure for generateContent with images:
-        // candidates[0].content.parts[].inlineData (mimeType, data)
-
         if (isset($responseData['candidates'][0]['content']['parts'])) {
             $parts = $responseData['candidates'][0]['content']['parts'];
             $foundImage = false;
@@ -144,7 +202,7 @@ class MediaGenerationService
                     $imageData = base64_decode($base64);
 
                     // Save to disk
-                    $fileName = 'gen_' . time() . '_' . uniqid() . '.jpg'; // Assuming JPEG based on script
+                    $fileName = 'gen_' . time() . '_' . uniqid() . '.jpg';
                     $uploadPath = WRITEPATH . 'uploads/generated/' . $userId . '/';
 
                     if (!is_dir($uploadPath)) {
@@ -156,15 +214,13 @@ class MediaGenerationService
                         continue;
                     }
                     $foundImage = true;
-                    break; // Just handle the first image for now
+                    break; // Process only the first image
                 }
             }
 
             if ($foundImage) {
-                // Deduct Balance
                 $this->deductCredits($userId, $cost);
 
-                // Record in DB
                 $this->db->table('generated_media')->insert([
                     'user_id' => $userId,
                     'type' => 'image',
@@ -185,10 +241,23 @@ class MediaGenerationService
             }
         }
 
-        return ['status' => 'error', 'message' => 'No image data in response.'];
+        return ['status' => 'error', 'message' => 'No image data found in the response.'];
     }
 
-    protected function handleImageResponse($userId, $modelId, $prompt, $responseData, $cost)
+    /**
+     * Handles the response for standard 'image' type models (e.g., Imagen).
+     *
+     * Extracts the image data from the 'predictions' structure, saves it to disk,
+     * deducts the user's balance, and logs the transaction.
+     *
+     * @param int $userId
+     * @param string $modelId
+     * @param string $prompt
+     * @param array $responseData
+     * @param float $cost
+     * @return array
+     */
+    protected function handleImageResponse(int $userId, string $modelId, string $prompt, array $responseData, float $cost): array
     {
         if (isset($responseData['predictions'][0]['bytesBase64Encoded'])) {
             $base64 = $responseData['predictions'][0]['bytesBase64Encoded'];
@@ -207,10 +276,8 @@ class MediaGenerationService
                 return ['status' => 'error', 'message' => 'Failed to save generated image.'];
             }
 
-            // Deduct Balance
             $this->deductCredits($userId, $cost);
 
-            // Record in DB
             $this->db->table('generated_media')->insert([
                 'user_id' => $userId,
                 'type' => 'image',
@@ -226,22 +293,35 @@ class MediaGenerationService
             return [
                 'status' => 'success',
                 'type' => 'image',
-                'url' => site_url('gemini/media/serve/' . $fileName) // We will need a route for this
+                'url' => site_url('gemini/media/serve/' . $fileName)
             ];
         }
 
-        return ['status' => 'error', 'message' => 'No image data in response.'];
+        return ['status' => 'error', 'message' => 'No image data found in the response.'];
     }
 
-    protected function handleVideoResponse($userId, $modelId, $prompt, $responseData, $cost)
+    /**
+     * Handles the response for 'video' type models (e.g., Veo).
+     *
+     * Video generation is asynchronous. This method extracts the operation ID,
+     * deducts the cost (upfront), creates a pending database record, and returns
+     * the operation ID for polling.
+     *
+     * @param int $userId
+     * @param string $modelId
+     * @param string $prompt
+     * @param array $responseData
+     * @param float $cost
+     * @return array
+     */
+    protected function handleVideoResponse(int $userId, string $modelId, string $prompt, array $responseData, float $cost): array
     {
         if (isset($responseData['name'])) {
-            $opName = $responseData['name']; // "projects/.../operations/..."
+            $opName = $responseData['name']; // Format: "projects/.../operations/..."
 
-            // Deduct Balance (Deduct on initiation or completion? Usually initiation to prevent abuse, refund on fail)
+            // Deduct Balance on initiation to prevent abuse
             $this->deductCredits($userId, $cost);
 
-            // Record in DB
             $this->db->table('generated_media')->insert([
                 'user_id' => $userId,
                 'type' => 'video',
@@ -261,10 +341,19 @@ class MediaGenerationService
             ];
         }
 
-        return ['status' => 'error', 'message' => 'No operation ID in response.'];
+        return ['status' => 'error', 'message' => 'No operation ID returned for video generation.'];
     }
 
-    public function pollVideoStatus($opId)
+    /**
+     * Polls the status of a long-running video generation operation.
+     *
+     * If the video is ready, it downloads the content, saves it to disk,
+     * and updates the database record status to 'completed'.
+     *
+     * @param string $opId The operation ID to poll.
+     * @return array Status and result URL if completed.
+     */
+    public function pollVideoStatus(string $opId): array
     {
         $apiKey = getenv('GEMINI_API_KEY');
         $url = "https://generativelanguage.googleapis.com/v1beta/{$opId}?key=" . urlencode($apiKey);
@@ -277,20 +366,18 @@ class MediaGenerationService
             $data = json_decode($responseBody, true);
 
             if (isset($data['done']) && $data['done'] === true) {
-                // Video is ready
+                // Video generation is complete
                 if (isset($data['response']['generatedSamples'][0]['video']['uri'])) {
                     $videoUri = $data['response']['generatedSamples'][0]['video']['uri'];
 
-                    // Download Video
+                    // Download Video Content
                     $downloadUrl = $videoUri . '&key=' . urlencode($apiKey);
-
-                    // Use client to download
                     $videoResponse = $client->get($downloadUrl, ['http_errors' => false]);
 
                     if ($videoResponse->getStatusCode() === 200) {
                         $videoContent = $videoResponse->getBody();
 
-                        // Get DB Record
+                        // Retrieve the pending record
                         $record = $this->db->table('generated_media')->where('remote_op_id', $opId)->get()->getRow();
 
                         if ($record) {
@@ -306,7 +393,7 @@ class MediaGenerationService
                                 return ['status' => 'failed', 'message' => 'Failed to save video file.'];
                             }
 
-                            // Update DB
+                            // Update DB Record
                             $this->db->table('generated_media')->where('id', $record->id)->update([
                                 'status' => 'completed',
                                 'local_path' => $fileName,
@@ -330,13 +417,25 @@ class MediaGenerationService
         }
     }
 
-    protected function deductCredits($userId, $amount)
+    /**
+     * Deducts credits from the user's balance.
+     *
+     * @param int $userId
+     * @param float $amount
+     */
+    protected function deductCredits(int $userId, float $amount): void
     {
-        // Use UserModel to deduct balance
-        $this->userModel->deductBalance($userId, $amount);
+        // Format as string to ensure precision and match UserModel requirement
+        $formattedAmount = number_format($amount, 4, '.', '');
+        $this->userModel->deductBalance($userId, $formattedAmount);
     }
 
-    public function getMediaConfig()
+    /**
+     * Retrieves the configuration for all supported media models.
+     *
+     * @return array
+     */
+    public function getMediaConfig(): array
     {
         return $this->mediaConfigs;
     }
