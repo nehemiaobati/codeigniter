@@ -87,19 +87,15 @@
     }
 
     /* Model Selection Cards */
-    /* Model Selection Cards */
     .model-card {
         cursor: pointer;
         transition: all 0.2s;
         border: 2px solid transparent;
-        position: relative;
-        /* For z-index */
     }
 
     .model-card:hover {
         transform: translateY(-4px);
         background-color: var(--bs-gray-100);
-        z-index: 10;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
@@ -110,13 +106,6 @@
 
     .model-icon {
         font-size: 1.5rem;
-    }
-
-    /* Fix Tab Focus Overflow */
-    .nav-tabs .nav-link:focus {
-        box-shadow: none;
-        /* Remove default wide focus ring */
-        border-color: var(--bs-primary-border-subtle);
     }
 </style>
 <?= $this->endSection() ?>
@@ -157,33 +146,34 @@
                 <?= csrf_field() ?>
 
                 <div class="card blueprint-card prompt-card">
+                    <!-- Tabs (Correctly placed in card-header) -->
+                    <div class="card-header bg-transparent border-bottom-0 pt-3 px-3 ">
+                        <ul class="nav nav-tabs card-header-tabs" id="generationTabs" role="tablist">
+                            <!-- Text Tab -->
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="text-tab" data-bs-toggle="tab" data-bs-target="#text-pane" type="button" role="tab" data-type="text" data-model="gemini-2.0-flash">
+                                    <i class="bi bi-chat-text me-2"></i>Text
+                                </button>
+                            </li>
+                            <!-- Image Tab -->
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="image-tab" data-bs-toggle="tab" data-bs-target="#image-pane" type="button" role="tab" data-type="image">
+                                    <i class="bi bi-image me-2"></i>Image
+                                </button>
+                            </li>
+                            <!-- Video Tab -->
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="video-tab" data-bs-toggle="tab" data-bs-target="#video-pane" type="button" role="tab" data-type="video">
+                                    <i class="bi bi-camera-video me-2"></i>Video
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+
                     <div class="card-body p-0 d-flex flex-column">
-                        <!-- Tabs -->
-                        <div class="card-header bg-transparent border-bottom-0 pt-3 px-3 pb-0">
-                            <ul class="nav nav-tabs card-header-tabs" id="generationTabs" role="tablist">
-                                <!-- Text Tab -->
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="text-tab" data-bs-toggle="tab" data-bs-target="#text-pane" type="button" role="tab" data-type="text" data-model="gemini-2.0-flash">
-                                        <i class="bi bi-chat-text me-2"></i>Text
-                                    </button>
-                                </li>
-                                <!-- Image Tab -->
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="image-tab" data-bs-toggle="tab" data-bs-target="#image-pane" type="button" role="tab" data-type="image">
-                                        <i class="bi bi-image me-2"></i>Image
-                                    </button>
-                                </li>
-                                <!-- Video Tab -->
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="video-tab" data-bs-toggle="tab" data-bs-target="#video-pane" type="button" role="tab" data-type="video">
-                                        <i class="bi bi-camera-video me-2"></i>Video
-                                    </button>
-                                </li>
-                            </ul>
-                        </div>
 
                         <!-- Model Selection Area -->
-                        <div id="model-selection-area" class="p-3 border-bottom d-none">
+                        <div id="model-selection-area" class="p-3 bg-body-tertiary border-bottom d-none">
                             <div class="small fw-bold text-muted mb-2 text-uppercase">Select Model</div>
 
                             <!-- Image Models Grid -->
