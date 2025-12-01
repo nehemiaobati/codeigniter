@@ -105,11 +105,11 @@ class MediaGenerationService
      * 5. Processes the response based on the media type.
      *
      * @param int $userId The ID of the user requesting generation.
-     * @param string $prompt The text prompt for generation.
+     * @param string|array $input The text prompt (string) or multimodal parts (array).
      * @param string $modelId The identifier of the model to use.
      * @return array An associative array containing 'status' and result data or error message.
      */
-    public function generateMedia(int $userId, string $prompt, string $modelId): array
+    public function generateMedia(int $userId, mixed $input, string $modelId): array
     {
         if (!isset($this->mediaConfigs[$modelId])) {
             return ['status' => 'error', 'message' => 'Invalid model ID.'];
@@ -131,7 +131,23 @@ class MediaGenerationService
 
         // 2. Prepare Payload
         $apiKey = getenv('GEMINI_API_KEY');
-        $parts = [['text' => $prompt]];
+
+        // Normalize input to parts array
+        if (is_string($input)) {
+            $parts = [['text' => $input]];
+            $promptText = $input;
+        } else {
+            $parts = $input;
+            // Extract text for logging/DB
+            $promptText = '';
+            foreach ($parts as $part) {
+                if (isset($part['text'])) {
+                    $promptText .= $part['text'] . ' ';
+                }
+            }
+            $promptText = trim($promptText);
+        }
+
         $payloadData = $this->modelPayloadService->getPayloadConfig($modelId, $apiKey, $parts);
 
         if (!$payloadData) {
@@ -166,11 +182,11 @@ class MediaGenerationService
 
             // 4. Handle Response based on Type
             if ($config['type'] === 'image') {
-                return $this->handleImageResponse($userId, $modelId, $prompt, $responseData, $costKsh);
+                return $this->handleImageResponse($userId, $modelId, $promptText, $responseData, $costKsh);
             } elseif ($config['type'] === 'video') {
-                return $this->handleVideoResponse($userId, $modelId, $prompt, $responseData, $costKsh);
+                return $this->handleVideoResponse($userId, $modelId, $promptText, $responseData, $costKsh);
             } elseif ($config['type'] === 'image_generation_content') {
-                return $this->handleImageGenerationContentResponse($userId, $modelId, $prompt, $responseData, $costKsh);
+                return $this->handleImageGenerationContentResponse($userId, $modelId, $promptText, $responseData, $costKsh);
             }
 
             return ['status' => 'error', 'message' => 'Unknown media type configuration.'];
