@@ -206,11 +206,11 @@ class MediaGenerationService
                     $imageData = base64_decode($base64);
 
                     // Save to disk
-                    $fileName = 'gen_' . time() . '_' . uniqid() . '.jpg';
+                    $fileName = 'gen_' . time() . '_' . bin2hex(random_bytes(8)) . '.jpg';
                     $uploadPath = WRITEPATH . 'uploads/generated/' . $userId . '/';
 
                     if (!is_dir($uploadPath)) {
-                        mkdir($uploadPath, 0777, true);
+                        mkdir($uploadPath, 0755, true);
                     }
 
                     if (file_put_contents($uploadPath . $fileName, $imageData) === false) {
@@ -268,11 +268,11 @@ class MediaGenerationService
             $imageData = base64_decode($base64);
 
             // Save to disk
-            $fileName = 'gen_' . time() . '_' . uniqid() . '.jpg';
+            $fileName = 'gen_' . time() . '_' . bin2hex(random_bytes(8)) . '.jpg';
             $uploadPath = WRITEPATH . 'uploads/generated/' . $userId . '/';
 
             if (!is_dir($uploadPath)) {
-                mkdir($uploadPath, 0777, true);
+                mkdir($uploadPath, 0755, true);
             }
 
             if (file_put_contents($uploadPath . $fileName, $imageData) === false) {
@@ -385,11 +385,11 @@ class MediaGenerationService
                         $record = $this->db->table('generated_media')->where('remote_op_id', $opId)->get()->getRow();
 
                         if ($record) {
-                            $fileName = 'vid_' . time() . '_' . uniqid() . '.mp4';
+                            $fileName = 'vid_' . time() . '_' . bin2hex(random_bytes(8)) . '.mp4';
                             $uploadPath = WRITEPATH . 'uploads/generated/' . $record->user_id . '/';
 
                             if (!is_dir($uploadPath)) {
-                                mkdir($uploadPath, 0777, true);
+                                mkdir($uploadPath, 0755, true);
                             }
 
                             if (file_put_contents($uploadPath . $fileName, $videoContent) === false) {

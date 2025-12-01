@@ -585,7 +585,7 @@ class GeminiController extends BaseController
         if (!is_dir($securePath)) mkdir($securePath, 0755, true);
 
         // Generate base name (e.g., "speech_651a...")
-        $filenameBase = uniqid('speech_');
+        $filenameBase = 'speech_' . bin2hex(random_bytes(8));
 
         // Delegate to Service (Returns .mp3 OR .wav)
         $result = service('ffmpegService')->processAudio(
