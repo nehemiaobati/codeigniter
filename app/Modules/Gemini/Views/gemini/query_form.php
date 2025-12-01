@@ -879,26 +879,10 @@
             formData.append('prompt', promptVal);
             formData.append('model_id', modelInput.value);
 
-            // --- MOCK TESTING LOGIC ---
-            const lowerPrompt = promptVal.toLowerCase();
-            if (lowerPrompt === 'test image' && type === 'image') {
-                setTimeout(() => {
-                    showMediaResult('https://placehold.co/1024x1024/png?text=Mock+Image+Result', 'image');
-                    resetBtn();
-                    showToast('Mock image generated successfully.');
-                }, 1500);
-                return;
-            }
-            if (lowerPrompt === 'test video' && type === 'video') {
-                setTimeout(() => {
-                    // Using a sample video for testing
-                    showMediaResult('http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', 'video');
-                    resetBtn();
-                    showToast('Mock video generated successfully.');
-                }, 2000);
-                return;
-            }
-            // ---------------------------
+            // --- MOCK TESTING INTERCEPT (Start) ---
+            // To remove mock functionality, delete this block.
+            if (handleMockGeneration(promptVal, type)) return;
+            // --- MOCK TESTING INTERCEPT (End) ---
 
             try {
                 const res = await fetch('<?= url_to('gemini.media.generate') ?>', {
@@ -938,40 +922,132 @@
             }
         });
 
+        // --- MOCK GENERATION LOGIC (Start) ---
+        // Returns true if a mock request was handled, false otherwise.
+        const handleMockGeneration = (prompt, type) => {
+            const lowerPrompt = prompt.toLowerCase();
+
+            if (lowerPrompt === 'test image' && type === 'image') {
+                setTimeout(() => {
+                    showMediaResult('https://picsum.photos/200/300?random=' + new Date().getTime(), 'image');
+                    resetBtn();
+                    showToast('Mock image generated successfully.');
+                }, 1500);
+                return true;
+            }
+
+            if (lowerPrompt === 'test video' && type === 'video') {
+                setTimeout(() => {
+                    // Using a sample video for testing
+                    showMediaResult('http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', 'video');
+                    resetBtn();
+                    showToast('Mock video generated successfully.');
+                }, 2000);
+                return true;
+            }
+
+            return false;
+        };
+        // --- MOCK GENERATION LOGIC (End) ---
+
         const resetBtn = () => {
             generateBtn.disabled = false;
             generateBtn.innerHTML = '<i class="bi bi-sparkles"></i> Generate';
         };
 
         const showMediaResult = (url, type) => {
+            // Prepare Download Function Call
+            const downloadFn = `downloadMedia('${url}', '${type}')`;
+
             // Create or Update Result Card
             let resultContainer = document.getElementById('media-result-container');
             if (!resultContainer) {
                 resultContainer = document.createElement('div');
                 resultContainer.id = 'media-result-container';
-                resultContainer.className = 'card blueprint-card mt-4 shadow-lg border-primary';
-                resultContainer.innerHTML = `
-                    <div class="card-header bg-primary text-white fw-bold">Generated Media</div>
-                    <div class="card-body text-center p-4" id="media-content-area"></div>
-                `;
-                document.querySelector('.col-lg-8').appendChild(resultContainer);
+                resultContainer.className = 'card blueprint-card mt-5 shadow-lg border-primary';
+                // Append to the main container (parent of the row) to span full width
+                document.querySelector('.container.my-3.my-lg-5').appendChild(resultContainer);
             }
 
+            // Update Header with Download Button
+            resultContainer.innerHTML = `
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">Studio Output</span>
+                    <div>
+                        <button onclick="${downloadFn}" class="btn btn-sm btn-light" id="mediaDownloadBtn">
+                            <i class="bi bi-download me-1"></i> Download
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body text-center p-4" id="media-content-area"></div>
+            `;
+
             const contentArea = document.getElementById('media-content-area');
+            let mediaHtml = '';
+
             if (type === 'image') {
-                contentArea.innerHTML = `<img src="${url}" class="img-fluid rounded shadow-sm" alt="Generated Image">`;
+                mediaHtml = `<img src="${url}" class="img-fluid rounded shadow-sm" alt="Generated Image">`;
             } else if (type === 'video') {
-                contentArea.innerHTML = `
+                mediaHtml = `
                     <video controls autoplay loop class="w-100 rounded shadow-sm">
                         <source src="${url}" type="video/mp4">
                         Your browser does not support the video tag.
                     </video>`;
             }
 
+            contentArea.innerHTML = mediaHtml;
+
             resultContainer.scrollIntoView({
                 behavior: 'smooth'
             });
         };
+
+        // Global function for downloading media
+        window.downloadMedia = async (url, type) => {
+            // 1. Internal URL (Real API): Use backend forced download
+            if (url.includes('gemini/media/serve')) {
+                const downloadUrl = url + (url.includes('?') ? '&' : '?') + 'download=1';
+                window.location.href = downloadUrl;
+                return;
+            }
+
+            // --- MOCK DOWNLOAD LOGIC (Start) ---
+            // To remove mock functionality, delete this block.
+            await handleMockDownload(url, type);
+            // --- MOCK DOWNLOAD LOGIC (End) ---
+        };
+
+        // --- MOCK DOWNLOAD HANDLER (Start) ---
+        const handleMockDownload = async (url, type) => {
+            try {
+                const btn = document.getElementById('mediaDownloadBtn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Downloading...';
+                btn.disabled = true;
+
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                // Generate filename: mock_image_123.jpg
+                const ext = type === 'video' ? 'mp4' : 'jpg';
+                a.download = `mock_${type}_${new Date().getTime()}.${ext}`;
+                document.body.appendChild(a);
+                a.click();
+
+                window.URL.revokeObjectURL(blobUrl);
+                document.body.removeChild(a);
+
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            } catch (err) {
+                console.error('Download failed:', err);
+                alert('Failed to download media.');
+            }
+        };
+        // --- MOCK DOWNLOAD HANDLER (End) ---
 
         const pollVideo = async (opId) => {
             generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing Video...';

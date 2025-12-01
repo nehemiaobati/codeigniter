@@ -144,6 +144,11 @@ class MediaController extends BaseController
         header('Content-Type: ' . $mime);
         header('Content-Length: ' . filesize($path));
 
+        // Force download if requested
+        if ($this->request->getGet('download') === '1') {
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+        }
+
         // Use readfile for efficient output buffering
         readfile($path);
         exit;
