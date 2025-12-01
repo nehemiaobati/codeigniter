@@ -128,6 +128,7 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
   - **Served Media:** Immediately after `readfile($path)`, you MUST call `@unlink($path)`.
   - **Processed Uploads:** Immediately after reading the file into memory (e.g., `file_get_contents`), you MUST call `@unlink($path)`.
   - **Generated Documents:** Intermediate files (HTML) and final outputs (PDF/DOCX) MUST be deleted immediately after they are read for the response.
+  - **Retention Tip:** To retain files for debugging or history (e.g., in a persistent environment), simply comment out the `@unlink($path)` line.
 
 ---
 
