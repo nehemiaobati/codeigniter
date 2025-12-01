@@ -173,7 +173,11 @@ class MediaController extends BaseController
         }
 
         // Use readfile for efficient output buffering
-        readfile($path);
+        if (readfile($path) !== false) {
+            // Auto-delete the file after serving (Serverless/Privacy optimization)
+            // This ensures we don't accumulate files in a stateless/ephemeral environment.
+            @unlink($path);
+        }
         exit;
     }
 }

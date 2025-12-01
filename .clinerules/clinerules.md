@@ -121,6 +121,14 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
   - Use temporary file storage (e.g., `WRITEPATH . 'uploads/'`) or cloud storage for binary assets.
   - Pass file paths or IDs to the view, not the raw data itself.
 
+#### **3.7. Ephemeral File Handling (The Unlink Pattern)**
+
+- **Principle:** The application MUST behave as if it is stateless/serverless. No user-generated files (uploads, generated media) should persist on disk after the request is completed.
+- **Procedure:**
+  - **Served Media:** Immediately after `readfile($path)`, you MUST call `@unlink($path)`.
+  - **Processed Uploads:** Immediately after reading the file into memory (e.g., `file_get_contents`), you MUST call `@unlink($path)`.
+  - **Generated Documents:** Intermediate files (HTML) and final outputs (PDF/DOCX) MUST be deleted immediately after they are read for the response.
+
 ---
 
 ### **Part 4: Frontend & UI Mandates**

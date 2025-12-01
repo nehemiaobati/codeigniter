@@ -441,7 +441,10 @@ class GeminiController extends BaseController
             ->setHeader('Content-Disposition', 'inline; filename="' . $fileName . '"');
 
         // Efficiently output file content without loading into memory
-        readfile($path);
+        if (readfile($path) !== false) {
+            // Auto-delete the file after serving (Serverless/Privacy optimization)
+            @unlink($path);
+        }
         return $this->response;
     }
 

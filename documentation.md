@@ -387,7 +387,9 @@ This module (`App\Modules\Gemini`) is the core of the platform.
   - **Short-Term Memory:** The system forces the retrieval of the most recent interactions (configurable via `AGI.php`) to maintain immediate conversational flow.
 - **6.3.3. Text-to-Speech (TTS) & Audio Processing**:
   - **Generation:** If `voice_output_enabled` is true, `GeminiService` requests audio data from the API.
+  - **Generation:** If `voice_output_enabled` is true, `GeminiService` requests audio data from the API.
   - **Conversion:** The API returns raw PCM data. `FfmpegService` converts this raw data into a web-compatible MP3 file using the `ffmpeg` binary installed on the server.
+  - **Ephemeral Storage:** Generated audio files are stored in `writable/uploads/ttsaudio_secure/{userId}/` and are **deleted immediately** after being served to the user ("Read-Once" policy).
 - **6.3.4. Advanced Document Generation (Pandoc/XeTeX)**:
   - **Primary Method:** `DocumentService` uses `PandocService` to convert Markdown/HTML to PDF using the `xelatex` engine. This supports complex formatting.
   - **Fallback:** If Pandoc fails, the system falls back to `Dompdf` for PDF generation.
@@ -396,9 +398,12 @@ This module (`App\Modules\Gemini`) is the core of the platform.
   - These preferences are stored in the `user_settings` table and persist across sessions.
 - **6.3.6. Media Generation (Image & Video)**:
   - **Service:** `MediaGenerationService` handles interactions with image (Imagen 4.0, Gemini 2.5 Flash Image) and video (Veo 2.0) models.
+  - **Multimodal Input:** The system supports generating media from text prompts OR multimodal inputs (e.g., Image-to-Image using Gemini Flash).
+  - **Privacy:** User prompts are processed in-memory for the API request but are **never stored** in the database, ensuring maximum user privacy.
   - **Process:**
-    - **Images:** Generated synchronously. The system decodes the base64 response, saves the image to `writable/uploads/generated/`, and logs the transaction.
+    - **Images:** Generated synchronously. The system decodes the base64 response, saves the image to `writable/uploads/generated/{userId}/`, and logs the transaction (without the prompt).
     - **Videos:** Generated asynchronously. The system initiates a long-running operation with Veo 2.0, returns an operation ID, and polls for completion. Once ready, the video is downloaded and saved.
+    - **Auto-Deletion:** All generated media files are **deleted immediately** after they are served to the user. This ensures a stateless architecture and maximum privacy.
   - **Cost Management:** Costs are estimated and deducted based on the specific model's pricing (e.g., per image or per second of video).
 
 **6.4. Cryptocurrency Data Service**
@@ -545,6 +550,19 @@ Ensure your code is well-documented, follows the project's architectural pattern
 - **PCM:** Pulse-Code Modulation, a raw audio format returned by Gemini API.
 
 **13.2. Changelog & Release History**
+
+**v1.6.0 - 2025-12-01**
+
+### Added
+
+- **Verified Model Capabilities:**
+  - Confirmed and implemented correct payloads for **Imagen 4.0** (Standard, Ultra, Fast), **Veo 2.0**, and **Gemini 2.5 Flash Image**.
+  - Added support for **Multimodal Input** (Text + Image) in `MediaGenerationService`, enabling features like Image-to-Image generation where supported.
+
+### Changed
+
+- **Privacy Enhancement:** Removed the `prompt` column from the `generated_media` table. User prompts are no longer stored in the database or logs, ensuring higher privacy standards.
+- **Defensive Payload Handling:** Implemented strict filtering in `ModelPayloadService` to strip file inputs when sending requests to text-only models (Imagen, Veo) to prevent API errors.
 
 **v1.5.0 - 2025-11-29**
 
