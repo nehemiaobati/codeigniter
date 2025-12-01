@@ -135,17 +135,8 @@ class MediaGenerationService
         // Normalize input to parts array
         if (is_string($input)) {
             $parts = [['text' => $input]];
-            $promptText = $input;
         } else {
             $parts = $input;
-            // Extract text for logging/DB
-            $promptText = '';
-            foreach ($parts as $part) {
-                if (isset($part['text'])) {
-                    $promptText .= $part['text'] . ' ';
-                }
-            }
-            $promptText = trim($promptText);
         }
 
         $payloadData = $this->modelPayloadService->getPayloadConfig($modelId, $apiKey, $parts);
@@ -182,11 +173,11 @@ class MediaGenerationService
 
             // 4. Handle Response based on Type
             if ($config['type'] === 'image') {
-                return $this->handleImageResponse($userId, $modelId, $promptText, $responseData, $costKsh);
+                return $this->handleImageResponse($userId, $modelId, $responseData, $costKsh);
             } elseif ($config['type'] === 'video') {
-                return $this->handleVideoResponse($userId, $modelId, $promptText, $responseData, $costKsh);
+                return $this->handleVideoResponse($userId, $modelId, $responseData, $costKsh);
             } elseif ($config['type'] === 'image_generation_content') {
-                return $this->handleImageGenerationContentResponse($userId, $modelId, $promptText, $responseData, $costKsh);
+                return $this->handleImageGenerationContentResponse($userId, $modelId, $responseData, $costKsh);
             }
 
             return ['status' => 'error', 'message' => 'Unknown media type configuration.'];
@@ -204,12 +195,11 @@ class MediaGenerationService
      *
      * @param int $userId
      * @param string $modelId
-     * @param string $prompt
      * @param array $responseData
      * @param float $cost
      * @return array
      */
-    protected function handleImageGenerationContentResponse(int $userId, string $modelId, string $prompt, array $responseData, float $cost): array
+    protected function handleImageGenerationContentResponse(int $userId, string $modelId, array $responseData, float $cost): array
     {
         if (isset($responseData['candidates'][0]['content']['parts'])) {
             $parts = $responseData['candidates'][0]['content']['parts'];
@@ -245,7 +235,6 @@ class MediaGenerationService
                     'user_id' => $userId,
                     'type' => 'image',
                     'model_id' => $modelId,
-                    'prompt' => $prompt,
                     'local_path' => $fileName,
                     'status' => 'completed',
                     'cost' => $cost,
@@ -272,12 +261,11 @@ class MediaGenerationService
      *
      * @param int $userId
      * @param string $modelId
-     * @param string $prompt
      * @param array $responseData
      * @param float $cost
      * @return array
      */
-    protected function handleImageResponse(int $userId, string $modelId, string $prompt, array $responseData, float $cost): array
+    protected function handleImageResponse(int $userId, string $modelId, array $responseData, float $cost): array
     {
         if (isset($responseData['predictions'][0]['bytesBase64Encoded'])) {
             $base64 = $responseData['predictions'][0]['bytesBase64Encoded'];
@@ -302,7 +290,6 @@ class MediaGenerationService
                 'user_id' => $userId,
                 'type' => 'image',
                 'model_id' => $modelId,
-                'prompt' => $prompt,
                 'local_path' => $fileName,
                 'status' => 'completed',
                 'cost' => $cost,
@@ -329,12 +316,11 @@ class MediaGenerationService
      *
      * @param int $userId
      * @param string $modelId
-     * @param string $prompt
      * @param array $responseData
      * @param float $cost
      * @return array
      */
-    protected function handleVideoResponse(int $userId, string $modelId, string $prompt, array $responseData, float $cost): array
+    protected function handleVideoResponse(int $userId, string $modelId, array $responseData, float $cost): array
     {
         if (isset($responseData['name'])) {
             $opName = $responseData['name']; // Format: "projects/.../operations/..."
@@ -346,7 +332,6 @@ class MediaGenerationService
                 'user_id' => $userId,
                 'type' => 'video',
                 'model_id' => $modelId,
-                'prompt' => $prompt,
                 'remote_op_id' => $opName,
                 'status' => 'pending',
                 'cost' => $cost,
