@@ -344,6 +344,10 @@ class GeminiService
             }
 
             $responseData = json_decode($responseBody, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                log_message('error', 'Gemini API countTokens JSON Decode Error: ' . json_last_error_msg());
+                return ['status' => false, 'error' => 'Failed to decode API response.'];
+            }
             $totalTokens = $responseData['totalTokens'] ?? 0;
 
             return ['status' => true, 'totalTokens' => $totalTokens];

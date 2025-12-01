@@ -148,7 +148,7 @@ class GeminiController extends BaseController
         $userTempPath = WRITEPATH . 'uploads/gemini_temp/' . $userId . '/';
 
         if (!is_dir($userTempPath)) {
-            mkdir($userTempPath, 0777, true);
+            mkdir($userTempPath, 0755, true);
         }
 
         $fileName = $file->getRandomName();
@@ -582,7 +582,7 @@ class GeminiController extends BaseController
         $userId = (int) session()->get('userId');
         $securePath = WRITEPATH . 'uploads/ttsaudio_secure/' . $userId . '/';
 
-        if (!is_dir($securePath)) mkdir($securePath, 0775, true);
+        if (!is_dir($securePath)) mkdir($securePath, 0755, true);
 
         // Generate base name (e.g., "speech_651a...")
         $filenameBase = uniqid('speech_');
