@@ -135,6 +135,10 @@ class CampaignController extends BaseController
 
         // Define allowed tags for sanitization.
         $allowed_tags = '<p><a><strong><em><ul><ol><li><br><h1><h2><h3><h4><h5><h6>';
+
+        // Replace [your_base_url] placeholder with the actual base URL.
+        $messageBody = str_replace('[your_base_url]', rtrim(base_url(), '/'), $messageBody);
+
         // Sanitize the message body before use.
         $sanitizedMessageBody = strip_tags($messageBody, $allowed_tags);
 
