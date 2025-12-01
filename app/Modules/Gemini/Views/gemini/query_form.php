@@ -879,6 +879,27 @@
             formData.append('prompt', promptVal);
             formData.append('model_id', modelInput.value);
 
+            // --- MOCK TESTING LOGIC ---
+            const lowerPrompt = promptVal.toLowerCase();
+            if (lowerPrompt === 'test image' && type === 'image') {
+                setTimeout(() => {
+                    showMediaResult('https://placehold.co/1024x1024/png?text=Mock+Image+Result', 'image');
+                    resetBtn();
+                    showToast('Mock image generated successfully.');
+                }, 1500);
+                return;
+            }
+            if (lowerPrompt === 'test video' && type === 'video') {
+                setTimeout(() => {
+                    // Using a sample video for testing
+                    showMediaResult('http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', 'video');
+                    resetBtn();
+                    showToast('Mock video generated successfully.');
+                }, 2000);
+                return;
+            }
+            // ---------------------------
+
             try {
                 const res = await fetch('<?= url_to('gemini.media.generate') ?>', {
                     method: 'POST',
