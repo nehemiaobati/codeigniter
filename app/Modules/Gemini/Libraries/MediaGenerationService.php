@@ -155,7 +155,7 @@ class MediaGenerationService
                 log_message('error', "Gemini Media API Error ({$httpCode}): " . $responseBody);
                 $errData = json_decode($responseBody, true);
                 $errMsg = $errData['error']['message'] ?? $responseBody;
-                return ['status' => 'error', 'message' => 'API Error: ' . $errMsg];
+                return ['status' => 'error', 'message' => 'We encountered an issue while generating your media. Please try again. (API Error: ' . $errMsg . ')'];
             }
 
             $responseData = json_decode($responseBody, true);
