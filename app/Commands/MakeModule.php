@@ -238,7 +238,7 @@ PHP;
         $autoloadPath = APPPATH . 'Config/Autoload.php';
         $content = file_get_contents($autoloadPath);
 
-        $newLine = "        'App\\\\Modules\\\\$name' => APPPATH . 'Modules/$name',";
+        $newLine = "     'App\\\\Modules\\\\$name' => APPPATH . 'Modules/$name',";
 
         // Check if already added
         if (strpos($content, $newLine) !== false) {
