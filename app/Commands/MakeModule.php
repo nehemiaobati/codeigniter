@@ -182,6 +182,7 @@ PHP;
 
     private function createModelFile($path, $name)
     {
+        $lowerName = strtolower($name);
         $content = <<<PHP
 <?php
 
@@ -192,7 +193,7 @@ use App\Modules\\$name\Entities\\$name;
 
 class {$name}Model extends Model
 {
-    protected \$table            = '{$name}_table'; // TODO: Update table name
+    protected \$table            = '{$lowerName}_table'; // TODO: Update table name
     protected \$primaryKey       = 'id';
     protected \$useAutoIncrement = true;
     protected \$returnType       = $name::class;
