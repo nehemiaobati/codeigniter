@@ -270,6 +270,34 @@ Within each module (and for core shared components in the `app/` directory), the
 - **Controllers (`app/Modules/[ModuleName]/Controllers`)**: Act as the bridge, handling HTTP requests for the module, calling services, and passing data to views.
 - **Services (`app/Modules/[ModuleName]/Libraries`)**: Contain the core business logic specific to that module. For example, `MemoryService` resides in `App\Modules\Gemini\Libraries`.
 
+#### Visual Architecture Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Router
+    participant Filter as Auth/Balance Filter
+    participant Controller
+    participant Service
+    participant Model
+    participant Database
+
+    User->>Router: HTTP Request (GET/POST)
+    Router->>Filter: Check Access/Balance
+    alt Access Denied
+        Filter-->>User: Redirect / Error
+    else Access Granted
+        Filter->>Controller: Pass Request
+        Controller->>Service: Invoke Business Logic
+        Service->>Model: Request Data (Entities)
+        Model->>Database: Query
+        Database-->>Model: Raw Data
+        Model-->>Service: Return Entity Object
+        Service-->>Controller: Return Result (Status/Data)
+        Controller-->>User: Return View or Redirect
+    end
+```
+
 **4.2. The Request Lifecycle**
 
 Standard CodeIgniter 4 lifecycle applies. Routes are defined in `app/Modules/[ModuleName]/Config/Routes.php`. Filters like `AuthFilter` and `BalanceFilter` protect routes and ensure users have funds before accessing AI services.

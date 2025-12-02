@@ -188,11 +188,11 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
 - **Location:** All modules MUST be located in the `app/Modules/` directory.
 - **Structure:** Every module MUST contain `Config/`, `Controllers/`, `Database/`, `Entities/`, `Models/`, and `Views/` subdirectories.
 - **Workflow:**
-  1.  Create the module directory structure.
-  2.  Register the module's namespace individually in `app/Config/Autoload.php`.
+  1.  **Automated Generation:** Use the command `php spark make:module [ModuleName]` to generate the standard directory structure and boilerplate files.
+  2.  **Manual Registration (if needed):** If the command fails to update `app/Config/Autoload.php`, register the module's namespace manually:
       Format ("'App\Modules\[ModuleName]' => APPPATH . 'Modules/[ModuleName]',")
-  3.  Move all related PHP files into the module and update their namespaces.
-  4.  All routes for a module MUST be defined in the module's own `Config/Routes.php` file.
+  3.  **Routes:** Define routes in the generated `Config/Routes.php` file.
+  4.  **Views:** Use the generated `Views/index.php` as a starting point.
   5.  When calling a module's view from its controller, the path MUST be fully qualified (e.g., `view('App\Modules\Blog\Views\blog\index', $data);`).
 - **Core vs. Module:** The main `app/` directory is for the application's core shell. All distinct business features MUST be implemented as modules.
 
