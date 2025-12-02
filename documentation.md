@@ -396,6 +396,9 @@ Create `app/Modules/Notes/Views/index.php`.
 - **6.1.1. Registration & Login Flow**: Managed by `AuthController.php`, this feature handles user registration with validation and reCAPTCHA, credential verification for login, and session management.
 - **6.1.2. Email Verification & Password Resets**: A unique token is generated and emailed to the user for verification. The password reset flow uses a secure, expiring token sent via email.
 - **6.1.3. Access Control with Filters**: The `AuthFilter` (`app/Filters/AuthFilter.php`) is applied to routes to protect pages that require a user to be logged in.
+- **6.1.4. Password Security**:
+  - **Hashing**: Passwords are never stored in plain text. The system uses `password_hash($password, PASSWORD_DEFAULT)` to generate a secure Bcrypt hash with a random salt.
+  - **Verification**: Login attempts are validated using `password_verify($password, $hash)`, which safely compares the input against the stored hash.
 
 **6.2. Payment Gateway Integration**
 
