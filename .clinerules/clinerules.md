@@ -48,7 +48,7 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
 #### **1.7. Configuration (app/Config/)**
 
 - Sensitive or environment-specific settings MUST be managed via the `.env` file.
-- All custom configuration files MUST be placed in the `app/Config/Custom/` directory.
+- All custom configuration files MUST be placed in a dedicated directory (e.g., `app/Config/Custom/`).
 - Custom configuration files MUST use the `Config\Custom` namespace.
 
 ---
@@ -105,12 +105,12 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
 
 - Auto-routing MUST be disabled (`$autoRoute = false`).
 - Use pagination (`paginate()`) for lists. Avoid `findAll()` on large tables.
-- The deployment script MUST run `php spark optimize`.
+- The deployment script MUST run `php spark optimize` (see **Part 11** for the full boot sequence).
 
 #### **3.5. Error Handling & Logging**
 
-- Detailed error reporting MUST be disabled in production.
-- Use `log_message()` for system events and developer-facing errors.
+- Detailed error reporting MUST be disabled in production (set `display_errors` to 0; see **Part 9** for logging protocols).
+- **Development:** Use `log_message()` for system events and developer-facing errors.
   - Use `session()->setFlashdata()` to communicate action outcomes to the user.
 
 #### **3.6. Session Management**
@@ -135,14 +135,12 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
 ### **Part 4: Frontend & UI Mandates**
 
 - Bootstrap 5 is the sole CSS framework.
-- All pages MUST extend the master layout `app/Views/layouts/default.php`.
+- All pages MUST extend the master layout (e.g., `app/Views/layouts/default.php`).
 - Common UI elements MUST be created as partials in `app/Views/partials/`.
 - The Privacy Policy page MUST detail all cookies used.
 - **URL Generation:**
-  - ALL URLs (HTML links, Redirects, AJAX endpoints, Fetch calls) MUST be generated using `url_to('route.name')`. CI4
-    else
-  - Use `route_to()` for JavaScript background requests (AJAX, `fetch`).
-  - Use `url_to()` for HTML full-page navigation (`<a>` tags, `<form>` actions, redirects).
+  - ALL URLs (HTML links, Redirects, AJAX endpoints, Fetch calls) MUST be generated using `url_to('route.name')`.
+  - Hardcoded URLs are strictly **FORBIDDEN**.
 
 ---
 
@@ -151,7 +149,7 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
 - All credentials and API keys MUST be in the `.env` file. The `.env` file MUST NOT be committed to version control.
 - In production, `CI_ENVIRONMENT` MUST be set to `production`.
 - The server's document root MUST point to the `/public` directory.
-- Deployments MUST run `composer install --no-dev --optimize-autoloader`.
+- Deployments MUST run `composer install --no-dev` (see **Part 11** for the full checklist).
 - Development files (`tests/`, `spark`, etc.) MUST be removed from the production server.
 
 ---
@@ -252,7 +250,7 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
 - **New Environment Setup:**
   1.  `composer install`
   2.  `php spark migrate --all` (Runs core and module migrations)
-  3.  `php spark db:seed MainSeeder` (Populates essential app data)
+  3.  `php spark db:seed [MainSeeder]` (Populates essential app data)
 - **Production Launch:**
   - MUST run `composer install --no-dev --optimize-autoloader`.
   - MUST run `php spark optimize` to cache config and routes.
