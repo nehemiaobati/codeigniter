@@ -104,6 +104,7 @@ class MakeModule extends BaseCommand
 
     private function createRoutesFile($path, $name)
     {
+        $lowerName = strtolower($name);
         $content = <<<PHP
 <?php
 
@@ -113,8 +114,8 @@ namespace App\Modules\\$name\Config;
  * @var \CodeIgniter\Router\RouteCollection \$routes
  */
 
-\$routes->group(strtolower('$name'), ['namespace' => 'App\Modules\\$name\Controllers'], static function (\$routes) {
-    \$routes->get('/', '{$name}Controller::index', ['as' => strtolower('$name') . '.index']);
+\$routes->group('$lowerName', ['namespace' => 'App\Modules\\$name\Controllers'], static function (\$routes) {
+    \$routes->get('/', '{$name}Controller::index', ['as' => '$lowerName.index']);
 });
 PHP;
         file_put_contents($path . '/Config/Routes.php', $content);
@@ -238,7 +239,7 @@ PHP;
         $autoloadPath = APPPATH . 'Config/Autoload.php';
         $content = file_get_contents($autoloadPath);
 
-        $newLine = "     'App\\\\Modules\\\\$name' => APPPATH . 'Modules/$name',";
+        $newLine = "    'App\\\\Modules\\\\$name' => APPPATH . 'Modules/$name',";
 
         // Check if already added
         if (strpos($content, $newLine) !== false) {
