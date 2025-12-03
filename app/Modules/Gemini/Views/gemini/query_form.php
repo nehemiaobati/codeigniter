@@ -727,14 +727,55 @@
 
             // Delete Prompt
             if (deletePromptBtn) {
-                deletePromptBtn.addEventListener('click', () => {
+                deletePromptBtn.addEventListener('click', async () => {
                     const selectedOption = savedSelect.options[savedSelect.selectedIndex];
                     const promptId = selectedOption.dataset.id;
 
                     if (promptId && confirm('Are you sure you want to delete this saved prompt?')) {
-                        const form = document.getElementById('deletePromptForm');
-                        form.action = appState.endpoints.deletePromptBase + promptId;
-                        form.submit();
+                        const originalText = deletePromptBtn.innerHTML;
+                        deletePromptBtn.disabled = true;
+                        deletePromptBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+                        const formData = new FormData();
+                        formData.append(appState.csrfName, appState.csrfHash);
+
+                        try {
+                            const res = await fetch(appState.endpoints.deletePromptBase + promptId, {
+                                method: 'POST',
+                                body: formData,
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            });
+                            const data = await res.json();
+
+                            if (data.token) refreshCsrf(data.token);
+
+                            if (data.status === 'success') {
+                                showToast('Prompt deleted.');
+                                selectedOption.remove();
+                                savedSelect.value = ""; // Reset selection
+                                deletePromptBtn.disabled = true; // Disable delete button
+
+                                // If no prompts left, show alert
+                                if (savedSelect.options.length <= 1) { // 1 because of "Select..." placeholder
+                                    const alertDiv = document.createElement('div');
+                                    alertDiv.className = 'alert alert-light border mb-3 small text-muted';
+                                    alertDiv.innerHTML = '<i class="bi bi-info-circle me-1"></i> No saved prompts yet. Save one after generating!';
+                                    savedSelect.parentElement.replaceWith(alertDiv);
+                                }
+                            } else {
+                                showToast(data.message || 'Failed to delete prompt.');
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            showToast('Network error occurred.');
+                        } finally {
+                            if (deletePromptBtn) { // Check if it still exists (might be removed if no prompts left)
+                                deletePromptBtn.disabled = !savedSelect.value;
+                                deletePromptBtn.innerHTML = originalText;
+                            }
+                        }
                     }
                 });
             }
@@ -770,6 +811,69 @@
                 format: 'text'
             });
         });
+
+        // AJAX Save Prompt
+        const savePromptForm = document.querySelector('#savePromptModal form');
+        if (savePromptForm) {
+            savePromptForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = savePromptForm.querySelector('button[type="submit"]');
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+
+                const formData = new FormData(savePromptForm);
+                formData.append(appState.csrfName, appState.csrfHash);
+
+                try {
+                    const res = await fetch(savePromptForm.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    const data = await res.json();
+
+                    if (data.token) refreshCsrf(data.token);
+
+                    if (data.status === 'success') {
+                        showToast('Prompt saved successfully!');
+
+                        // Close Modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('savePromptModal'));
+                        modal.hide();
+
+                        // Add to Dropdown
+                        if (savedSelect) {
+                            const option = document.createElement('option');
+                            option.value = data.prompt.prompt_text;
+                            option.dataset.id = data.prompt.id;
+                            option.textContent = data.prompt.title;
+                            option.selected = true;
+                            savedSelect.appendChild(option);
+
+                            // Enable delete button
+                            if (deletePromptBtn) deletePromptBtn.disabled = false;
+
+                            // Remove "No saved prompts" alert if it exists
+                            const noPromptsAlert = document.querySelector('.alert-light.text-muted');
+                            if (noPromptsAlert) noPromptsAlert.remove();
+                        }
+
+                        savePromptForm.reset();
+                    } else {
+                        showToast(data.message || 'Failed to save prompt.');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showToast('Network error occurred.');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            });
+        }
 
         document.getElementById('geminiForm').addEventListener('submit', function() {
             const btn = document.getElementById('generateBtn');
