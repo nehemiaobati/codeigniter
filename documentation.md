@@ -75,6 +75,8 @@
 **7. Command-Line Interface (CLI)**
 7.1. Overview of Custom Commands
 7.2. `php spark train`
+7.3. `php spark db:backup`
+7.4. `php spark make:module`
 
 **8. Configuration Reference**
 8.1. Application (`App.php`)
@@ -477,6 +479,23 @@ Custom application commands are located in `app/Commands/` or `app/Modules/[Modu
 
 - **Purpose:** To run the NLP training service for text classification tasks.
 - **Action:** Invokes `TrainingService::train()`. It reads training data, processes it via `TokenService`, trains a Naive Bayes classifier using the `nlp-tools` library, and serializes the resulting models to `writable/nlp/feature_factory.model` and `writable/nlp/classifier.model`.
+  **7.3. `php spark db:backup`**
+
+- **Purpose:** To create a secure backup of the application database.
+- **Action:** Invokes `mysqldump` to export the database to `writable/backups/`.
+- **Features:**
+  - **Consistency:** Uses `--single-transaction` to ensure data integrity without locking tables.
+  - **Portability:** Uses `--set-gtid-purged=OFF` to allow easy restoration on different servers.
+  - **Usage:** `php spark db:backup [optional_filename.sql]`
+
+**7.4. `php spark make:module`**
+
+- **Purpose:** To scaffold a new module following the project's strict MVC-S architecture.
+- **Action:** Generates the directory structure (`Config`, `Controllers`, `Models`, etc.) and boilerplate files with correct namespaces.
+- **Features:**
+  - **Standardization:** Enforces PascalCase for classes and lowercase for Routes/Tables.
+  - **Automation:** Updates `app/Config/Autoload.php` to register the new namespace.
+  - **Usage:** `php spark make:module [ModuleName]`
 
 **8. Configuration Reference**
 
@@ -581,6 +600,18 @@ Ensure your code is well-documented, follows the project's architectural pattern
 - **PCM:** Pulse-Code Modulation, a raw audio format returned by Gemini API.
 
 **13.2. Changelog & Release History**
+
+**v1.7.0 - 2025-12-03**
+
+### Added
+
+- **Database Backup Command:**
+  - Implemented `php spark db:backup` command.
+  - Supports automated backups via cron jobs.
+  - Includes safety flags (`--single-transaction`) for live server backups.
+- **Module Generator Command:**
+  - Implemented `php spark make:module` to automate MVC-S module creation.
+  - Enforces naming conventions (PascalCase classes, lowercase routes/tables).
 
 **v1.6.0 - 2025-12-01**
 
