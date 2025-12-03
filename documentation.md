@@ -76,7 +76,8 @@
 7.1. Overview of Custom Commands
 7.2. `php spark train`
 7.3. `php spark db:backup`
-7.4. `php spark make:module`
+7.4. `php spark db:restore`
+7.5. `php spark make:module`
 
 **8. Configuration Reference**
 8.1. Application (`App.php`)
@@ -488,7 +489,16 @@ Custom application commands are located in `app/Commands/` or `app/Modules/[Modu
   - **Portability:** Uses `--set-gtid-purged=OFF` to allow easy restoration on different servers.
   - **Usage:** `php spark db:backup [optional_filename.sql]`
 
-**7.4. `php spark make:module`**
+**7.4. `php spark db:restore`**
+
+- **Purpose:** To restore the database from a backup file.
+- **Action:** Invokes `mysql` client to import data from `writable/backups/`.
+- **Features:**
+  - **Interactive Mode:** Lists available backups if no filename is provided.
+  - **Safety:** Can be used to recover from data loss or revert to a previous state.
+  - **Usage:** `php spark db:restore [optional_filename.sql]`
+
+**7.5. `php spark make:module`**
 
 - **Purpose:** To scaffold a new module following the project's strict MVC-S architecture.
 - **Action:** Generates the directory structure (`Config`, `Controllers`, `Models`, etc.) and boilerplate files with correct namespaces.
@@ -609,6 +619,10 @@ Ensure your code is well-documented, follows the project's architectural pattern
   - Implemented `php spark db:backup` command.
   - Supports automated backups via cron jobs.
   - Includes safety flags (`--single-transaction`) for live server backups.
+- **Database Restore Command:**
+  - Implemented `php spark db:restore` command.
+  - Supports interactive selection of backup files.
+  - Verifies file existence before attempting restore.
 - **Module Generator Command:**
   - Implemented `php spark make:module` to automate MVC-S module creation.
   - Enforces naming conventions (PascalCase classes, lowercase routes/tables).
