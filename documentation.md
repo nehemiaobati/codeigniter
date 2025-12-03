@@ -494,7 +494,9 @@ Custom application commands are located in `app/Commands/` or `app/Modules/[Modu
 - **Purpose:** To restore the database from a backup file.
 - **Action:** Invokes `mysql` client to import data from `writable/backups/`.
 - **Features:**
-  - **Interactive Mode:** Lists available backups with numeric indices for easy selection.
+  - **Interactive Mode:** Run `php spark db:restore`. You will be shown a list of available backups (newest first) and prompted to select one by entering its number (e.g., `0`, `1`).
+  - **Direct Mode:** Run `php spark db:restore <filename>` to restore a specific file immediately.
+    > [!CAUTION] > **Destructive Operation**: This command typically performs a "wipe and replace" operation. It will DROP existing tables and replace them with the data from the backup file. Any data created _after_ the backup was taken will be lost. Ensure you have a recent backup before restoring.
   - **Safety:** Can be used to recover from data loss or revert to a previous state.
   - **Usage:** `php spark db:restore [optional_filename.sql]`
 
