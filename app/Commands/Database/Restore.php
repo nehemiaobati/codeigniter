@@ -77,11 +77,13 @@ class Restore extends BaseCommand
             });
 
             $options = [];
-            foreach ($files as $file) {
-                $options[basename($file)] = basename($file) . ' (' . date('Y-m-d H:i:s', filemtime($file)) . ')';
+            foreach ($files as $index => $file) {
+                // Use numeric index for easier selection
+                $options[$index] = basename($file) . ' (' . date('Y-m-d H:i:s', filemtime($file)) . ')';
             }
 
-            $filename = CLI::promptByKey('Select a backup to restore:', $options);
+            $selectedKey = CLI::promptByKey('Select a backup to restore:', $options);
+            $filename = basename($files[$selectedKey]);
         }
 
         $path = $backupDir . $filename;

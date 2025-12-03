@@ -494,7 +494,7 @@ Custom application commands are located in `app/Commands/` or `app/Modules/[Modu
 - **Purpose:** To restore the database from a backup file.
 - **Action:** Invokes `mysql` client to import data from `writable/backups/`.
 - **Features:**
-  - **Interactive Mode:** Lists available backups if no filename is provided.
+  - **Interactive Mode:** Lists available backups with numeric indices for easy selection.
   - **Safety:** Can be used to recover from data loss or revert to a previous state.
   - **Usage:** `php spark db:restore [optional_filename.sql]`
 
