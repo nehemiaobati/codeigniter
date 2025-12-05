@@ -25,7 +25,7 @@ $routes->group('', static function ($routes) {
     $routes->get('documentation', 'DocumentationController::index', ['as' => 'documentation']);
     $routes->get('documentation/web', 'DocumentationController::web', ['as' => 'web']);
     $routes->get('documentation/agi', 'DocumentationController::agi', ['as' => 'agi']);
-    
+
 
     // Sitemap Route for SEO
     $routes->get('sitemap.xml', 'SitemapController::index', ['as' => 'sitemap']);
@@ -57,6 +57,7 @@ $routes->group('', static function ($routes) {
     $routes->get('privacy', 'HomeController::privacy', ['as' => 'privacy']);
 
     // Public Service Pages
+    $routes->post('cookie/accept', 'HomeController::acceptCookie', ['as' => 'cookie.accept']);
 });
 
 //--------------------------------------------------------------------
@@ -71,16 +72,16 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->get('account', 'AccountController::index', ['as' => 'account.index']);
 
     // Admin Panel Routes
-    $routes->group('admin', static function ($routes) {
+    $routes->group('admin', ['filter' => 'admin'], static function ($routes) {
         $routes->get('/', 'AdminController::index', ['as' => 'admin.index']);
         $routes->get('users/(:num)', 'AdminController::show/$1', ['as' => 'admin.users.show']);
         $routes->post('users/update_balance/(:num)', 'AdminController::updateBalance/$1', ['as' => 'admin.users.update_balance']);
         $routes->post('users/delete/(:num)', 'AdminController::delete/$1', ['as' => 'admin.users.delete']);
         $routes->get('users/search', 'AdminController::searchUsers', ['as' => 'admin.users.search']);
-        
+
         // New route for viewing logs
         $routes->get('logs', 'AdminController::logs', ['as' => 'admin.logs']);
-        
+
         // --- Campaign Routes ---
         $routes->get('campaign', 'CampaignController::create', ['as' => 'admin.campaign.create']);
         $routes->post('campaign/send', 'CampaignController::send', ['as' => 'admin.campaign.send']);
@@ -88,5 +89,4 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->post('campaign/delete/(:num)', 'CampaignController::delete/$1', ['as' => 'admin.campaign.delete']); // ADDED THIS LINE
 
     });
-
 });

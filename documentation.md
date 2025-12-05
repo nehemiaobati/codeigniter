@@ -1,125 +1,129 @@
-PROJECT DOCUMENTATION: GENAI WEB PLATFORM
+"PROJECT DOCUMENTATION: GENAI WEB PLATFORM
 
-**************************************************
+---
 
 **Part I: Getting Started**
 
 **1. Introduction**
-    1.1. What is GenAI Web Platform?
-    1.2. Core Features & Capabilities
-    1.3. Who Is This For?
-    1.4. Technology Stack
+1.1. What is GenAI Web Platform?
+1.2. Core Features & Capabilities
+1.3. Who Is This For?
+1.4. Technology Stack
 
 **2. Quick Start Guide**
-    2.1. Your First 5 Minutes
-    2.2. Running the Application Locally
-    2.3. Key Concepts at a Glance
+2.1. Your First 5 Minutes
+2.2. Running the Application Locally
+2.3. Key Concepts at a Glance
 
 **3. Installation**
-    3.1. Server Requirements & Prerequisites
-    3.2. Automated Installation (Recommended)
-    3.3. Manual Installation (Advanced)
-    3.4. Environment Configuration (`.env`)
-    3.5. Post-Installation Steps & Security
+3.1. Server Requirements & Prerequisites
+3.2. Automated Installation (Recommended)
+3.3. Manual Installation (Advanced)
+3.4. Environment Configuration (`.env`)
+3.5. Post-Installation Steps & Security
 
---------------------------------------------------
+---
 
 **Part II: Guides & Tutorials**
 
 **4. Core Concepts**
-    4.1. Architectural Overview (Modular MVC-S)
-    4.2. The Request Lifecycle
-    4.3. Service Container & Dependency Injection
-    4.4. Directory Structure Explained
-    4.5. Security Principles
-    4.6. Frontend Design (The 'Blueprint' Method)
+4.1. Architectural Overview (Modular MVC-S)
+4.2. The Request Lifecycle
+4.3. Service Container & Dependency Injection
+4.4. Directory Structure Explained
+4.5. Security Principles
+4.6. Frontend Design (The 'Blueprint' Method)
 
 **5. Tutorial: Building Your First Feature**
-    5.1. Creating a New Route
-    5.2. Building the Controller & Service
-    5.3. Interacting with the Database (Model & Entity)
-    5.4. Displaying Data in a View
+5.1. Creating a New Route
+5.2. Building the Controller & Service
+5.3. Interacting with the Database (Model & Entity)
+5.4. Displaying Data in a View
 
 **6. Feature Guides (Deep Dives)**
-    6.1. User Authentication
-        6.1.1. Registration & Login Flow
-        6.1.2. Email Verification & Password Resets
-        6.1.3. Access Control with Filters
-    6.2. Payment Gateway Integration
-        6.2.1. Configuration
-        6.2.2. Initiating a Transaction
-        6.2.3. Verifying a Payment
-    6.3. AI Service Integration
-        6.3.1. Generating Content
-        6.3.2. Conversational Memory System
-        6.3.3. Handling Multimedia Inputs
-        6.3.4. Document Generation (PDF/Word) with Fallback
-    6.4. Cryptocurrency Data Service
-        6.4.1. Querying Balances
-        6.4.2. Fetching Transaction Histories
-    6.5. Administrative Dashboard
-        6.5.1. User Management
-        6.5.2. Sending Email Campaigns
-        6.5.3. Viewing Application Logs
-    6.6. Blog & Content Management
-        6.6.1. Public-Facing Blog
-        6.6.2. Admin Management Interface
-    6.7. Self-Hosted Documentation
-        6.7.1. Serving Documentation Pages
+6.1. User Authentication
+6.1.1. Registration & Login Flow
+6.1.2. Email Verification & Password Resets
+6.1.3. Access Control with Filters
+6.2. Payment Gateway Integration
+6.2.1. Configuration
+6.2.2. Initiating a Transaction
+6.2.3. Verifying a Payment
+6.3. AI Service Integration
+6.3.1. Generative Text & Multimodal Input
+6.3.2. Hybrid Memory System (Vector + Keyword)
+6.3.3. Text-to-Speech (TTS) & Audio Processing
+6.3.4. Advanced Document Generation (Pandoc/XeTeX)
+6.3.5. User Settings (Voice & Assistant Modes)
+6.4. Cryptocurrency Data Service
+6.4.1. Querying Balances
+6.4.2. Fetching Transaction Histories
+6.5. Administrative Dashboard
+6.5.1. User Management
+6.5.2. Sending Email Campaigns
+6.5.3. Viewing Application Logs
+6.6. Blog & Content Management
+6.6.1. Public-Facing Blog
+6.6.2. Admin Management Interface
+6.7. Self-Hosted Documentation
+6.7.1. Serving Documentation Pages
 
---------------------------------------------------
+---
 
 **Part III: Technical Reference**
 
 **7. Command-Line Interface (CLI)**
-    7.1. Overview of Custom Commands
-    7.2. `php spark train`
+7.1. Overview of Custom Commands
+7.2. `php spark train`
+7.3. `php spark db:backup`
+7.4. `php spark db:restore`
+7.5. `php spark make:module`
 
 **8. Configuration Reference**
-    8.1. Application (`App.php`)
-    8.2. Database (`Database.php`)
-    8.3. Custom Configurations (`AGI.php`, `Recaptcha.php`)
+8.1. Application (`App.php`)
+8.2. Database (`Database.php`)
+8.3. Custom Configurations (`AGI.php`, `Recaptcha.php`)
 
 **9. Testing**
-    9.1. Running the Test Suite
-    9.2. Writing Unit Tests
-    9.3. Writing Feature Tests
+9.1. Running the Test Suite
+9.2. Writing Unit Tests
+9.3. Writing Feature Tests
 
---------------------------------------------------
+---
 
 **Part IV: Operations & Community**
 
 **10. Deployment**
-    10.1. Production Server Setup
-    10.2. Deployment Checklist
-    10.3. Performance Optimization
+10.1. Production Server Setup
+10.2. Deployment Checklist
+10.3. Performance Optimization
 
 **11. Troubleshooting**
-    11.1. Frequently Asked Questions (FAQ)
-    11.2. Common Error Resolutions
-    11.3. Logging & Debugging
+11.1. Frequently Asked Questions (FAQ)
+11.2. Common Error Resolutions
+11.3. Logging & Debugging
 
 **12. Contributing**
-    12.1. Contribution Guidelines
-    12.2. Code Style (PSR-12)
-    12.3. Submitting a Pull Request
+12.1. Contribution Guidelines
+12.2. Code Style (PSR-12)
+12.3. Submitting a Pull Request
 
 **13. Appendices**
-    13.1. Glossary of Terms
-    13.2. Changelog & Release History
+13.1. Glossary of Terms
+13.2. Changelog & Release History
 
---------------------------------------------------
+---
 
 **Part V: Documentation Maintenance Guide**
 
 **15. A Guide for the Project Owner**
-    15.1. The Philosophy of Living Documentation
-    15.2. Your Role vs. the AI's Role
-    15.3. The Documentation Update Workflow
-    15.4. Procedure: How to Review the Codebase for Changes
-    15.5. Procedure: Updating the Changelog and Managing Releases
+15.1. The Philosophy of Living Documentation
+15.2. Your Role vs. the AI's Role
+15.3. The Documentation Update Workflow
+15.4. Procedure: How to Review the Codebase for Changes
+15.5. Procedure: Updating the Changelog and Managing Releases
 
-**************************************************
+---
 
 **Part I: Getting Started**
 
@@ -134,7 +138,9 @@ The GenAI Web Platform is a comprehensive, multi-functional application built on
 - **Modular Architecture:** Core features like AI, Payments, Crypto, and Blog are isolated into self-contained modules for better organization and scalability.
 - **User Authentication:** Secure registration, login, email verification, and password reset functionality.
 - **Payment Gateway Integration:** Seamless payments via Paystack, a popular African payment gateway.
-- **AI Service Integration:** Advanced text and multimedia interaction with Google's Gemini API, featuring a sophisticated conversational memory system and on-demand document generation (PDF/Word).
+- **AI Service Integration:** Advanced text and multimedia interaction with Google's Gemini API. Features include a **Hybrid Memory System** (combining Vector embeddings and keyword search), **Text-to-Speech** output, and **Professional Document Generation** (PDF/Word) using LaTeX engines.
+- **Advanced Media Generation:** Support for generating high-quality images (Imagen 4.0) and videos (Veo 2.0) directly from text prompts.
+- **Local AI Integration (Ollama):** Support for running local LLMs (like Llama 3, DeepSeek) directly on the server, offering privacy-focused AI interactions with zero external API costs.
 - **Cryptocurrency Data Service:** Real-time balance and transaction history queries for Bitcoin (BTC) and Litecoin (LTC) addresses.
 - **Blog & Content Management:** A public-facing blog with a full administrative backend for creating, editing, and managing posts.
 - **Administrative Dashboard:** Robust tools for user management, balance adjustments, financial oversight, log viewing, and sending email campaigns to all users.
@@ -147,16 +153,19 @@ This platform is designed for developers, creators, and businesses, particularly
 
 **1.4. Technology Stack**
 
-- **Backend:** PHP 8.1+, CodeIgniter 4
+- **Backend:** PHP 8.2+, CodeIgniter 4
 - **Frontend:** Bootstrap 5, JavaScript, HTML5, CSS3
-- **Database:** MySQL
+- **Database:** MySQL 8.0+
 - **Web Server:** Apache2
 - **Key Libraries:**
-    - `google/gemini-php`: For interacting with the Gemini API.
-    - `dompdf/dompdf`: For PDF generation fallback.
-    - `nlp-tools/nlp-tools`: For Natural Language Processing tasks.
-    - `php-ffmpeg/php-ffmpeg`: For audio and video processing.
-- **System Dependencies:** Pandoc, ffmpeg
+  - `google/gemini-php`: For interacting with the Gemini API (supports Gemini 2.5, Imagen 4.0, Veo 2.0).
+  - `ollama/ollama`: Local LLM inference server (external dependency).
+  - `dompdf/dompdf`: For PDF generation fallback.
+  - `nlp-tools/nlp-tools`: For Natural Language Processing (Naive Bayes classification).
+  - `php-ffmpeg/php-ffmpeg`: For audio conversion (PCM to MP3).
+- **System Dependencies:**
+  - **Pandoc & TeX Live (XeTeX):** For high-fidelity PDF/Docx generation.
+  - **FFmpeg:** For audio processing.
 - **Development & Deployment:** Composer, PHPUnit, Spark CLI, Git, Bash
 
 **2. Quick Start Guide**
@@ -169,7 +178,8 @@ For a fresh Ubuntu server, the fastest way to get started is with the automated 
 2.  Navigate into the directory: `cd genaiwebapplication`
 3.  Make the script executable: `chmod +x setup.sh`
 4.  Run with sudo: `sudo ./setup.sh`
-5.  After completion, edit the newly created `.env` file to add your API keys.
+5.  **Important:** The installation process may take several minutes as it installs robust PDF engines (TexLive).
+6.  After completion, edit the newly created `.env` file to add your `GEMINI_API_KEY`.
 
 **2.2. Running the Application Locally**
 
@@ -177,35 +187,39 @@ For a fresh Ubuntu server, the fastest way to get started is with the automated 
 2.  **Install Dependencies:** `composer install`
 3.  **Create Environment File:** Copy `env` to `.env` and configure your local database and `app.baseURL`.
 4.  **Run Migrations:** `php spark migrate`
-5.  **Start the Server:** `php spark serve`
-6.  Access the application at `http://localhost:8080`.
+5.  **Create Writable Directories:** Ensure `writable/uploads/gemini_temp`, `writable/uploads/ttsaudio_secure`, and `writable/nlp` exist.
+6.  **Start the Server:** `php spark serve`
+7.  Access the application at `http://localhost:8080`.
 
 **2.3. Key Concepts at a Glance**
 
-- **Modular MVC-S Architecture:** The application is built around self-contained Modules (e.g., `Blog`, `Payments`). Within each module, concerns are separated into Models (database), Views (presentation), Controllers (request handling), and Services (business logic).
-- **Services:** Core functionality like payment processing (`PaystackService`), AI interaction (`GeminiService`), and crypto queries (`CryptoService`) are encapsulated in their own service classes for reusability.
-- **Pay-As-You-Go:** Users top up an account balance, and this balance is debited for each AI or Crypto query they perform.
+- **Modular MVC-S Architecture:** The application is built around self-contained Modules (e.g., `Gemini`, `Payments`).
+- **Services:** Core functionality is encapsulated in service classes. For example, `GeminiService` handles API communication, while `FfmpegService` handles audio conversion.
+- **Pay-As-You-Go:** Users top up an account balance, and this balance is debited for each AI interaction or Crypto query.
 
 **3. Installation**
 
 **3.1. Server Requirements & Prerequisites**
 
-- **OS:** Ubuntu (Recommended)
-- **Web Server:** Apache2 or Nginx
-- **PHP:** Version 8.1 or higher with `intl`, `mbstring`, `bcmath`, `curl`, `xml`, `zip`, `gd` extensions.
+- **OS:** Ubuntu 20.04/22.04 (Recommended)
+- **Web Server:** Apache2
+- **PHP:** Version **8.2** or higher. Required extensions: `intl`, `mbstring`, `bcmath`, `curl`, `xml`, `zip`, `gd`, `imagick`.
 - **Database:** MySQL Server
-- **Tools:** Composer, Git, Pandoc, ffmpeg
+- **System Tools:**
+  - `ffmpeg`: Required for Text-to-Speech functionality.
+  - `pandoc`: Required for document generation.
+  - `texlive-xetex`, `texlive-fonts-recommended`, `lmodern`: Required for generating PDFs via Pandoc.
 
 **3.2. Automated Installation (Recommended)**
 
 The `setup.sh` script is designed for a clean Ubuntu server and automates the entire installation process. It will:
 
-- Install Apache2, PHP 8.2, and MySQL.
+- Install Apache2, PHP 8.2, MySQL, FFMpeg, and the full Pandoc/LaTeX stack.
 - Create a dedicated database and user.
 - Install Composer and Node.js.
-- Clone the project repository.
-- Install all project dependencies.
+- Clone the project repository and install PHP dependencies.
 - Create the `.env` file with generated database credentials.
+- Create necessary subdirectories in `writable/` for temporary uploads and NLP models.
 - Run database migrations.
 - Configure an Apache virtual host.
 
@@ -218,36 +232,31 @@ The `setup.sh` script is designed for a clean Ubuntu server and automates the en
 
 1.  **Clone Repository:** `git clone https://github.com/nehemiaobati/genaiwebapplication.git .`
 2.  **Install Dependencies:** Run `composer install`.
-3.  **Configure Environment:** Copy `env` to `.env`.
-4.  **Database Setup:** Create a MySQL database and user.
-5.  **Edit `.env` file:** Fill in your `app.baseURL`, database credentials, API keys, and email settings.
-6.  **Run Migrations:** Run `php spark migrate` to create all necessary tables.
-7.  **Set Permissions:** Ensure the `writable/` directory is writable by the web server: `chmod -R 775 writable/`.
-8.  **Configure Web Server:** Point your web server's document root to the project's `public/` directory.
+3.  **System Dependencies:** Manually install `ffmpeg`, `pandoc`, and `texlive-xetex`.
+4.  **Configure Environment:** Copy `env` to `.env`.
+5.  **Database Setup:** Create a MySQL database and user.
+6.  **Edit `.env` file:** Fill in your `app.baseURL`, database credentials, `GEMINI_API_KEY`, and payment keys.
+7.  **Run Migrations:** Run `php spark migrate` to create all necessary tables (including `interactions`, `entities`, `user_settings`).
+8.  **Set Permissions:** Ensure the `writable/` directory is writable by the web server. Specifically ensure `writable/uploads` and `writable/nlp` are writable.
+9.  **Configure Web Server:** Point your web server's document root to the project's `public/` directory.
 
 **3.4. Environment Configuration (`.env`)**
 
 The `.env` file is critical for configuring the application. You must fill in the following values:
 
 - `CI_ENVIRONMENT`: `development` for local, `production` for live.
-- `app.baseURL`: The full URL of your application (e.g., `http://yourdomain.com/`).
-- `database.default.*`: Your database connection details.
-- `encryption.key`: A unique, 32-character random string for encryption.
+- `GEMINI_API_KEY`: **(Required)** Your API key for Google Gemini.
 - `PAYSTACK_SECRET_KEY`: Your secret key from your Paystack dashboard.
-- `GEMINI_API_KEY`: Your API key for the Google Gemini service.
+- `encryption.key`: A unique, 32-character random string (generated by setup script).
 - `recaptcha_siteKey` & `recaptcha_secretKey`: Your keys for Google reCAPTCHA v2.
-- `email.*`: Configuration details for your SMTP email sending service.
 
 **3.5. Post-Installation Steps & Security**
 
 1.  **Secure `.env`:** Ensure the `.env` file is never committed to version control.
-2.  **Set DNS:** Point your domain's A record to the server's IP address.
-3.  **Enable HTTPS:** For production, install an SSL certificate. Using Certbot is recommended:
+2.  **Directory Security:** The `writable/uploads/ttsaudio_secure` directory contains generated user audio. Access to this is controlled via the `GeminiController::serveAudio` method to prevent unauthorized access.
+3.  **Enable HTTPS:** For production, install an SSL certificate using Certbot.
 
-        sudo apt install certbot python3-certbot-apache
-        sudo certbot --apache
-
---------------------------------------------------
+---
 
 **Part II: Guides & Tutorials**
 
@@ -262,58 +271,69 @@ Within each module (and for core shared components in the `app/` directory), the
 - **Models (`app/Modules/[ModuleName]/Models`)**: Handle all direct database interactions for that module.
 - **Views (`app/Modules/[ModuleName]/Views`)**: Contain the presentation logic (HTML) for the module.
 - **Controllers (`app/Modules/[ModuleName]/Controllers`)**: Act as the bridge, handling HTTP requests for the module, calling services, and passing data to views.
-- **Services (`app/Modules/[ModuleName]/Libraries`)**: Contain the core business logic specific to that module. Shared, application-wide services are located in `app/Libraries/`.
+- **Services (`app/Modules/[ModuleName]/Libraries`)**: Contain the core business logic specific to that module. For example, `MemoryService` resides in `App\Modules\Gemini\Libraries`.
+
+#### Visual Architecture Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Router
+    participant Filter as Auth/Balance Filter
+    participant Controller
+    participant Service
+    participant Model
+    participant Database
+
+    User->>Router: HTTP Request (GET/POST)
+    Router->>Filter: Check Access/Balance
+    alt Access Denied
+        Filter-->>User: Redirect / Error
+    else Access Granted
+        Filter->>Controller: Pass Request
+        Controller->>Service: Invoke Business Logic
+        Service->>Model: Request Data (Entities)
+        Model->>Database: Query
+        Database-->>Model: Raw Data
+        Model-->>Service: Return Entity Object
+        Service-->>Controller: Return Result (Status/Data)
+        Controller-->>User: Return View or Redirect
+    end
+```
 
 **4.2. The Request Lifecycle**
 
-1.  The request first hits `public/index.php`.
-2.  CodeIgniter automatically discovers routes from `app/Config/Routes.php` and from the `Config/Routes.php` file inside each Module.
-3.  The routing system matches the URL to a specific controller method (either in `app/Controllers` or `app/Modules/[ModuleName]/Controllers`).
-4.  Any defined Filters (`app/Config/Filters.php`) are executed before the controller is called.
-5.  The Controller method is executed. It may validate input, call one or more Services, and retrieve data from Models.
-6.  The Controller passes the prepared data to a View.
-7.  The View is rendered into HTML and sent back to the browser as the final response.
+Standard CodeIgniter 4 lifecycle applies. Routes are defined in `app/Modules/[ModuleName]/Config/Routes.php`. Filters like `AuthFilter` and `BalanceFilter` protect routes and ensure users have funds before accessing AI services.
 
 **4.3. Service Container & Dependency Injection**
 
 The application uses CodeIgniter's service container to manage class instances. Core services are defined in `app/Config/Services.php`. This allows for easy instantiation and sharing of service objects throughout the application.
 
-- **Registration:** Custom services like `PaystackService` and `GeminiService` are registered as static methods in `app/Config/Services.php`.
-- **Usage:** Services are accessed anywhere in the application using the `service()` helper function (e.g., `$geminiService = service('geminiService');`).
+- **Example:** `$geminiService = service('geminiService');`
+- **Example:** `$ffmpegService = service('ffmpegService');`
 
 **4.4. Directory Structure Explained**
 
-- `app/Commands`: Houses custom `spark` CLI commands.
-- `app/Config`: Contains all core application configuration files.
-- `app/Controllers`: Handles core web requests like authentication and home pages.
-- `app/Database`: Contains migrations and seeders for core tables like `users`.
-- `app/Libraries`: Contains shared, application-wide **Service classes**.
-- `app/Models`: Contains core Models like `UserModel`.
-- `app/Modules/`: **This is the primary location for application features.**
-    - `Blog/`: Manages the public blog and admin CRUD interface.
-    - `Crypto/`: Handles cryptocurrency address queries.
-    - `Gemini/`: Manages all interactions with the Gemini AI API.
-    - `Payments/`: Manages the Paystack payment gateway integration.
-- `app/Views`: Contains core HTML templates, including the main `layouts/` and `partials/`.
-- `public/`: The web server's document root.
-- `writable/`: Directory for logs, cache, and file uploads.
+- `app/Modules/Gemini/`:
+  - `Libraries/`: Contains `GeminiService`, `MediaGenerationService`, `ModelPayloadService`, `MemoryService`, `EmbeddingService`, `FfmpegService`, `PandocService`, `TokenService`, `TrainingService`.
+  - `Models/`: Contains `InteractionModel`, `EntityModel`, `PromptModel`, `UserSettingsModel`.
+- `app/Modules/Ollama/`:
+  - `Libraries/`: Contains `OllamaService`, `OllamaPayloadService`.
+  - `Controllers/`: Contains `OllamaController`.
+  - `Config/`: Contains `Ollama.php` configuration.
+- `writable/nlp/`: Stores trained Naive Bayes models (`classifier.model`).
+- `writable/uploads/`: Stores temporary media, PDF generation artifacts, and secure audio files.
 
 **4.5. Security Principles**
 
-- **Public Webroot:** The server's document root is set to the `public/` directory, preventing direct web access to application source code.
+- **Public Webroot:** The server's document root is set to the `public/` directory.
+- **Input Sanitization:** `TokenService` strips HTML tags and normalizes text before processing for memory.
+- **Secure File Serving:** Generated MP3s are stored outside the `public` root and served via a controller method (`serveAudio`) that verifies user ownership.
 - **CSRF Protection:** Cross-Site Request Forgery tokens are used on all POST forms.
-- **XSS Filtering:** All data rendered in views is escaped using `esc()` to prevent Cross-Site Scripting attacks.
-- **Environment Variables:** Sensitive information is stored in the `.env` file and is never committed to version control.
-- **Query Builder & Entities:** All database queries use CodeIgniter's built-in methods, which automatically escape parameters to prevent SQL injection.
 
 **4.6. Frontend Design (The 'Blueprint' Method)**
 
-The project follows a strict frontend workflow called the "Blueprint Method" to ensure UI consistency.
-
-- **Bootstrap 5 Utilities First:** All styling should prioritize using Bootstrap 5's built-in utility classes (`fw-bold`, `p-4`, `mb-3`, `text-center`, `bg-body-tertiary`) over writing custom CSS.
-- **Blueprint Card:** All primary content blocks, forms, and data displays MUST be placed within a `<div class="card blueprint-card">`. This provides a consistent, theme-aware container.
-- **Blueprint Header:** Pages should use a standard header structure (`<div class="blueprint-header">`) for titles and subtitles.
-- **Theme-Aware Colors:** Hardcoding colors is forbidden. Use Bootstrap's theme-aware utilities (`text-body-secondary`, `bg-primary-subtle`) or the project's CSS variables (`var(--primary-color)`) to ensure compatibility with both light and dark modes.
+The project follows a strict frontend workflow called the "Blueprint Method" to ensure UI consistency. New features include `prompt-card` styling and progress bars for file uploads in the AI Studio.
 
 **5. Tutorial: Building Your First Feature**
 
@@ -335,7 +355,7 @@ Open `app/Modules/Notes/Config/Routes.php` and add routes.
 
         <?php
         namespace App\Modules\Notes\Controllers;
-        
+
         use App\Controllers\BaseController;
 
         class NoteController extends BaseController
@@ -346,7 +366,7 @@ Open `app/Modules/Notes/Config/Routes.php` and add routes.
                 $data['notes'] = $noteModel->where('user_id', session()->get('userId'))->findAll();
                 return view('App\Modules\Notes\Views\index', $data);
             }
-        
+
             public function create()
             {
                 // ... (logic to save note) ...
@@ -379,6 +399,9 @@ Create `app/Modules/Notes/Views/index.php`.
 - **6.1.1. Registration & Login Flow**: Managed by `AuthController.php`, this feature handles user registration with validation and reCAPTCHA, credential verification for login, and session management.
 - **6.1.2. Email Verification & Password Resets**: A unique token is generated and emailed to the user for verification. The password reset flow uses a secure, expiring token sent via email.
 - **6.1.3. Access Control with Filters**: The `AuthFilter` (`app/Filters/AuthFilter.php`) is applied to routes to protect pages that require a user to be logged in.
+- **6.1.4. Password Security**:
+  - **Hashing**: Passwords are never stored in plain text. The system uses `password_hash($password, PASSWORD_DEFAULT)` to generate a secure Bcrypt hash with a random salt.
+  - **Verification**: Login attempts are validated using `password_verify($password, $hash)`, which safely compares the input against the stored hash.
 
 **6.2. Payment Gateway Integration**
 
@@ -388,10 +411,34 @@ Create `app/Modules/Notes/Views/index.php`.
 
 **6.3. AI Service Integration**
 
-- **6.3.1. Generating Content**: `GeminiController::generate()` prepares the user's prompt, adds contextual data from the memory system, and sends it to `GeminiService::generateContent()`.
-- **6.3.2. Conversational Memory System**: This feature is managed by `MemoryService.php`. It uses a hybrid search (semantic vector search + keyword search) on past interactions to construct a relevant context block, which is prepended to the user's new prompt.
-- **6.3.3. Handling Multimedia Inputs**: Users can upload files via the AI Studio. `GeminiController` handles the file, converting it to base64 and including it in the API request to the multimodal Gemini model.
-- **6.3.4. Document Generation (PDF/Word) with Fallback**: Users can download the generated response. `GeminiController::downloadDocument()` uses the `DocumentService`, which first attempts to use `Pandoc` for high-quality conversion. If Pandoc is unavailable or fails for PDF, it automatically falls back to using `Dompdf` for reliable PDF creation.
+This module (`App\Modules\Gemini`) is the core of the platform.
+
+- **6.3.1. Generative Text & Multimodal Input**: `GeminiController::generate()` accepts text prompts and uploaded files (images/PDFs). It uses `GeminiService` to communicate with models like `gemini-2.5-flash`. The system uses `ModelPayloadService` to dynamically construct payloads for different model architectures. Token usage is calculated and costs are deducted from the user's balance in real-time.
+- **6.3.2. Hybrid Memory System (Vector + Keyword)**: Managed by `MemoryService.php`.
+  - **Storage:** Interactions are stored in the `interactions` table. Entities (keywords) are stored in `entities`.
+  - **Retrieval:** The system uses `EmbeddingService` to get vector embeddings of the user's query. It performs a cosine similarity search (Semantic) AND a keyword-based search (Lexical).
+  - **Fusion:** Results are fused using a weighted algorithm (Alpha 0.5) to provide context that is both conceptually similar and keyword-relevant.
+  - **Short-Term Memory:** The system forces the retrieval of the most recent interactions (configurable via `AGI.php`) to maintain immediate conversational flow.
+- **6.3.3. Text-to-Speech (TTS) & Audio Processing**:
+  - **Generation:** If `voice_output_enabled` is true, `GeminiService` requests audio data from the API.
+  - **Generation:** If `voice_output_enabled` is true, `GeminiService` requests audio data from the API.
+  - **Conversion:** The API returns raw PCM data. `FfmpegService` converts this raw data into a web-compatible MP3 file using the `ffmpeg` binary installed on the server.
+  - **Ephemeral Storage:** Generated audio files are stored in `writable/uploads/ttsaudio_secure/{userId}/` and are **deleted immediately** after being served to the user ("Read-Once" policy).
+- **6.3.4. Advanced Document Generation (Pandoc/XeTeX)**:
+  - **Primary Method:** `DocumentService` uses `PandocService` to convert Markdown/HTML to PDF using the `xelatex` engine. This supports complex formatting.
+  - **Fallback:** If Pandoc fails, the system falls back to `Dompdf` for PDF generation.
+- **6.3.5. User Settings (Voice & Assistant Modes)**:
+  - Users can toggle "Conversational Memory" and "Voice Output" directly from the UI.
+  - These preferences are stored in the `user_settings` table and persist across sessions.
+- **6.3.6. Media Generation (Image & Video)**:
+  - **Service:** `MediaGenerationService` handles interactions with image (Imagen 4.0, Gemini 2.5 Flash Image) and video (Veo 2.0) models.
+  - **Multimodal Input:** The system supports generating media from text prompts OR multimodal inputs (e.g., Image-to-Image using Gemini Flash).
+  - **Privacy:** User prompts are processed in-memory for the API request but are **never stored** in the database, ensuring maximum user privacy.
+  - **Process:**
+    - **Images:** Generated synchronously. The system decodes the base64 response, saves the image to `writable/uploads/generated/{userId}/`, and logs the transaction (without the prompt).
+    - **Videos:** Generated asynchronously. The system initiates a long-running operation with Veo 2.0, returns an operation ID, and polls for completion. Once ready, the video is downloaded and saved.
+    - **Auto-Deletion:** All generated media files are **deleted immediately** after they are served to the user. This ensures a stateless architecture and maximum privacy.
+  - **Cost Management:** Costs are estimated and deducted based on the specific model's pricing (e.g., per image or per second of video).
 
 **6.4. Cryptocurrency Data Service**
 
@@ -413,7 +460,13 @@ Create `app/Modules/Notes/Views/index.php`.
 
 - **6.7.1. Serving Documentation Pages**: `DocumentationController.php` serves documentation pages. It includes methods to display the main documentation index and separate pages for different aspects of the project, such as web architecture and the AI system.
 
---------------------------------------------------
+**6.8. Local AI Service (Ollama)**
+
+- **6.8.1. Configuration & Model Selection**: The module connects to a local Ollama instance (default: `http://localhost:11434`). It dynamically fetches available models (e.g., `llama3`, `mistral`) and presents them in the UI for user selection.
+- **6.8.2. Chat & Assistant Mode**: Supports conversational AI with an "Assistant Mode" that maintains context. It reuses the robust memory architecture designed for Gemini.
+- **6.8.3. Multimodal Input**: Users can upload images for analysis by vision-capable local models (like `llava`), handled via `OllamaPayloadService` which manages base64 encoding.
+
+---
 
 **Part III: Technical Reference**
 
@@ -425,8 +478,36 @@ Custom application commands are located in `app/Commands/` or `app/Modules/[Modu
 
 **7.2. `php spark train`**
 
-- **Purpose:** To run the AI text classification training service offline.
-- **Action:** It invokes `TrainingService::train()`, which trains a Naive Bayes classifier and saves the serialized model files to the `writable/nlp/` directory.
+- **Purpose:** To run the NLP training service for text classification tasks.
+- **Action:** Invokes `TrainingService::train()`. It reads training data, processes it via `TokenService`, trains a Naive Bayes classifier using the `nlp-tools` library, and serializes the resulting models to `writable/nlp/feature_factory.model` and `writable/nlp/classifier.model`.
+  **7.3. `php spark db:backup`**
+
+- **Purpose:** To create a secure backup of the application database.
+- **Action:** Invokes `mysqldump` to export the database to `writable/backups/`.
+- **Features:**
+  - **Consistency:** Uses `--single-transaction` to ensure data integrity without locking tables.
+  - **Portability:** Uses `--set-gtid-purged=OFF` to allow easy restoration on different servers.
+  - **Usage:** `php spark db:backup [optional_filename.sql]`
+
+**7.4. `php spark db:restore`**
+
+- **Purpose:** To restore the database from a backup file.
+- **Action:** Invokes `mysql` client to import data from `writable/backups/`.
+- **Features:**
+  - **Interactive Mode:** Run `php spark db:restore`. You will be shown a list of available backups (newest first) and prompted to select one by entering its number (e.g., `0`, `1`).
+  - **Direct Mode:** Run `php spark db:restore <filename>` to restore a specific file immediately.
+    > [!CAUTION] > **Destructive Operation**: This command typically performs a "wipe and replace" operation. It will DROP existing tables and replace them with the data from the backup file. Any data created _after_ the backup was taken will be lost. Ensure you have a recent backup before restoring.
+  - **Safety:** Can be used to recover from data loss or revert to a previous state.
+  - **Usage:** `php spark db:restore [optional_filename.sql]`
+
+**7.5. `php spark make:module`**
+
+- **Purpose:** To scaffold a new module following the project's strict MVC-S architecture.
+- **Action:** Generates the directory structure (`Config`, `Controllers`, `Models`, etc.) and boilerplate files with correct namespaces.
+- **Features:**
+  - **Standardization:** Enforces PascalCase for classes and lowercase for Routes/Tables.
+  - **Automation:** Updates `app/Config/Autoload.php` to register the new namespace.
+  - **Usage:** `php spark make:module [ModuleName]`
 
 **8. Configuration Reference**
 
@@ -440,9 +521,12 @@ Located at `app/Config/Database.php`, this file defines the database connection 
 
 **8.3. Custom Configurations (`AGI.php`, `Recaptcha.php`)**
 
-Custom configuration files are placed in `app/Config/Custom/`.
+Custom configuration files are placed in `app/Config/Custom/` or `app/Modules/Gemini/Config/AGI.php`.
 
-- `AGI.php`: Contains settings for the AI service, including embedding models, memory logic, and hybrid search parameters.
+- `AGI.php`: Contains settings for the AI service, including:
+  - **Memory Logic:** `rewardScore`, `decayScore`, `pruningThreshold`.
+  - **Search Tuning:** `hybridSearchAlpha` (balance between vector and keyword search).
+  - **NLP:** `nlpStopWords` (list of words to ignore during keyword extraction).
 - `Recaptcha.php`: Stores the site and secret keys for the Google reCAPTCHA service.
 
 **9. Testing**
@@ -459,7 +543,7 @@ Unit tests focus on testing individual classes in isolation and are placed in th
 
 Feature tests test a full request-response cycle, simulating user interaction.
 
---------------------------------------------------
+---
 
 **Part IV: Operations & Community**
 
@@ -467,40 +551,38 @@ Feature tests test a full request-response cycle, simulating user interaction.
 
 **10.1. Production Server Setup**
 
-The `setup.sh` script provides a complete, automated setup for a production-ready Ubuntu server.
+The `setup.sh` script provides a complete, automated setup for a production-ready Ubuntu server. **Note:** Ensure your server has at least 2GB of RAM to handle the compilation of PDF documents and FFMpeg conversions.
 
 **10.2. Deployment Checklist**
 
 1.  Set `CI_ENVIRONMENT` to `production` in your `.env` file.
 2.  Install production-only dependencies: `composer install --no-dev --optimize-autoloader`.
 3.  Run database migrations: `php spark migrate`.
-4.  Optimize the application: `php spark optimize`.
-5.  Ensure the web server's document root points to the `/public/` directory.
-6.  Verify that `writable/` directory has the correct server permissions.
+4.  Ensure `ffmpeg` and `pandoc` are in the system PATH.
+5.  Verify that `writable/` directory (especially `writable/uploads` and `writable/nlp`) has the correct server permissions.
 
 **10.3. Performance Optimization**
 
 - **Caching:** The application is configured to use Redis with a file-based fallback.
 - **Autoloader Optimization:** The `--optimize-autoloader` flag creates an optimized class map.
-- **Spark Optimize Command:** `php spark optimize` caches configuration for improved performance.
+- **Memory Pruning:** The `MemoryService` automatically prunes old interactions when the threshold (default: 500) is reached to keep database queries fast.
 
 **11. Troubleshooting**
 
 **11.1. Frequently Asked Questions (FAQ)**
 
-- **Why can't I log in after registering?** You must click the verification link sent to your email address.
-- **Why is my AI query failing?** Check your account balance or try again after a few moments.
+- **Why is PDF generation slow?** The system uses LaTeX for high-quality rendering. This is resource-intensive.
+- **Why is there no audio?** Ensure `voice_output_enabled` is checked and that `ffmpeg` is installed on the server.
 
 **11.2. Common Error Resolutions**
 
-- **"Whoops! We hit a snag."**: Check the server logs at `writable/logs/` for specific error details.
-- **"File upload failed."**: This usually indicates a permissions issue on the `writable/uploads/` directory.
-- **"Could not send email."**: Verify your SMTP credentials in the `.env` file.
+- **"Pandoc command not found"**: Re-run the setup script or manually install `pandoc` and `texlive-xetex`.
+- **"Conversion failed" (Audio)**: Check web server logs. Usually implies `ffmpeg` is missing or `writable/uploads/ttsaudio_secure` is not writable.
 
 **11.3. Logging & Debugging**
 
 - **Log Location:** All application logs are stored in `writable/logs/`, with a new file created daily.
-- **Log Levels:** Adjust logging sensitivity in `app/Config/Logger.php`.
+- **Critical Errors:** Failures in FFMpeg or Pandoc are logged as 'critical' or 'error' level for easy identification.
 
 **12. Contributing**
 
@@ -525,21 +607,91 @@ Ensure your code is well-documented, follows the project's architectural pattern
 **13.1. Glossary of Terms**
 
 - **Module:** A self-contained directory in `app/Modules/` that encapsulates a single business feature.
-- **MVC-S:** Model-View-Controller-Service, an architectural pattern that separates database logic (Model), presentation (View), request handling (Controller), and business logic (Service).
-- **Service:** A class containing reusable business logic.
-- **Entity:** A class that represents a single row from a database table.
+- **Embeddings:** Numerical representations of text used for semantic search.
+- **Hybrid Search:** A search technique combining vector similarity and keyword matching.
+- **PCM:** Pulse-Code Modulation, a raw audio format returned by Gemini API.
 
 **13.2. Changelog & Release History**
+
+**v1.7.0 - 2025-12-03**
+
+### Added
+
+- **Database Backup Command:**
+  - Implemented `php spark db:backup` command.
+  - Supports automated backups via cron jobs.
+  - Includes safety flags (`--single-transaction`) for live server backups.
+- **Database Restore Command:**
+  - Implemented `php spark db:restore` command.
+  - Supports interactive selection of backup files.
+  - Verifies file existence before attempting restore.
+- **Module Generator Command:**
+  - Implemented `php spark make:module` to automate MVC-S module creation.
+  - Enforces naming conventions (PascalCase classes, lowercase routes/tables).
+
+**v1.6.0 - 2025-12-01**
+
+### Added
+
+- **Verified Model Capabilities:**
+  - Confirmed and implemented correct payloads for **Imagen 4.0** (Standard, Ultra, Fast), **Veo 2.0**, and **Gemini 2.5 Flash Image**.
+  - Added support for **Multimodal Input** (Text + Image) in `MediaGenerationService`, enabling features like Image-to-Image generation where supported.
+
+### Changed
+
+- **Privacy Enhancement:** Removed the `prompt` column from the `generated_media` table. User prompts are no longer stored in the database or logs, ensuring higher privacy standards.
+- **Defensive Payload Handling:** Implemented strict filtering in `ModelPayloadService` to strip file inputs when sending requests to text-only models (Imagen, Veo) to prevent API errors.
+
+**v1.5.0 - 2025-11-29**
+
+### Added
+
+- **Advanced Media Generation:**
+  - Integrated `MediaGenerationService` for generating images and videos.
+  - Added support for **Imagen 4.0** (Standard, Ultra, Fast) for high-fidelity image generation.
+  - Added support for **Veo 2.0** for AI video generation.
+  - Implemented asynchronous polling for long-running video generation tasks.
+- **Model Payload Service:**
+  - Created `ModelPayloadService` to decouple API payload construction from the main service, allowing for easier addition of new models with unique requirements.
+- **Gemini 2.5 Support:** Updated `GeminiService` to prioritize `gemini-2.5-flash` and `gemini-2.5-pro` models.
+
+**v1.4.0 - 2025-11-26**
+
+### Added
+
+- **Ollama Module:** Full integration with local Ollama instances.
+  - Dynamic model selection from the UI.
+  - Support for "Assistant Mode" (conversational memory).
+  - Multimodal support (image uploads) for vision models.
+  - Credit deduction system for local model usage.
+
+**v1.3.0 - 2025-11-21**
+
+### Added
+
+- **Text-to-Speech (TTS):** Integrated Gemini Audio capabilities. Users can now hear AI responses.
+- **FFmpeg Integration:** Added `FfmpegService` to convert raw AI audio to web-ready MP3s.
+- **Hybrid Memory System:** Upgraded memory to use both Vector Embeddings and Keyword extraction for better context retrieval.
+- **User Settings:** Added persistent toggles for "Assistant Mode" and "Voice Output".
+- **Setup Script:** Major overhaul to `setup.sh` to include `texlive`, `ffmpeg`, and `pandoc` dependencies.
+
+### Changed
+
+- **Document Generation:** Now uses `XeTeX` engine via Pandoc for professional-grade PDF output.
+- **Gemini Service:** Refactored to support `gemini-2.0-flash` and `gemini-2.0-flash-lite`.
+- **Memory Logic:** Added "Recency Bias" to force the inclusion of the last 3 interactions in context.
 
 **v1.2.0 - 2025-11-14**
 
 ### Added
+
 - **Modular Architecture:** Refactored the entire application into a modular structure. Features like Blog, Payments, Crypto, and Gemini are now self-contained in `app/Modules/`.
 - **Campaign Templates:** Administrators can now save, load, and delete email campaign templates.
 - **Admin Log Viewer:** Added a new page in the admin dashboard to securely view application log files.
 - **Self-Hosted Documentation Pages:** The application now serves dedicated pages for Web and AGI documentation.
 
 ### Changed
+
 - **Document Generation:** The AI document download feature now uses Pandoc for higher quality output and falls back to Dompdf for PDFs if Pandoc is not available.
 - **Directory Structure:** Major changes to the directory structure to support the new modular architecture.
 - **Frontend Workflow:** Standardized all views to use the "Blueprint" method for UI consistency.
@@ -547,16 +699,19 @@ Ensure your code is well-documented, follows the project's architectural pattern
 **v1.1.0 - 2025-11-13**
 
 ### Added
+
 - **Blog & Content Management System:** Added a complete public-facing blog and an administrative backend for full CRUD functionality.
 - **AI Document Generation:** Users can download generated AI content as a PDF or Microsoft Word (`.docx`) file.
 
 ### Changed
+
 - Updated routing to include endpoints for the new blog and documentation features.
 
 **v1.0.0 (Initial Release)**
+
 - Core features implemented: User Authentication, Paystack Payments, Gemini AI Integration, Crypto Data Service, Admin Dashboard.
 
---------------------------------------------------
+---
 
 **Part V: Documentation Maintenance Guide**
 
@@ -566,7 +721,7 @@ This section serves as the standard operating procedure (SOP) for maintaining th
 
 **15.1. The Philosophy of Living Documentation**
 
-Treat this documentation as a core part of the codebase. It should evolve in lockstep with every feature change, bug fix, or architectural adjustment. An undocumented change is an incomplete change. The goal is to ensure that a new developer, or you in six months, can understand the *what*, *how*, and *why* of the system just by reading this document.
+Treat this documentation as a core part of the codebase. It should evolve in lockstep with every feature change, bug fix, or architectural adjustment. An undocumented change is an incomplete change. The goal is to ensure that a new developer, or you in six months, can understand the _what_, _how_, and _why_ of the system just by reading this document.
 
 **15.2. Your Role vs. the AI's Role**
 
@@ -582,13 +737,13 @@ This workflow applies to any code changes committed to the main branch.
 1.  **Identify:** Locate the relevant section in the documentation file.
 2.  **Edit:** Make the necessary correction or addition directly.
 3.  **Commit:** Commit the change with a clear message, prefixed with `docs:`.
-    - *Example:* `docs: Correct typo in Installation section 3.4`
+    - _Example:_ `docs: Correct typo in Installation section 3.4`
 
 **B. For Complex Changes (e.g., new features, architectural modifications):**
 
 1.  **Identify the Scope:** Use the procedure in section **15.4** to identify all changed files and map them to the corresponding sections of this documentation.
 2.  **Draft Updates (or Prompt the AI):** For each affected section, draft the new content. If using the AI, provide it with the list of changed files and instruct it to update the documentation accordingly.
-    - *Example Prompt for AI:* "A new email campaign feature has been added. The following files were created or modified: `CampaignController.php`, `CampaignModel.php`, `create.php` view, and the routes were updated. Please update the documentation, including a new sub-section in the Feature Guides (6.5.2) and updating the directory structure."
+    - _Example Prompt for AI:_ "A new email campaign feature has been added. The following files were created or modified: `CampaignController.php`, `CampaignModel.php`, `create.php` view, and the routes were updated. Please update the documentation, including a new sub-section in the Feature Guides (6.5.2) and updating the directory structure."
 3.  **Update Table of Contents:** If new sections or sub-sections were added, update the table of contents at the beginning of the document.
 4.  **Update Changelog:** Follow the procedure in section **15.5** to add an entry to the Changelog and determine if the version number needs to be updated.
 5.  **Review and Commit:** Read through all changes from the perspective of someone unfamiliar with the update. Is it clear? Is anything missing? Once satisfied, commit the changes.
@@ -604,18 +759,18 @@ The most efficient way to find what needs documenting is by analyzing the differ
 
 2.  **Map Files to Documentation Sections:** Use the output from the command above and this checklist to determine which parts of the documentation to review and update.
 
-| If This File/Directory Changed... | ...Then Review and Update These Documentation Sections |
-| :--- | :--- |
-| `setup.sh` or `.env` (new variables) | **3. Installation** (Prerequisites, Automated/Manual Setup, Environment Config) |
-| `app/Modules/[ModuleName]/Config/Routes.php` | **5. Tutorial**, **6. Feature Guides** (for new endpoints/URLs) |
-| `app/Modules/[ModuleName]/Controllers/*` | **6. Feature Guides** (logic for a specific feature) |
-| `app/Modules/[ModuleName]/Libraries/*` (Services) | **4. Core Concepts**, **6. Feature Guides** (detailed business logic) |
-| `app/Modules/[ModuleName]/Models/*` or `Entities/*` | **5. Tutorial**, **6. Feature Guides** (how data is handled for a feature) |
-| `app/Modules/[ModuleName]/Database/Migrations/*` | **5. Tutorial**, **6. Feature Guides** (mention new database tables/columns) |
-| `app/Commands/*` or `app/Modules/[ModuleName]/Commands/*` | **7. Command-Line Interface (CLI)** |
-| `app/Config/Custom/*` | **8. Configuration Reference** (document new custom settings) |
-| `app/Modules/[ModuleName]/Views/*` | Usually doesn't require a doc change unless a major new UI feature is introduced. |
-| `composer.json` (new dependencies) | **1.4. Technology Stack**, **3.1. Server Requirements** |
+| If This File/Directory Changed...                         | ...Then Review and Update These Documentation Sections                            |
+| :-------------------------------------------------------- | :-------------------------------------------------------------------------------- |
+| `setup.sh` or `.env` (new variables)                      | **3. Installation** (Prerequisites, Automated/Manual Setup, Environment Config)   |
+| `app/Modules/[ModuleName]/Config/Routes.php`              | **5. Tutorial**, **6. Feature Guides** (for new endpoints/URLs)                   |
+| `app/Modules/[ModuleName]/Controllers/*`                  | **6. Feature Guides** (logic for a specific feature)                              |
+| `app/Modules/[ModuleName]/Libraries/*` (Services)         | **4. Core Concepts**, **6. Feature Guides** (detailed business logic)             |
+| `app/Modules/[ModuleName]/Models/*` or `Entities/*`       | **5. Tutorial**, **6. Feature Guides** (how data is handled for a feature)        |
+| `app/Modules/[ModuleName]/Database/Migrations/*`          | **5. Tutorial**, **6. Feature Guides** (mention new database tables/columns)      |
+| `app/Commands/*` or `app/Modules/[ModuleName]/Commands/*` | **7. Command-Line Interface (CLI)**                                               |
+| `app/Config/Custom/*`                                     | **8. Configuration Reference** (document new custom settings)                     |
+| `app/Modules/[ModuleName]/Views/*`                        | Usually doesn't require a doc change unless a major new UI feature is introduced. |
+| `composer.json` (new dependencies)                        | **1.4. Technology Stack**, **3.1. Server Requirements**                           |
 
 **15.5. Procedure: Updating the Changelog and Managing Releases**
 
@@ -647,6 +802,6 @@ This project follows **Semantic Versioning (SemVer)**: `MAJOR.MINOR.PATCH`.
         ### Removed
         - Deprecated the old reporting feature.
 
-4.  **Be Concise and User-Focused:** Describe the *impact* of the change, not just the code that was altered.
+4.  **Be Concise and User-Focused:** Describe the _impact_ of the change, not just the code that was altered.
     - **Good:** "Added email notifications for successful payments."
-    - **Bad:** "Modified the `PaymentsController` and created a `PaymentNotification` class."
+    - **Bad:** "Modified the `PaymentsController` and created a `PaymentNotification` class.""
