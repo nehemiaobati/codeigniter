@@ -170,6 +170,12 @@ app.baseURL = 'http://localhost'
 # If you have a domain, change localhost to your domain
 
 #--------------------------------------------------------------------
+# SESSION
+#--------------------------------------------------------------------
+session.driver = 'CodeIgniter\Session\Handlers\DatabaseHandler'
+session.savePath = 'ci_sessions'
+
+#--------------------------------------------------------------------
 # DATABASE
 #--------------------------------------------------------------------
 database.default.hostname = 127.0.0.1
@@ -183,6 +189,17 @@ database.default.port = 3306
 # ENCRYPTION
 #--------------------------------------------------------------------
 encryption.key = ${ENCRYPTION_KEY}
+
+#--------------------------------------------------------------------
+# EMAIL Configuration
+#--------------------------------------------------------------------
+email_fromEmail = '_@gmail.com'
+email_fromName = ''
+email_SMTPHost = 'smtp.gmail.com'
+email_SMTPUser = '_@gmail.com'
+email_SMTPPass = ''
+email_SMTPPort = 587
+email_SMTPCrypto = 'tls'
 
 #--------------------------------------------------------------------
 # AI & API KEYS (Required for GeminiService.php)
