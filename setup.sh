@@ -147,6 +147,7 @@ configure_project() {
     # Run migrations as www-data to ensure created files have right permissions, 
     # OR run as root and fix permissions after. Running as root is easier in setup script.
     php spark migrate
+    php spark migrate -all
     
     # If TrainingService needs a seed or initial training, strictly speaking it should be done here,
     # but we will leave that for manual execution or a seeder.
