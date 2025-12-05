@@ -94,6 +94,10 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
 - **Database Interaction:** The Query Builder or Entities are the ONLY permitted methods.
 - **Validation:** All user-supplied data MUST be validated using the Validation library before use.
 - **Throttling:** The Throttler MUST be enabled on authentication and password reset routes.
+- **reCAPTCHA:**
+  - **Views:** MUST retrieve the site key via `service('recaptchaService')->getSiteKey()`.
+  - **Controllers:** MUST verify the response via `service('recaptchaService')->verify($response)`.
+  - **Configuration:** Keys (`recaptcha_siteKey`, `recaptcha_secretKey`) MUST be stored in `.env` and accessed only by the Service. Custom config files are FORBIDDEN.
 
 #### **3.3. Transactional Integrity: All or Nothing**
 
