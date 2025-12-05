@@ -18,7 +18,7 @@ $routes->cli('train', 'TrainingController::index', ['as' => 'train.run']);
 // These routes are accessible to everyone.
 $routes->group('', static function ($routes) {
     // Home & Welcome Page
-    $routes->get('', 'HomeController::landing', ['as' => 'landing']);
+    $routes->get('/', 'HomeController::landing', ['as' => 'landing']);
 
 
     // Documentation Page
