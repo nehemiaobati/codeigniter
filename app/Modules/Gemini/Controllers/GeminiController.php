@@ -315,6 +315,123 @@ class GeminiController extends BaseController
     }
 
     /**
+     * Handles streaming text generation via Server-Sent Events (SSE).
+     *
+     * @return ResponseInterface
+     */
+    public function stream(): ResponseInterface
+    {
+        $userId = (int) session()->get('userId');
+        $user = $this->userModel->find($userId);
+
+        if (!$user) {
+            return $this->response->setStatusCode(401)->setJSON(['error' => 'User not found']);
+        }
+
+        // Set Headers for SSE
+        $this->response->setContentType('text/event-stream');
+        $this->response->setHeader('Cache-Control', 'no-cache');
+        $this->response->setHeader('Connection', 'keep-alive');
+        $this->response->setHeader('X-Accel-Buffering', 'no'); // Disable buffering for Nginx
+
+        // Input Validation (Reusing logic)
+        $inputText = (string) $this->request->getPost('prompt');
+        $uploadedFileIds = (array) $this->request->getPost('uploaded_media');
+
+        if (empty(trim($inputText)) && empty($uploadedFileIds)) {
+            $this->response->setBody("data: " . json_encode(['error' => 'Please provide a prompt.']) . "\n\n");
+            return $this->response;
+        }
+
+        // 1. Prepare Context & Files
+        $userSetting = $this->userSettingsModel->where('user_id', $userId)->first();
+        $isAssistantMode = $userSetting ? $userSetting->assistant_mode_enabled : true;
+
+        $contextData = $this->_prepareContext($userId, $inputText, $isAssistantMode);
+        $uploadResult = $this->_handlePreUploadedFiles($uploadedFileIds, $userId);
+
+        if (isset($uploadResult['error'])) {
+            $this->_cleanupTempFiles($uploadedFileIds, $userId);
+            $this->response->setBody("data: " . json_encode(['error' => $uploadResult['error']]) . "\n\n");
+            return $this->response;
+        }
+
+        $parts = $uploadResult['parts'];
+        if ($contextData['finalPrompt']) {
+            array_unshift($parts, ['text' => $contextData['finalPrompt']]);
+        }
+
+        // 2. Estimate Cost & Check Balance
+        $estimate = $this->geminiService->estimateCost($parts);
+        if ($estimate['status'] && $user->balance < $estimate['costKSH']) {
+            $this->_cleanupTempFiles($uploadedFileIds, $userId);
+            $this->response->setBody("data: " . json_encode(['error' => "Insufficient balance. Estimated: KSH " . number_format($estimate['costKSH'], 2)]) . "\n\n");
+            return $this->response;
+        }
+
+        // Send headers now by sending a comment
+        // In CodeIgniter 4, returning response object is preferred, but for streaming we might need to flush manually.
+        // However, we are returning a ResponseInterface, so CI4 will try to send headers.
+        // But headers are sent when output starts. 
+        // We will force headers sending by echoing comments.
+
+        // Actually, let's use the standard output buffer flushing sequence.
+        // We return the response object at the end, but we echo content during execution.
+        $this->response->sendHeaders();
+        // Clear buffer
+        if (ob_get_level() > 0) ob_end_flush();
+        flush();
+
+        // 3. Call Stream Service
+        $this->geminiService->generateStream(
+            $parts,
+            function ($textChunk) {
+                echo "data: " . json_encode(['text' => $textChunk]) . "\n\n";
+                if (ob_get_level() > 0) ob_flush();
+                flush();
+            },
+            function ($fullText, $usageMetadata) use ($userId, $contextData, $inputText) {
+                // Final Completion Callback
+
+                // Update Balance
+                $costData = ['costKSH' => 0];
+                if ($usageMetadata) {
+                    $costData = $this->geminiService->calculateCost($usageMetadata);
+                    $deduction = number_format($costData['costKSH'], 4, '.', '');
+                    $this->userModel->deductBalance($userId, $deduction);
+                }
+
+                // Update Memory
+                if (isset($contextData['memoryService'])) {
+                    $contextData['memoryService']->updateMemory(
+                        $inputText,
+                        $fullText,
+                        $contextData['usedInteractionIds']
+                    );
+                }
+
+                // Send Close Event with final data
+                echo "event: close\n";
+                echo "data: " . json_encode([
+                    'csrf_token' => csrf_hash(),
+                    'cost' => $costData['costKSH']
+                ]) . "\n\n";
+
+                if (ob_get_level() > 0) ob_flush();
+                flush();
+            }
+        );
+
+        $this->_cleanupTempFiles($uploadedFileIds, $userId);
+
+        // We really shouldn't return anything else as we've been streaming, 
+        // but CI expects a return. We can return the response instance.
+        // However, since we've already outputted body content, we should suppress further output.
+        exit;
+    }
+
+
+    /**
      * Updates user settings (Assistant Mode, Voice Output).
      *
      * @return ResponseInterface JSON response with update status.

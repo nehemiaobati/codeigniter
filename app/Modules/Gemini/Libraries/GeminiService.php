@@ -449,4 +449,173 @@ class GeminiService
             'candidatesTokens' => $candidatesTokens
         ];
     }
+    /**
+     * Streams text generation from the Gemini API using Server-Sent Events (SSE).
+     *
+     * @param array $parts An array of content parts.
+     * @param callable $chunkCallback Function to call with each text chunk: function(string $text)
+     * @param callable $completeCallback Function to call on completion: function(string $fullText, ?array $metadata)
+     * @return void
+     */
+    public function generateStream(array $parts, callable $chunkCallback, callable $completeCallback): void
+    {
+        if (!$this->apiKey) {
+            $chunkCallback("Error: GEMINI_API_KEY not set.");
+            return;
+        }
+
+        $apiKey = trim($this->apiKey);
+        $fullGeneratedText = '';
+        $finalUsageMetadata = null;
+
+        if (empty($this->modelPriorities)) {
+            $chunkCallback("Error: No models configured.");
+            return;
+        }
+
+        foreach ($this->modelPriorities as $model) {
+            $currentModel = $model;
+            // Get Stream Config (note true for isStream)
+            $config = $this->payloadService->getPayloadConfig($currentModel, $apiKey, $parts, true);
+
+            // Skip if no payload config found ensuring we dont send bad requests
+            if (empty($config)) continue;
+
+            $apiUrl = $config['url'];
+            $requestBody = $config['body'];
+
+            // State for the write function
+            $buffer = '';
+
+            // We need a custom cURL handle to use CURLOPT_WRITEFUNCTION properly with keeping state
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $apiUrl);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $requestBody);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, false); // Important: We handle output manually
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 120); // Longer timeout for streaming
+
+            // The Write Function
+            curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $chunk) use (&$buffer, &$fullGeneratedText, &$finalUsageMetadata, $chunkCallback) {
+                $buffer .= $chunk;
+
+                // Google sends a JSON array stream: [{...}, \n {...}]
+                // We need to parse valid objects out of this stream.
+                // This is a simple parser that looks for balanced braces.
+
+                // Continue parsing while we can find a potential JSON object
+                while (true) {
+                    $buffer = trim($buffer);
+                    if (empty($buffer)) break;
+
+                    // Strip leading comma or array bracket if present from previous chunk remnants
+                    if (str_starts_with($buffer, ',') || str_starts_with($buffer, '[')) {
+                        $buffer = trim(substr($buffer, 1));
+                        continue;
+                    }
+
+                    if (str_starts_with($buffer, ']')) {
+                        // End of stream array
+                        $buffer = trim(substr($buffer, 1));
+                        continue;
+                    }
+
+                    // Check if we have a full object via brace counting
+                    if (str_starts_with($buffer, '{')) {
+                        $openBraces = 0;
+                        $endPos = -1;
+                        $inString = false;
+                        $escaped = false;
+
+                        $len = strlen($buffer);
+                        for ($i = 0; $i < $len; $i++) {
+                            $char = $buffer[$i];
+
+                            if (!$inString) {
+                                if ($char === '{') $openBraces++;
+                                elseif ($char === '}') {
+                                    $openBraces--;
+                                    if ($openBraces === 0) {
+                                        $endPos = $i;
+                                        break;
+                                    }
+                                } elseif ($char === '"') $inString = true;
+                            } else {
+                                if ($char === '\\' && !$escaped) {
+                                    $escaped = true;
+                                } elseif ($char === '"' && !$escaped) {
+                                    $inString = false;
+                                } else {
+                                    $escaped = false;
+                                }
+                            }
+                        }
+
+                        if ($endPos !== -1) {
+                            // We found a complete object
+                            $jsonStr = substr($buffer, 0, $endPos + 1);
+                            $remaining = substr($buffer, $endPos + 1);
+
+                            $data = json_decode($jsonStr, true);
+
+                            if (json_last_error() === JSON_ERROR_NONE) {
+                                // Process Valid Object
+                                if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
+                                    $textChunk = $data['candidates'][0]['content']['parts'][0]['text'];
+                                    $fullGeneratedText .= $textChunk;
+                                    $chunkCallback($textChunk);
+                                }
+
+                                if (isset($data['usageMetadata'])) {
+                                    $finalUsageMetadata = $data['usageMetadata'];
+                                }
+
+                                // Advance buffer
+                                $buffer = $remaining;
+                                continue;
+                            } else {
+                                // Logic error or malformed JSON, strip it to avoid infinite loop
+                                $buffer = $remaining;
+                            }
+                        } else {
+                            // Incomplete object, wait for more data
+                            break;
+                        }
+                    } else {
+                        // Garbage or unhandled format, skip one char
+                        if (strlen($buffer) > 0) {
+                            $buffer = substr($buffer, 1);
+                        } else {
+                            break;
+                        }
+                    }
+                }
+
+                return strlen($chunk);
+            });
+
+            $result = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+
+            if ($httpCode === 200) { // Success even if result is bool(true) content was handled by writefunction
+                $completeCallback($fullGeneratedText, $finalUsageMetadata);
+                return;
+            }
+
+            // If we are here, it failed.
+            if ($httpCode === 429) {
+                log_message('warning', "Gemini Streaming Quota Exceeded (429) for model '{$currentModel}'");
+                // Continue to next model
+            } else {
+                log_message('error', "Gemini Streaming Error: Status {$httpCode} - {$curlError}");
+            }
+        }
+
+        // If we reach here, all models failed
+        $chunkCallback("Error: Unable to generate stream. Please try again later.");
+    }
 }

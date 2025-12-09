@@ -277,6 +277,13 @@
                             Reads the AI response aloud using text-to-speech.
                         </div>
                     </div>
+                    <div class="form-check form-switch mb-4">
+                        <input class="form-check-input" type="checkbox" id="streamOutput" checked>
+                        <label class="form-check-label" for="streamOutput">Stream Responses</label>
+                        <div class="form-text text-muted small mt-1">
+                            Typewriter effect (faster perception).
+                        </div>
+                    </div>
 
                     <!-- Saved Prompts -->
                     <label class="form-label small fw-bold text-uppercase text-muted">Saved Prompts</label>
@@ -989,29 +996,159 @@
 
             // Allow normal submission for Text (handled by existing logic or backend)
             // BUT if we want to handle Media via AJAX, we must intercept.
-            if (type === 'text') return;
+            // If Text and Streaming is ON, we intercept.
+
+            const useStreaming = document.getElementById('streamOutput') ? document.getElementById('streamOutput').checked : true;
+
+            // Standard Form Submit (Page Reload) condition:
+            if (type === 'text' && !useStreaming) {
+                return; // Let the form submit naturally to 'gemini.generate'
+            }
 
             e.preventDefault();
 
             const promptVal = tinymce.get('prompt').getContent({
                 format: 'text'
             }).trim();
-            if (!promptVal) {
+
+            if (!promptVal && type === 'text') { // Only check prompt for text/media
+                // For media validation is handled differently sometimes but consistent enough
                 showToast('Please enter a prompt.');
                 return;
             }
 
             // UI Loading State
             generateBtn.disabled = true;
-            generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Generating...';
+            generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
 
             const formData = new FormData();
             formData.append(appState.csrfName, appState.csrfHash);
             formData.append('prompt', promptVal);
             formData.append('model_id', modelInput.value);
 
+            // Append Uploaded Files
+            const uploadedInputs = document.querySelectorAll('input[name="uploaded_media[]"]');
+            uploadedInputs.forEach(input => {
+                formData.append('uploaded_media[]', input.value);
+            });
+
+            // --- TEXT STREAMING ---
+            if (type === 'text' && useStreaming) {
+                try {
+                    // 1. Prepare UI
+                    let resultsCard = document.getElementById('results-card');
+
+                    // Create Results Card if missing
+                    if (!resultsCard) {
+                        const container = document.querySelector('.container.my-3.my-lg-5');
+                        const cardHtml = `
+                        <div class="card blueprint-card mt-5 shadow-lg border-primary" id="results-card">
+                            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">Studio Output</span>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-light" id="copyFullResponseBtn" title="Copy Full Text"><i class="bi bi-clipboard"></i> Copy</button>
+                                     <div class="dropdown">
+                                        <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">Export</button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item download-action" href="#" data-format="pdf">PDF</a></li>
+                                            <li><a class="dropdown-item download-action" href="#" data-format="docx">Word</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body response-content" id="ai-response-body" style="white-space: pre-wrap; font-family: inherit;"></div>
+                            <textarea id="raw-response" class="d-none"></textarea>
+                            <div class="card-footer bg-transparent border-0 text-center">
+                                <small class="text-muted fst-italic"><i class="bi bi-info-circle me-1"></i> AI can make mistakes.</small>
+                            </div>
+                        </div>`;
+                        container.insertAdjacentHTML('beforeend', cardHtml);
+                        resultsCard = document.getElementById('results-card');
+
+                        // Bind new listeners
+                        resultsCard.querySelector('#copyFullResponseBtn').addEventListener('click', () => {
+                            const rawText = document.getElementById('raw-response').value;
+                            navigator.clipboard.writeText(rawText).then(() => showToast('Copied!'));
+                        });
+                        resultsCard.querySelectorAll('.download-action').forEach(btn => {
+                            btn.addEventListener('click', (ev) => {
+                                ev.preventDefault();
+                                document.getElementById('dl_raw').value = document.getElementById('raw-response').value;
+                                document.getElementById('dl_format').value = ev.target.dataset.format;
+                                document.getElementById('downloadForm').submit();
+                            });
+                        });
+                    }
+
+                    const responseBody = document.getElementById('ai-response-body');
+                    const rawResponse = document.getElementById('raw-response');
+
+                    responseBody.textContent = ''; // Clear previous
+                    rawResponse.value = '';
+                    resultsCard.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+
+                    // 2. Initiate Stream
+                    const response = await fetch('<?= url_to('gemini.stream') ?>', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) throw new Error('Stream connection failed');
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = '';
+                    let rawTextAccumulator = '';
+
+                    while (true) {
+                        const {
+                            value,
+                            done
+                        } = await reader.read();
+                        if (done) break;
+
+                        buffer += decoder.decode(value, {
+                            stream: true
+                        });
+                        const parts = buffer.split('\n\n');
+                        buffer = parts.pop(); // Keep incomplete chunk
+
+                        for (const part of parts) {
+                            if (part.startsWith('data: ')) {
+                                try {
+                                    const jsonStr = part.substring(6);
+                                    const data = JSON.parse(jsonStr);
+
+                                    if (data.text) {
+                                        rawTextAccumulator += data.text;
+                                        responseBody.textContent = rawTextAccumulator;
+                                        rawResponse.value = rawTextAccumulator;
+                                    } else if (data.error) {
+                                        showToast(data.error);
+                                        responseBody.innerHTML += `<div class="text-danger fw-bold mt-2">Error: ${data.error}</div>`;
+                                    } else if (data.csrf_token) {
+                                        refreshCsrf(data.csrf_token);
+                                        if (data.cost) showToast(`Cost: KSH ${data.cost}`);
+                                    }
+                                } catch (e) {
+                                    console.warn('JSON Parse error on chunk', part);
+                                }
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showToast('An error occurred during generation.');
+                } finally {
+                    resetBtn();
+                }
+                return;
+            }
+
+            // --- MEDIA GENERATION (Existing Logic) ---
             // --- MOCK TESTING INTERCEPT (Start) ---
-            // To remove mock functionality, delete this block.
             if (handleMockGeneration(promptVal, type)) return;
             // --- MOCK TESTING INTERCEPT (End) ---
 
@@ -1026,7 +1163,6 @@
 
                 const data = await res.json();
 
-                // CRITICAL: Always refresh CSRF token if returned, regardless of success/error
                 if (data.token) {
                     refreshCsrf(data.token);
                 }
@@ -1038,11 +1174,9 @@
                 }
 
                 if (data.type === 'image') {
-                    // Show Image Result
                     showMediaResult(data.url, 'image');
                     resetBtn();
                 } else if (data.type === 'video') {
-                    // Start Polling
                     pollVideo(data.op_id);
                 }
 
