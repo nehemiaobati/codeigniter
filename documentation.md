@@ -413,7 +413,11 @@ Create `app/Modules/Notes/Views/index.php`.
 
 This module (`App\Modules\Gemini`) is the core of the platform.
 
-- **6.3.1. Generative Text & Multimodal Input**: `GeminiController::generate()` accepts text prompts and uploaded files (images/PDFs). It uses `GeminiService` to communicate with models like `gemini-2.5-flash`. The system uses `ModelPayloadService` to dynamically construct payloads for different model architectures. Token usage is calculated and costs are deducted from the user's balance in real-time.
+- **6.3.1. Generative Text & Multimodal Input**:
+  - **Controller:** `GeminiController` acts as a thin layer, validating inputs and delegates strict business logic to the service layer.
+  - **Service:** `GeminiService::processInteraction()` encapsulates the entire lifecycle. It handles context retrieval, cost estimation, API interaction, and TTS generation.
+  - **Data Integrity:** Balance deduction and memory updates are wrapped in a **Database Transaction** to ensure data consistency.
+  - **Payloads:** The `ModelPayloadService` dynamically constructs payloads for specific model architectures.
 - **6.3.2. Hybrid Memory System (Vector + Keyword)**: Managed by `MemoryService.php`.
   - **Storage:** Interactions are stored in the `interactions` table. Entities (keywords) are stored in `entities`.
   - **Retrieval:** The system uses `EmbeddingService` to get vector embeddings of the user's query. It performs a cosine similarity search (Semantic) AND a keyword-based search (Lexical).
@@ -612,6 +616,17 @@ Ensure your code is well-documented, follows the project's architectural pattern
 - **PCM:** Pulse-Code Modulation, a raw audio format returned by Gemini API.
 
 **13.2. Changelog & Release History**
+
+**v1.8.0 - 2025-12-10**
+
+### Changed
+
+- **Gemini Module Architecture:**
+  - **Service Layer:** Encapsulated business logic into `GeminiService::processInteraction`.
+  - **Data Integrity:** Implemented database transactions for atomic balance deduction and memory updates.
+  - **Configuration:** Converted service configurations to immutable constants (`MODEL_PRIORITIES`, `MEDIA_CONFIGS`).
+  - **Presentation:** Refactored `DocumentService` to use Heredoc syntax for cleaner HTML generation.
+  - **Frontend:** Modernized `query_form.php` JS into a modular, class-based architecture (`GeminiApp`, `UIManager`).
 
 **v1.7.0 - 2025-12-03**
 

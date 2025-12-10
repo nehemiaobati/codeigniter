@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Modules\Gemini\Libraries;
 
 use App\Modules\Gemini\Libraries\ModelPayloadService;
+use CodeIgniter\I18n\Time;
+use App\Models\UserModel;
 
 /**
  * Service layer for interacting with the Google Gemini API.
@@ -36,7 +38,7 @@ class GeminiService
      *
      * @var array<string>
      */
-    protected array $modelPriorities = [
+    public const MODEL_PRIORITIES = [
         "gemini-3-pro-preview", // Multimodal, Thinking Level High
         "gemini-2.5-pro",       // Multimodal, Thinking Budget
         "gemini-flash-latest",      // Primary: Latest Flash model for speed and efficiency
@@ -54,6 +56,12 @@ class GeminiService
     protected $userModel;
 
     /**
+     * Database connection.
+     * @var \CodeIgniter\Database\BaseConnection
+     */
+    protected $db;
+
+    /**
      * Pricing configuration for text and audio models (per 1 Million tokens).
      *
      * Text Pricing:
@@ -63,7 +71,7 @@ class GeminiService
      * Audio Pricing:
      * - Fixed rate for input and output audio tokens.
      */
-    protected array $pricingConfig = [
+    public const PRICING_CONFIG = [
         'default' => [
             'tier1' => ['input' => 2.00, 'output' => 12.00],
             'tier2' => ['input' => 4.00, 'output' => 18.00],
@@ -83,7 +91,114 @@ class GeminiService
     {
         $this->apiKey = env('GEMINI_API_KEY') ?? getenv('GEMINI_API_KEY');
         $this->payloadService = service('modelPayloadService');
-        $this->userModel = new \App\Models\UserModel();
+        $this->userModel = new UserModel();
+        $this->db = \Config\Database::connect();
+    }
+
+    /**
+     * Encapsulates the entire interaction logic: Context, Cost, Generation, TTS, and Transactions.
+     * 
+     * @param int $userId
+     * @param string $prompt
+     * @param array $fileParts
+     * @param array $options ['assistant_mode' => bool, 'voice_mode' => bool]
+     * @return array
+     */
+    public function processInteraction(int $userId, string $prompt, array $fileParts, array $options): array
+    {
+        $isAssistantMode = $options['assistant_mode'] ?? true;
+        $isVoiceMode = $options['voice_mode'] ?? false;
+
+        $contextData = ['finalPrompt' => $prompt, 'memoryService' => null, 'usedInteractionIds' => []];
+
+        // 1. Context Preparation
+        if ($isAssistantMode && !empty(trim($prompt))) {
+            $memoryService = service('memory', $userId);
+            $recalled = $memoryService->getRelevantContext($prompt);
+
+            $template = $memoryService->getTimeAwareSystemPrompt();
+            $template = str_replace('{{CURRENT_TIME}}', Time::now()->format('Y-m-d H:i:s T'), $template);
+            $template = str_replace('{{CONTEXT_FROM_MEMORY_SERVICE}}', $recalled['context'], $template);
+            $template = str_replace('{{USER_QUERY}}', htmlspecialchars($prompt), $template);
+            $template = str_replace('{{TONE_INSTRUCTION}}', "Maintain default persona: dry, witty, concise.", $template);
+
+            $contextData['finalPrompt'] = $template;
+            $contextData['memoryService'] = $memoryService;
+            $contextData['usedInteractionIds'] = $recalled['used_interaction_ids'];
+        }
+
+        $allParts = $fileParts;
+        if ($contextData['finalPrompt']) {
+            array_unshift($allParts, ['text' => $contextData['finalPrompt']]);
+        }
+
+        if (empty($allParts)) {
+            return ['error' => 'Please provide a prompt or file.'];
+        }
+
+        // 2. Cost Estimation & Balance Check
+        $user = $this->userModel->find($userId);
+        $estimate = $this->estimateCost($allParts);
+
+        if ($estimate['status'] && $user->balance < $estimate['costKSH']) {
+            return ['error' => "Insufficient balance. Estimated Input Cost: KSH " . number_format($estimate['costKSH'], 2)];
+        }
+
+        // 3. API Execution
+        $apiResponse = $this->generateContent($allParts);
+
+        if (isset($apiResponse['error'])) {
+            return ['error' => $apiResponse['error']];
+        }
+
+        // 4. TTS Execution
+        $audioResult = null;
+        if ($isVoiceMode && !empty(trim($apiResponse['result']))) {
+            $speech = $this->generateSpeech($apiResponse['result']);
+            if ($speech['status']) {
+                $audioResult = $speech; // Contains audioData and usage
+            }
+        }
+
+        // 5. Transactional Write (Balance + Memory)
+        $costKSH = 0.0;
+        $this->db->transStart();
+
+        // Calculate & Deduct Cost
+        if (isset($apiResponse['usage']) || ($audioResult['usage'] ?? null)) {
+            $textUsage = $apiResponse['usage'] ?? [];
+            $audioUsage = $audioResult['usage'] ?? null;
+
+            $costData = $this->calculateCost($textUsage, $audioUsage);
+            $costKSH = $costData['costKSH'];
+            $deduction = number_format($costKSH, 4, '.', '');
+
+            $this->userModel->deductBalance($userId, $deduction);
+        }
+
+        // Update Memory
+        // Update Memory
+        $memoryService = $contextData['memoryService'] ?? null;
+        if ($isAssistantMode && $memoryService) {
+            $memoryService->updateMemory(
+                $prompt,
+                $apiResponse['result'],
+                $contextData['usedInteractionIds']
+            );
+        }
+
+        $this->db->transComplete();
+
+        if ($this->db->transStatus() === false) {
+            return ['error' => 'Transaction failed. Please try again.'];
+        }
+
+        return [
+            'result' => $apiResponse['result'],
+            'costKSH' => $costKSH,
+            'audioData' => $audioResult['audioData'] ?? null,
+            'success' => true
+        ];
     }
 
     /**
@@ -108,11 +223,11 @@ class GeminiService
         $apiKey = trim($this->apiKey);
         $lastError = ['error' => 'An unexpected error occurred after multiple retries.'];
 
-        if (empty($this->modelPriorities)) {
+        if (empty(self::MODEL_PRIORITIES)) {
             return ['error' => 'No Gemini models configured in modelPriorities.'];
         }
 
-        foreach ($this->modelPriorities as $model) {
+        foreach (self::MODEL_PRIORITIES as $model) {
             $currentModel = $model;
 
             // Retrieve the specific payload configuration for the current model
@@ -376,7 +491,7 @@ class GeminiService
         $estimatedTokens = $response['totalTokens'];
 
         // Use Tier 1 pricing for estimation (conservative approach)
-        $pricing = $this->pricingConfig['default']['tier1'];
+        $pricing = self::PRICING_CONFIG['default']['tier1'];
 
         $estimatedCostUSD = ($estimatedTokens / 1000000) * $pricing['input'];
         $usdToKsh = 129; // Fixed exchange rate
@@ -411,7 +526,7 @@ class GeminiService
         $candidatesTokens = $textUsage['candidatesTokenCount'] ?? 0;
         $totalTextTokens = $textUsage['totalTokenCount'] ?? ($promptTokens + $candidatesTokens);
 
-        $pricing = $this->pricingConfig['default'];
+        $pricing = self::PRICING_CONFIG['default'];
         // Determine pricing tier based on total text tokens
         $tier = ($totalTextTokens > $pricing['tier_threshold']) ? 'tier2' : 'tier1';
         $rates = $pricing[$tier];
@@ -429,7 +544,7 @@ class GeminiService
             $audioOutputTokens = $audioUsage['candidatesTokenCount'] ?? 0;
             $audioTokens = $audioUsage['totalTokenCount'] ?? ($audioInputTokens + $audioOutputTokens);
 
-            $audioPricing = $this->pricingConfig['audio'];
+            $audioPricing = self::PRICING_CONFIG['audio'];
             $audioInputCost = ($audioInputTokens / 1000000) * $audioPricing['input'];
             $audioOutputCost = ($audioOutputTokens / 1000000) * $audioPricing['output'];
             $totalAudioCostUSD = $audioInputCost + $audioOutputCost;
@@ -468,12 +583,12 @@ class GeminiService
         $fullGeneratedText = '';
         $finalUsageMetadata = null;
 
-        if (empty($this->modelPriorities)) {
+        if (empty(self::MODEL_PRIORITIES)) {
             $chunkCallback("Error: No models configured.");
             return;
         }
 
-        foreach ($this->modelPriorities as $model) {
+        foreach (self::MODEL_PRIORITIES as $model) {
             $currentModel = $model;
             // Get Stream Config (note true for isStream)
             $config = $this->payloadService->getPayloadConfig($currentModel, $apiKey, $parts, true);
@@ -599,7 +714,9 @@ class GeminiService
             $result = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $curlError = curl_error($ch);
-            curl_close($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            // curl_close($ch); // Deprecated/Not needed in PHP 8+, auto-closed
 
             if ($httpCode === 200) { // Success even if result is bool(true) content was handled by writefunction
                 $completeCallback($fullGeneratedText, $finalUsageMetadata);

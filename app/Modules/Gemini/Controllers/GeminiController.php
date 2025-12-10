@@ -16,6 +16,7 @@ use App\Modules\Gemini\Models\UserSettingsModel;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\ResponseInterface;
 use App\Modules\Gemini\Libraries\DocumentService;
+use App\Modules\Gemini\Libraries\MediaGenerationService;
 use CodeIgniter\I18n\Time;
 use Parsedown;
 
@@ -97,8 +98,7 @@ class GeminiController extends BaseController
         $userSetting = $this->userSettingsModel->where('user_id', $userId)->first();
 
         // Fetch Media Configs for Dynamic Tabs
-        $mediaService = service('mediaGenerationService');
-        $mediaConfigs = $mediaService->getMediaConfig();
+        $mediaConfigs = MediaGenerationService::MEDIA_CONFIGS;
 
         $data = [
             'pageTitle'              => 'AI Workspace | Afrikenkid',
@@ -216,93 +216,57 @@ class GeminiController extends BaseController
             return redirect()->back()->withInput()->with('error', 'Prompt is too long. Maximum 200,000 characters allowed.');
         }
 
+        // 1. Prepare Inputs
         $userSetting = $this->userSettingsModel->where('user_id', $userId)->first();
-        $isAssistantMode = $userSetting ? $userSetting->assistant_mode_enabled : true;
-        $isVoiceMode = $userSetting ? $userSetting->voice_output_enabled : false;
+        $options = [
+            'assistant_mode' => $userSetting ? $userSetting->assistant_mode_enabled : true,
+            'voice_mode' => $userSetting ? $userSetting->voice_output_enabled : false,
+        ];
 
         $inputText = (string) $this->request->getPost('prompt');
         $uploadedFileIds = (array) $this->request->getPost('uploaded_media');
 
-        // 1. Prepare Context & Files
-        $contextData = $this->_prepareContext($userId, $inputText, $isAssistantMode);
+        // Handle File Parts
         $uploadResult = $this->_handlePreUploadedFiles($uploadedFileIds, $userId);
-
         if (isset($uploadResult['error'])) {
             $this->_cleanupTempFiles($uploadedFileIds, $userId);
             return redirect()->back()->withInput()->with('error', $uploadResult['error']);
         }
+        $fileParts = $uploadResult['parts'];
 
-        $parts = $uploadResult['parts'];
-        if ($contextData['finalPrompt']) {
-            array_unshift($parts, ['text' => $contextData['finalPrompt']]);
+        // 2. Process Interaction via Service
+        $result = $this->geminiService->processInteraction($userId, $inputText, $fileParts, $options);
+
+        $this->_cleanupTempFiles($uploadedFileIds, $userId); // Always cleanup
+
+        if (isset($result['error'])) {
+            return redirect()->back()->withInput()->with('error', $result['error']);
         }
 
-        if (empty($parts)) {
-            $this->_cleanupTempFiles($uploadedFileIds, $userId);
-            return redirect()->back()->withInput()->with('error', 'Please provide a prompt or file.');
-        }
-
-        // 2. Check Balance (Estimation via Service)
-        $estimate = $this->geminiService->estimateCost($parts);
-        if ($estimate['status'] && $user->balance < $estimate['costKSH']) {
-            $this->_cleanupTempFiles($uploadedFileIds, $userId);
-            return redirect()->back()->withInput()->with('error', "Insufficient balance. Estimated Input Cost: KSH " . number_format($estimate['costKSH'], 2));
-        } elseif (!$estimate['status']) {
-            // Log warning but allow to proceed if estimation fails
-            log_message('warning', 'Cost estimation failed: ' . $estimate['error']);
-        }
-
-        // 3. Call API
-        $apiResponse = $this->geminiService->generateContent($parts);
-        $this->_cleanupTempFiles($uploadedFileIds, $userId);
-
-        if (isset($apiResponse['error'])) {
-            return redirect()->back()->withInput()->with('error', $apiResponse['error']);
-        }
-
-        // 4. Handle Audio (Voice Mode)
+        // 3. Post-Process Audio (File Saving - Controller Responsibility)
         $audioUrl = null;
         $audioFilePath = null;
-        $audioUsage = null;
-
-        if ($isVoiceMode && !empty(trim($apiResponse['result']))) {
-            $speech = $this->geminiService->generateSpeech($apiResponse['result']);
-            if ($speech['status']) {
-                $audioUrl = $this->_processAudioData($speech['audioData']);
-                $audioUsage = $speech['usage'] ?? null;
+        if (!empty($result['audioData'])) {
+            $audioUrl = $this->_processAudioData($result['audioData']);
+            if ($audioUrl) {
                 // Store the absolute file path for the view to read
-                $userId = (int) session()->get('userId');
                 $audioFilePath = WRITEPATH . 'uploads/ttsaudio_secure/' . $userId . '/' . basename($audioUrl);
             }
         }
 
-        // 5. Update Memory (Assistant Mode)
-        if ($isAssistantMode && isset($contextData['memoryService'])) {
-            $contextData['memoryService']->updateMemory(
-                (string)$this->request->getPost('prompt'),
-                $apiResponse['result'],
-                $contextData['usedInteractionIds']
-            );
+        // Flash Message
+        if ($result['costKSH'] > 0) {
+            session()->setFlashdata('success', "KSH " . number_format($result['costKSH'], 2) . " deducted.");
         }
 
-        // 6. Deduct Cost & Flash Message
-        if (isset($apiResponse['usage']) || $audioUsage) {
-            $textUsage = $apiResponse['usage'] ?? [];
-            $costData = $this->geminiService->calculateCost($textUsage, $audioUsage);
-            $deduction = number_format($costData['costKSH'], 4, '.', '');
-
-            $this->userModel->deductBalance($userId, $deduction);
-            session()->setFlashdata('success', "KSH " . number_format($costData['costKSH'], 2) . " deducted.");
-        }
-
-        // 7. Output
+        // 4. Output
         $parsedown = new Parsedown();
         $parsedown->setSafeMode(true);
         $parsedown->setBreaksEnabled(true);
 
         $redirect = redirect()->back()->withInput()
-            ->with('result', $parsedown->text($apiResponse['result']))
-            ->with('raw_result', $apiResponse['result']);
+            ->with('result', $parsedown->text($result['result']))
+            ->with('raw_result', $result['result']);
 
         if ($audioUrl) {
             $redirect->with('audio_url', $audioUrl);
