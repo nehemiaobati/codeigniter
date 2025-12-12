@@ -319,6 +319,11 @@ The application uses CodeIgniter's service container to manage class instances. 
 - `app/Modules/Gemini/`:
   - `Libraries/`: Contains `GeminiService`, `MediaGenerationService`, `ModelPayloadService`, `MemoryService`, `EmbeddingService`, `FfmpegService`, `PandocService`, `TokenService`, `TrainingService`.
   - `Models/`: Contains `InteractionModel`, `EntityModel`, `PromptModel`, `UserSettingsModel`.
+- `app/Modules/Blog/`:
+  - `Controllers/`: Contains `BlogController` (Public & Admin).
+- `app/Modules/Crypto/`:
+  - `Controllers/`: Contains `CryptoController`.
+  - `Libraries/`: Contains `CryptoService`.
 - `app/Modules/Ollama/`:
   - `Libraries/`: Contains `OllamaService`, `OllamaPayloadService`.
   - `Controllers/`: Contains `OllamaController`.
