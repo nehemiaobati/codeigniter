@@ -390,6 +390,7 @@
 <?= $this->section('scripts') ?>
 <script src="<?= base_url('assets/highlight/highlight.js') ?>"></script>
 <script src="<?= base_url('assets/tinymce/tinymce.min.js') ?>"></script>
+<script src="<?= base_url('assets/marked/marked.min.js') ?>"></script>
 <script>
     /**
      * Gemini Module - Frontend Application
@@ -423,6 +424,14 @@
         }
 
         init() {
+            // Configure Marked.js to handle line breaks like PHP Parsedown
+            if (typeof marked !== 'undefined') {
+                marked.use({
+                    breaks: true, // Converts single \n to <br>
+                    gfm: true // Enables GitHub Flavored Markdown
+                });
+            }
+
             this.ui.init();
             this.uploader.init();
             this.prompts.init();
@@ -585,6 +594,7 @@
             if (typeof hljs !== 'undefined') hljs.highlightAll();
 
             document.querySelectorAll('pre code').forEach((block) => {
+                if (block.parentElement.querySelector('.copy-code-btn')) return; // Avoid duplicates
                 const btn = document.createElement('button');
                 btn.className = 'btn btn-sm btn-dark copy-code-btn';
                 btn.innerHTML = '<i class="bi bi-clipboard"></i>';
@@ -597,6 +607,40 @@
                 });
                 block.parentElement.appendChild(btn);
             });
+        }
+
+        ensureResultCardExists() {
+            if (document.getElementById('results-card')) return;
+
+            const container = document.querySelector('.gemini-view-container');
+            const cardHtml = `
+            <div class="card blueprint-card mt-5 shadow-lg border-primary" id="results-card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">Studio Output</span>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-light" id="copyFullResponseBtn" title="Copy Full Text">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">Export</button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item download-action" href="#" data-format="pdf">PDF</a></li>
+                                <li><a class="dropdown-item download-action" href="#" data-format="docx">Word</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body response-content" id="ai-response-body"></div>
+                <textarea id="raw-response" class="d-none"></textarea>
+                <div class="card-footer bg-transparent border-0 text-center">
+                    <small class="text-muted fst-italic"><i class="bi bi-info-circle me-1"></i> AI can make mistakes. Please verify important information.</small>
+                </div>
+            </div>`;
+
+            const row = container.querySelector('.row.g-4');
+            row.insertAdjacentHTML('afterend', cardHtml);
+
+            this.setupDownloads();
         }
 
         setupAutoScroll() {
@@ -923,7 +967,10 @@
             const useStreaming = document.getElementById('streamOutput')?.checked;
 
             // Text + Standard POST -> Let browser handle it
-            if (type === 'text' && !useStreaming) return;
+            if (type === 'text' && !useStreaming) {
+                this.app.ui.setLoading(true, 'Thinking...');
+                return;
+            }
 
             e.preventDefault();
 
@@ -950,25 +997,15 @@
         }
 
         async handleStreaming(formData) {
-            // Ensure result card exists
-            if (!document.getElementById('results-card')) {
-                // Simplified fall back for streaming on fresh page load without results block
-                this.app.ui.showToast('For streaming, please ensure results area is active (or reload).');
-                // In a real app we might inject the container dynamically here. 
-                // For this refactor, we preserve existing behavior which likely expects a reload or container presence.
-                // But let's at least try to reload to standard generation if container missing? 
-                // No, just warn.
-                this.app.ui.setLoading(false);
-                return;
-            }
+            this.app.ui.ensureResultCardExists();
 
             const resBody = document.getElementById('ai-response-body');
             const rawRes = document.getElementById('raw-response');
-            resBody.innerHTML = ''; // Start clean (was textContent, use innerHTML for safety or keep text? Markdown usually rendered server side for others. Streaming returns raw text usually.)
-            // The original logic just appended text.
-            resBody.textContent = '';
+            resBody.innerHTML = '';
             rawRes.value = '';
             this.app.ui.setupAutoScroll();
+
+            let streamAccumulator = '';
 
             try {
                 const response = await fetch(this.app.config.endpoints.stream, {
@@ -997,9 +1034,8 @@
                             try {
                                 const data = JSON.parse(part.substring(6));
                                 if (data.text) {
-                                    resBody.textContent += data.text; // Or parse markdown on client if needed? Original handled server side markdown?
-                                    // Original streaming logic likely relied on client side or just text.
-                                    // We will stick to textContent for now as per `handleStreaming` in original code (implied).
+                                    streamAccumulator += data.text;
+                                    resBody.innerHTML = marked.parse(streamAccumulator);
                                     rawRes.value += data.text;
                                 } else if (data.error) {
                                     this.app.ui.showToast(data.error);
@@ -1011,13 +1047,7 @@
                     }
                 }
 
-                // Final Markdown parse if using a client lib?
-                // The original code used Parsedown (PHP). If we stream, we get raw text.
-                // The requirements say "Preserve existing functionality".
-                // If the original streaming just dumped text, this is fine.
-                // If it parsed markdown, we might need a JS markdown parser.
-                // Checking imports: highlight.js is there. No marked.js.
-                // So likely streaming just shows text or basic formatting.
+                this.app.ui.setupCodeHighlighting();
 
             } catch (e) {
                 this.app.ui.showToast('Stream error');
