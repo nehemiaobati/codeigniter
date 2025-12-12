@@ -1,4 +1,6 @@
-"PROJECT DOCUMENTATION: GENAI WEB PLATFORM
+# PROJECT DOCUMENTATION: GENAI WEB PLATFORM
+
+## Table of Contents
 
 ---
 
@@ -460,7 +462,6 @@ This module (`App\Modules\Gemini`) is the core of the platform.
   - **Short-Term Memory:** The system forces the retrieval of the most recent interactions (configurable via `AGI.php`) to maintain immediate conversational flow.
 - **6.3.3. Text-to-Speech (TTS) & Audio Processing**:
   - **Generation:** If `voice_output_enabled` is true, `GeminiService` requests audio data from the API.
-  - **Generation:** If `voice_output_enabled` is true, `GeminiService` requests audio data from the API.
   - **Conversion:** The API returns raw PCM data. `FfmpegService` converts this raw data into a web-compatible MP3 file using the `ffmpeg` binary installed on the server.
   - **Ephemeral Storage:** Generated audio files are stored in `writable/uploads/ttsaudio_secure/{userId}/` and are **deleted immediately** after being served to the user ("Read-Once" policy).
 - **6.3.4. Advanced Document Generation (Pandoc/XeTeX)**:
@@ -763,18 +764,6 @@ Ensure your code is well-documented, follows the project's architectural pattern
 **v1.0.0 (Initial Release)**
 
 - Core features implemented: User Authentication, Paystack Payments, Gemini AI Integration, Crypto Data Service, Admin Dashboard.
-
----
-
-**Part V: Documentation Maintenance Guide**
-
-**15. A Guide for the Project Owner**
-
-15.1. The Philosophy of Living Documentation
-15.2. Your Role vs. the AI's Role
-15.3. The Documentation Update Workflow
-15.4. Procedure: How to Review the Codebase for Changes
-15.5. Procedure: Updating the Changelog and Managing Releases
 
 ---
 
