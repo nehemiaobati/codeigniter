@@ -396,7 +396,7 @@ Create `app/Modules/Notes/Views/index.php`.
 
 **6.1. User Authentication**
 
-- **6.1.1. Registration & Login Flow**: Managed by `AuthController.php`, this feature handles user registration with validation and reCAPTCHA, credential verification for login, and session management.
+- **6.1.1. Registration & Login Flow**: Managed by `AuthController.php`. This controller acts as an **Orchestrator**, coordinating multiple components to complete the user flow. It validates input, verifies reCAPTCHA via `RecaptchaService`, creates/authenticates users via `UserModel`, and sends verification emails via the `Email` service.
 - **6.1.2. Email Verification & Password Resets**: A unique token is generated and emailed to the user for verification. The password reset flow uses a secure, expiring token sent via email.
 - **6.1.3. Access Control with Filters**: The `AuthFilter` (`app/Filters/AuthFilter.php`) is applied to routes to protect pages that require a user to be logged in.
 - **6.1.4. Password Security**:
@@ -405,21 +405,45 @@ Create `app/Modules/Notes/Views/index.php`.
 
 **6.2. Payment Gateway Integration**
 
+### Module Manifest
+
+- **Controller:** `PaymentsController`
+- **Service:** `PaystackService`
+- **Model:** `PaymentModel`
+- **Entity:** `Payment`
+
+### Features
+
 - **6.2.1. Configuration**: The Paystack secret key is configured in the `.env` file (`PAYSTACK_SECRET_KEY`).
-- **6.2.2. Initiating a Transaction**: `PaymentsController::initiate()` calls `PaystackService::initializeTransaction()`. The service sends a request to Paystack, which returns a unique authorization URL. The user is then redirected to this URL.
-- **6.2.3. Verifying a Payment**: After payment, Paystack redirects the user back to the application. `PaymentsController::verify()` uses `PaystackService::verifyTransaction()` to confirm the payment status. If successful, the user's balance is updated within a database transaction.
+- **6.2.2. Transaction Lifecycle**:
+  1.  **Orchestration**: `PaymentsController::initiate()` calls `PaystackService::initializeTransaction()`.
+  2.  **API Request**: The service sends a request to Paystack, returning a unique authorization URL.
+  3.  **User Action**: The user is redirected to the payment page.
+  4.  **Verification**: Upon return, `PaymentsController::verify()` uses `PaystackService::verifyTransaction()`.
+  5.  **Completion (Transactional Integrity)**: If successful, the system opens a Database Transaction (`transStart`) to:
+      - Log the transaction in the `payments` table via `PaymentModel`.
+      - Credit the user's `account_balance` in the `users` table via `UserModel`.
+      - Commit the transaction (`transComplete`).
 
 **6.3. AI Service Integration**
 
 This module (`App\Modules\Gemini`) is the core of the platform.
 
-- **6.3.1. Generative Text & Multimodal Input**:
-  - **Controller:** `GeminiController` acts as a thin layer, validating inputs and delegates strict business logic to the service layer.
-  - **Service:** `GeminiService::processInteraction()` encapsulates the entire lifecycle. It handles context retrieval, cost estimation, API interaction, and TTS generation.
-  - **Data Integrity:** Balance deduction and memory updates are wrapped in a **Database Transaction** to ensure data consistency.
-  - **Payloads:** The `ModelPayloadService` dynamically constructs payloads for specific model architectures.
-  - **Streaming & Rendering:** The system uses Server-Sent Events (SSE) for real-time text generation. The frontend uses **Marked.js** (configured with GitHub Flavored Markdown and strict line breaks) to render the raw streaming text into HTML on the client side.
-  - **Non-Streaming Rendering:** Standard requests are processed server-side. The raw Markdown from Gemini is parsed using the **Parsedown** library before being sent to the view, ensuring consistent formatting for both modes.
+### Module Manifest
+
+- **Controller:** `GeminiController`
+- **Service:** `GeminiService` (The 'Fat Service'), `MemoryService`, `ModelPayloadService`
+- **Model:** `InteractionModel`
+- **Entity:** `Interaction`
+
+### Features
+
+- **6.3.1. Generative Text & Resilience Strategy**:
+  - **Priority Fallback Mechanism**: The `GeminiService` defines a `MODEL_PRIORITIES` constant (a clear list of models, e.g., Pro -> Flash -> Lite). If the primary model fails with a **Quota Error (429)**, the system automatically retries with the next model in the list. This ensures high availability.
+  - **Streaming (SSE)**: For real-time feedback, the `processInteraction` method supports Server-Sent Events. It streams text chunks to the frontend, where **Marked.js** renders Markdown incrementally.
+  - **Service Layer Logic**: `GeminiService::processInteraction()` encapsulates the entire lifecycle. It handles context retrieval, cost estimation, API interaction, and TTS generation.
+  - **Data Integrity**: Balance deduction and memory updates are wrapped in a **Database Transaction** to ensure data consistency.
+  - **Payloads**: The `ModelPayloadService` dynamically constructs payloads for specific model architectures.
 - **6.3.2. Hybrid Memory System (Vector + Keyword)**: Managed by `MemoryService.php`.
   - **Storage:** Interactions are stored in the `interactions` table. Entities (keywords) are stored in `entities`.
   - **Retrieval:** The system uses `EmbeddingService` to get vector embeddings of the user's query. It performs a cosine similarity search (Semantic) AND a keyword-based search (Lexical).
@@ -729,6 +753,18 @@ Ensure your code is well-documented, follows the project's architectural pattern
 **v1.0.0 (Initial Release)**
 
 - Core features implemented: User Authentication, Paystack Payments, Gemini AI Integration, Crypto Data Service, Admin Dashboard.
+
+---
+
+**Part V: Documentation Maintenance Guide**
+
+**15. A Guide for the Project Owner**
+
+15.1. The Philosophy of Living Documentation
+15.2. Your Role vs. the AI's Role
+15.3. The Documentation Update Workflow
+15.4. Procedure: How to Review the Codebase for Changes
+15.5. Procedure: Updating the Changelog and Managing Releases
 
 ---
 
