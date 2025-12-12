@@ -314,6 +314,8 @@ The application uses CodeIgniter's service container to manage class instances. 
 
 **4.4. Directory Structure Explained**
 
+- **Modules (Features):** The `app/Modules/` directory contains self-contained business features (e.g., Gemini, Payments).
+- **Core (App):** The root `app/` directory contains core application logic (Controllers, Models for Auth/Admin/Users) that are shared or fundamental to the system.
 - `app/Modules/Gemini/`:
   - `Libraries/`: Contains `GeminiService`, `MediaGenerationService`, `ModelPayloadService`, `MemoryService`, `EmbeddingService`, `FfmpegService`, `PandocService`, `TokenService`, `TrainingService`.
   - `Models/`: Contains `InteractionModel`, `EntityModel`, `PromptModel`, `UserSettingsModel`.
@@ -321,6 +323,8 @@ The application uses CodeIgniter's service container to manage class instances. 
   - `Libraries/`: Contains `OllamaService`, `OllamaPayloadService`.
   - `Controllers/`: Contains `OllamaController`.
   - `Config/`: Contains `Ollama.php` configuration.
+- `app/Controllers/`: Contains core controllers like `AuthController`, `AdminController`.
+- `app/Libraries/`: Contains shared services like `RecaptchaService`.
 - `writable/nlp/`: Stores trained Naive Bayes models (`classifier.model`).
 - `writable/uploads/`: Stores temporary media, PDF generation artifacts, and secure audio files.
 
@@ -549,15 +553,16 @@ Located at `app/Config/App.php`, this file contains the base configuration for t
 
 Located at `app/Config/Database.php`, this file defines the database connection parameters.
 
-**8.3. Custom Configurations (`AGI.php`, `Recaptcha.php`)**
+**8.3. Module & Service Configurations**
 
-Custom configuration files are placed in `app/Config/Custom/` or `app/Modules/Gemini/Config/AGI.php`.
+Module-specific configurations are located within their respective module directories (e.g., `app/Modules/Gemini/Config/AGI.php`).
 
-- `AGI.php`: Contains settings for the AI service, including:
+- `AGI.php` (`app/Modules/Gemini/Config/`): Contains settings for the AI service, including:
   - **Memory Logic:** `rewardScore`, `decayScore`, `pruningThreshold`.
   - **Search Tuning:** `hybridSearchAlpha` (balance between vector and keyword search).
   - **NLP:** `nlpStopWords` (list of words to ignore during keyword extraction).
-- `Recaptcha.php`: Stores the site and secret keys for the Google reCAPTCHA service.
+- **Recaptcha:**
+  - **Configuration:** Keys (`recaptcha_siteKey`, `recaptcha_secretKey`) MUST be stored in `.env`. The `RecaptchaService` reads these directly. Custom config files for keys are discouraged.
 
 **9. Testing**
 
@@ -823,7 +828,7 @@ The most efficient way to find what needs documenting is by analyzing the differ
 | `app/Modules/[ModuleName]/Models/*` or `Entities/*`       | **5. Tutorial**, **6. Feature Guides** (how data is handled for a feature)        |
 | `app/Modules/[ModuleName]/Database/Migrations/*`          | **5. Tutorial**, **6. Feature Guides** (mention new database tables/columns)      |
 | `app/Commands/*` or `app/Modules/[ModuleName]/Commands/*` | **7. Command-Line Interface (CLI)**                                               |
-| `app/Config/Custom/*`                                     | **8. Configuration Reference** (document new custom settings)                     |
+| `app/Modules/[ModuleName]/Config/*`                       | **8. Configuration Reference** (document new settings)                            |
 | `app/Modules/[ModuleName]/Views/*`                        | Usually doesn't require a doc change unless a major new UI feature is introduced. |
 | `composer.json` (new dependencies)                        | **1.4. Technology Stack**, **3.1. Server Requirements**                           |
 
