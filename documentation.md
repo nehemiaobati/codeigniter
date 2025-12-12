@@ -418,6 +418,8 @@ This module (`App\Modules\Gemini`) is the core of the platform.
   - **Service:** `GeminiService::processInteraction()` encapsulates the entire lifecycle. It handles context retrieval, cost estimation, API interaction, and TTS generation.
   - **Data Integrity:** Balance deduction and memory updates are wrapped in a **Database Transaction** to ensure data consistency.
   - **Payloads:** The `ModelPayloadService` dynamically constructs payloads for specific model architectures.
+  - **Streaming & Rendering:** The system uses Server-Sent Events (SSE) for real-time text generation. The frontend uses **Marked.js** (configured with GitHub Flavored Markdown and strict line breaks) to render the raw streaming text into HTML on the client side.
+  - **Non-Streaming Rendering:** Standard requests are processed server-side. The raw Markdown from Gemini is parsed using the **Parsedown** library before being sent to the view, ensuring consistent formatting for both modes.
 - **6.3.2. Hybrid Memory System (Vector + Keyword)**: Managed by `MemoryService.php`.
   - **Storage:** Interactions are stored in the `interactions` table. Entities (keywords) are stored in `entities`.
   - **Retrieval:** The system uses `EmbeddingService` to get vector embeddings of the user's query. It performs a cosine similarity search (Semantic) AND a keyword-based search (Lexical).
@@ -627,6 +629,8 @@ Ensure your code is well-documented, follows the project's architectural pattern
   - **Configuration:** Converted service configurations to immutable constants (`MODEL_PRIORITIES`, `MEDIA_CONFIGS`).
   - **Presentation:** Refactored `DocumentService` to use Heredoc syntax for cleaner HTML generation.
   - **Frontend:** Modernized `query_form.php` JS into a modular, class-based architecture (`GeminiApp`, `UIManager`).
+    - Integrated **Marked.js** for client-side Markdown rendering during streaming.
+    - Added dynamic UI state management (loading spinners, auto-created result cards).
 
 **v1.7.0 - 2025-12-03**
 
