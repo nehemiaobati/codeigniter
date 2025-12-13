@@ -654,6 +654,12 @@ Ensure your code is well-documented, follows the project's architectural pattern
 
 **13.2. Changelog & Release History**
 
+**v1.8.1 - 2025-12-13**
+
+### Fixed
+
+- **Documentation Routes:** Fixed a `RouterException` in `DocumentationController` where the canonical URL was pointing to a non-existent route name ('index'). It now correctly points to 'documentation'.
+
 **v1.8.0 - 2025-12-10**
 
 ### Changed
