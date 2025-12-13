@@ -121,7 +121,7 @@ class ModelPayloadService
             case 'imagen-4.0-generate-001':
                 $apiMethod = 'predict';
                 $payload = [
-                    "instances" => [["prompt" => $this->extractTextPrompt($parts)]],
+                    "instances" => [["prompt" => $this->_extractTextPrompt($parts)]],
                     "parameters" => [
                         "outputMimeType" => "image/jpeg",
                         "sampleCount" => 1,
@@ -138,7 +138,7 @@ class ModelPayloadService
             case 'veo-2.0-generate-001':
                 $apiMethod = 'predictLongRunning';
                 $payload = [
-                    "instances" => [["prompt" => $this->extractTextPrompt($parts)]],
+                    "instances" => [["prompt" => $this->_extractTextPrompt($parts)]],
                     "parameters" => [
                         "aspectRatio" => "16:9",
                         "sampleCount" => 1,
@@ -154,7 +154,7 @@ class ModelPayloadService
         }
 
         return [
-            'url' => $this->buildEndpoint($modelId, $apiMethod, $apiKey),
+            'url' => $this->_buildEndpoint($modelId, $apiMethod, $apiKey),
             'body' => json_encode($payload)
         ];
     }
@@ -163,7 +163,7 @@ class ModelPayloadService
      * Extracts plain text from a parts array, ignoring images/files.
      * Essential for models (Imagen/Veo) that crash if sent multimodal input arrays.
      */
-    private function extractTextPrompt(array $parts): string
+    private function _extractTextPrompt(array $parts): string
     {
         $text = '';
         foreach ($parts as $part) {
@@ -177,7 +177,7 @@ class ModelPayloadService
     /**
      * Standardizes the API endpoint construction.
      */
-    private function buildEndpoint(string $modelId, string $method, string $apiKey): string
+    private function _buildEndpoint(string $modelId, string $method, string $apiKey): string
     {
         return "https://generativelanguage.googleapis.com/v1beta/models/{$modelId}:{$method}?key=" . urlencode($apiKey);
     }

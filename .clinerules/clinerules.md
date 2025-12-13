@@ -82,6 +82,11 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
 
 - All PHP files MUST be PSR-12 compliant and start with `declare(strict_types=1);`.
 - Every class, property, and method MUST have a complete and accurate PHPDoc block.
+- **Helper Methods:**
+  - Private helper methods MUST be prefixed with an underscore (e.g., `_getUserSettings()`, `_buildResponse()`).
+  - Helper methods MUST be placed in a dedicated section marked with `// --- Helper Methods ---` or similar comment.
+  - Helper methods MUST be ordered **before** the public methods that use them for better code readability.
+  - Each helper should have a single, clear responsibility and be reusable where applicable.
 
 #### **3.2. Security**
 

@@ -654,6 +654,28 @@ Ensure your code is well-documented, follows the project's architectural pattern
 
 **13.2. Changelog & Release History**
 
+**v1.8.3 - 2025-12-14**
+
+### Changed
+
+- **Codebase-Wide Helper Method Standardization:**
+  - Enforced underscore-prefix naming convention (`_methodName`) for all private helper methods across 12 files (34 methods total).
+  - Updated all services in Gemini module: `GeminiService`, `MemoryService`, `MediaGenerationService`, `ModelPayloadService`, `FfmpegService`, `DocumentService`.
+  - Updated Ollama services: `OllamaMemoryService`, `OllamaDocumentService`.
+  - Updated utility services: `CryptoService`, `PaystackService`.
+  - Updated controllers: `GeminiController`, `BlogController`.
+  - Updated commands: `MakeModule`.
+  - Added helper method organization rules to `.clinerules/clinerules.md` for future compliance.
+
+### Fixed
+
+- **File Upload Validation & UX Improvements (Gemini Module):**
+  - Added frontend MIME type validation with instant toast feedback for unsupported file types.
+  - Improved batch upload handling to intelligently accept valid files while rejecting invalid ones with detailed error messages.
+  - Fixed file removal functionality by adding missing `data-id` attribute to remove buttons.
+  - Enhanced user feedback with specific error messages (file type, size limit with MB display, file count).
+  - Batch upload summary now shows "X uploaded, Y rejected" for multi-file operations.
+
 **v1.8.2 - 2025-12-13**
 
 ### Changed

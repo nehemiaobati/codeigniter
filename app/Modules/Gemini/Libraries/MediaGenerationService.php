@@ -68,18 +68,18 @@ class MediaGenerationService
 
             // 4. Parse & Finalize based on Type
             if ($config['type'] === 'video') {
-                return $this->handleVideoRequest($userId, $modelId, $responseData, $costKsh);
+                return $this->_handleVideoRequest($userId, $modelId, $responseData, $costKsh);
             }
 
             // Parse Image Data
             $parsed = ($config['type'] === 'image_generation_content')
-                ? $this->parseGeminiImageResponse($responseData)
-                : $this->parseImagenResponse($responseData);
+                ? $this->_parseGeminiImageResponse($responseData)
+                : $this->_parseImagenResponse($responseData);
 
             if (!$parsed) return ['status' => 'error', 'message' => 'No image data in response.'];
 
             // Persist Artifact
-            return $this->finalizeArtifact($userId, 'image', $parsed['data'], $parsed['ext'], $costKsh, $modelId);
+            return $this->_finalizeArtifact($userId, 'image', $parsed['data'], $parsed['ext'], $costKsh, $modelId);
         } catch (\Exception $e) {
             log_message('error', 'Media Gen Exception: ' . $e->getMessage());
             return ['status' => 'error', 'message' => 'System error during generation.'];
@@ -92,7 +92,7 @@ class MediaGenerationService
      * Handles file writing, balance deduction, and DB logging in one atomic flow.
      * Compliant with serverless (creates path on fly) and state management.
      */
-    private function finalizeArtifact(int $userId, string $type, string $binaryData, string $ext, float $cost, string $modelId, ?string $remoteOpId = null): array
+    private function _finalizeArtifact(int $userId, string $type, string $binaryData, string $ext, float $cost, string $modelId, ?string $remoteOpId = null): array
     {
         $fileName = ($type === 'video' ? 'vid_' : 'gen_') . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
         $uploadPath = WRITEPATH . 'uploads/generated/' . $userId . '/';
@@ -128,7 +128,7 @@ class MediaGenerationService
 
     // --- Pure Parsers ---
 
-    private function parseImagenResponse(array $response): ?array
+    private function _parseImagenResponse(array $response): ?array
     {
         if (isset($response['predictions'][0]['bytesBase64Encoded'])) {
             return ['data' => base64_decode($response['predictions'][0]['bytesBase64Encoded']), 'ext' => 'jpg'];
@@ -136,7 +136,7 @@ class MediaGenerationService
         return null;
     }
 
-    private function parseGeminiImageResponse(array $response): ?array
+    private function _parseGeminiImageResponse(array $response): ?array
     {
         $parts = $response['candidates'][0]['content']['parts'] ?? [];
         foreach ($parts as $part) {
@@ -147,7 +147,7 @@ class MediaGenerationService
         return null;
     }
 
-    private function handleVideoRequest(int $userId, string $modelId, array $response, float $cost): array
+    private function _handleVideoRequest(int $userId, string $modelId, array $response, float $cost): array
     {
         if (!isset($response['name'])) return ['status' => 'error', 'message' => 'No operation ID returned.'];
 

@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace App\Modules\Crypto\Libraries;
 
@@ -16,7 +18,7 @@ class CryptoService
     public function getBtcBalance($address)
     {
         $url = "https://blockchain.info/balance?active=" . urlencode($address);
-        $data = $this->makeApiRequest($url);
+        $data = $this->_makeApiRequest($url);
 
         if (isset($data[$address]['final_balance'])) {
             $balance_satoshi = $data[$address]['final_balance'];
@@ -42,7 +44,7 @@ class CryptoService
     public function getBtcTransactions($address, $limit)
     {
         $url = "https://blockchain.info/rawaddr/" . urlencode($address) . "?limit=" . $limit;
-        $data = $this->makeApiRequest($url);
+        $data = $this->_makeApiRequest($url);
 
         if (isset($data['txs'])) {
             $transactions = [];
@@ -95,7 +97,7 @@ class CryptoService
     public function getLtcBalance($address)
     {
         $url = "https://api.blockchair.com/litecoin/dashboards/address/" . urlencode($address) . "?limit=1"; // Add limit=1 to ensure full data structure
-        $data = $this->makeApiRequest($url);
+        $data = $this->_makeApiRequest($url);
 
         if (isset($data['data']) && !empty($data['data'])) {
             $address_data = reset($data['data']); // Get the first element, regardless of its key
@@ -124,7 +126,7 @@ class CryptoService
     {
         // Step 1: Get the list of transaction hashes (remains the same)
         $hashes_url = "https://api.blockchair.com/litecoin/dashboards/address/" . urlencode($address) . "?limit=" . $limit;
-        $hashes_data = $this->makeApiRequest($hashes_url);
+        $hashes_data = $this->_makeApiRequest($hashes_url);
 
         if (!isset($hashes_data['data'][$address]['transactions'])) {
             return ['error' => 'Could not retrieve LTC transaction list for the specified address.'];
@@ -144,7 +146,7 @@ class CryptoService
         // Step 2: Fetch ALL transaction details in a single batch call
         $hashes_string = implode(',', $tx_hashes);
         $details_url = "https://api.blockchair.com/litecoin/dashboards/transactions/" . urlencode($hashes_string);
-        $details_data = $this->makeApiRequest($details_url);
+        $details_data = $this->_makeApiRequest($details_url);
 
         if (!isset($details_data['data'])) {
             return ['error' => 'Failed to retrieve details for LTC transactions.'];
@@ -200,7 +202,7 @@ class CryptoService
      * @throws \CodeIgniter\HTTP\Exceptions\HTTPException If an HTTP error occurs during the request.
      * @throws \Exception If any other unexpected error occurs during the API request.
      */
-    private function makeApiRequest(string $url): array
+    private function _makeApiRequest(string $url): array
     {
         $client = \Config\Services::curlrequest();
 

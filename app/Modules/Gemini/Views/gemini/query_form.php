@@ -211,6 +211,14 @@
         }
     }
 
+    .file-chip .remove-btn {
+        transition: opacity 0.2s;
+    }
+
+    .file-chip .remove-btn:not(.disabled):hover {
+        opacity: 1 !important;
+    }
+
     /* Auto-expanding Textarea */
     .prompt-textarea {
         resize: none;
@@ -549,6 +557,7 @@
                 csrfHash: document.querySelector('input[name="<?= csrf_token() ?>"]').value,
                 maxFileSize: <?= $maxFileSize ?>,
                 maxFiles: <?= $maxFiles ?>,
+                supportedMimeTypes: <?= $supportedMimeTypes ?>,
                 endpoints: {
                     upload: '<?= url_to('gemini.upload_media') ?>',
                     deleteMedia: '<?= url_to('gemini.delete_media') ?>',
@@ -918,16 +927,39 @@
 
         handleFiles(files) {
             const currentCount = document.querySelectorAll('input[name="uploaded_media[]"]').length + this.queue.length;
-            if (currentCount + files.length > this.app.config.maxFiles) {
-                this.app.ui.showToast(`Max ${this.app.config.maxFiles} files allowed.`);
-                return;
-            }
+
+            let accepted = 0;
+            let rejected = {
+                limit: 0,
+                type: 0,
+                size: 0
+            };
 
             Array.from(files).forEach(file => {
-                if (file.size > this.app.config.maxFileSize) {
-                    this.app.ui.showToast(`${file.name} too large.`);
+                // 1. Check file limit
+                if (currentCount + accepted >= this.app.config.maxFiles) {
+                    rejected.limit++;
+                    if (files.length === 1) {
+                        this.app.ui.showToast(`Max ${this.app.config.maxFiles} files allowed`);
+                    }
                     return;
                 }
+
+                // 2. Check MIME type
+                if (!this.app.config.supportedMimeTypes.includes(file.type)) {
+                    rejected.type++;
+                    this.app.ui.showToast(`${file.name}: Unsupported file type`);
+                    return;
+                }
+
+                // 3. Check file size
+                if (file.size > this.app.config.maxFileSize) {
+                    rejected.size++;
+                    this.app.ui.showToast(`${file.name} exceeds ${(this.app.config.maxFileSize / 1024 / 1024).toFixed(1)}MB limit`);
+                    return;
+                }
+
+                // Queue valid file
                 const id = Math.random().toString(36).substr(2, 9);
                 const ui = this.createProgressBar(file, id);
                 this.queue.push({
@@ -935,9 +967,20 @@
                     ui,
                     id
                 });
+                accepted++;
             });
 
-            this.processQueue();
+            // Show summary for batch uploads
+            if (files.length > 1) {
+                const total = rejected.limit + rejected.type + rejected.size;
+                if (total > 0) {
+                    this.app.ui.showToast(`${accepted} uploaded, ${total} rejected`);
+                }
+            }
+
+            if (this.queue.length > 0) {
+                this.processQueue();
+            }
         }
 
         createProgressBar(file, id) {
@@ -947,7 +990,7 @@
             div.innerHTML = `
                 <div class="progress-ring"></div>
                 <span class="file-name" title="${file.name}">${file.name}</span>
-                <button type="button" class="btn-close btn-close-white p-1 remove-btn disabled" style="width: 0.5rem; height: 0.5rem; opacity: 0.5;" data-id="${id}"></button>
+                <button type="button" class="btn-close p-1 remove-btn disabled" style="width: 0.75rem; height: 0.75rem; opacity: 0.6;" data-id="${id}"></button>
             `;
             document.getElementById('upload-list-wrapper').appendChild(div);
             return div;
@@ -977,7 +1020,9 @@
 
                         if (xhr.status === 200 && res.status === 'success') {
                             this.updateUI(job.ui, 'success');
-                            job.ui.querySelector('.remove-btn').dataset.serverFileId = res.file_id;
+                            const removeBtn = job.ui.querySelector('.remove-btn');
+                            removeBtn.dataset.serverFileId = res.file_id;
+                            removeBtn.dataset.id = job.id;
 
                             const input = document.createElement('input');
                             input.type = 'hidden';

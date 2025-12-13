@@ -101,7 +101,7 @@ class GeminiService
     }
 
     /**
-     * Loops through models and attempts execution using the flattened executeRequest method.
+     * Loops through models and attempts execution using the flattened _executeRequest method.
      */
     public function generateContent(array $parts): array
     {
@@ -116,7 +116,7 @@ class GeminiService
                 continue;
             }
 
-            $result = $this->executeRequest($config['url'], $config['body'], $model);
+            $result = $this->_executeRequest($config['url'], $config['body'], $model);
 
             if (isset($result['error']) && str_contains($result['error'], 'Quota exceeded')) {
                 log_message('warning', "[GeminiService] Quota exceeded for model: {$model}, trying next model");
@@ -135,7 +135,7 @@ class GeminiService
     /**
      * Flattens the cURL execution and retry logic.
      */
-    private function executeRequest(string $url, string $body, string $model = 'unknown'): array
+    private function _executeRequest(string $url, string $body, string $model = 'unknown'): array
     {
         $maxRetries = 2;
         for ($i = 0; $i <= $maxRetries; $i++) {
@@ -211,7 +211,7 @@ class GeminiService
                 CURLOPT_WRITEFUNCTION => function ($ch, $chunk) use (&$buffer, &$fullText, &$usage, $chunkCallback) {
                     $buffer .= $chunk;
                     // Delegate complexity to private helper
-                    $parsed = $this->processStreamBuffer($buffer);
+                    $parsed = $this->_processStreamBuffer($buffer);
                     foreach ($parsed['chunks'] as $text) {
                         $fullText .= $text;
                         $chunkCallback($text);
@@ -236,7 +236,7 @@ class GeminiService
     /**
      * Encapsulates the fragile JSON stream parsing logic.
      */
-    private function processStreamBuffer(string &$buffer): array
+    private function _processStreamBuffer(string &$buffer): array
     {
         $result = ['chunks' => [], 'usage' => null];
 
