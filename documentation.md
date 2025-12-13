@@ -654,6 +654,16 @@ Ensure your code is well-documented, follows the project's architectural pattern
 
 **13.2. Changelog & Release History**
 
+**v1.8.2 - 2025-12-13**
+
+### Changed
+
+- **Gemini Module Architecture Refactoring:**
+  - **ModelPayloadService:** Implemented standalone pattern for infinite model scalability. Grouped models by architecture (Gemini 2.5/3.0, Pro/Thinking, Image Generation, Imagen 4.0, Veo 2.0) with explicit configuration for each group. Added helper methods for text extraction and standardized endpoint construction.
+  - **MediaGenerationService:** Refactored with decoupled parsing and unified artifact persistence. Introduced pure parser methods (`parseImagenResponse`, `parseGeminiImageResponse`) and consolidated file writing, balance deduction, and DB logging into a single atomic `finalizeArtifact` flow for better serverless compliance.
+  - **GeminiService:** Flattened execution logic with simplified `processInteraction` method. Consolidated retry mechanisms into `executeRequest` method and improved stream buffer processing with dedicated `processStreamBuffer` helper. Reduced code complexity while maintaining all core functionality.
+  - **Controllers (Serverless Compliance):** Updated `GeminiController::serveAudio` and `MediaController::serve` methods with strict unlink pattern, ensuring immediate file deletion after serving for serverless/stateless environment compliance.
+
 **v1.8.1 - 2025-12-13**
 
 ### Fixed

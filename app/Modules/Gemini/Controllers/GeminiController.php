@@ -550,10 +550,9 @@ class GeminiController extends BaseController
     }
 
     /**
-     * Serves the file with correct headers for inline playback.
+     * Ensures strict unlink pattern for serverless environments.
      *
-     * This method ensures secure access to generated audio files by validating
-     * the user ID and serving the file through PHP rather than direct public access.
+     * This method serves audio files and immediately deletes them for serverless compliance.
      *
      * @param string $fileName The name of the file to serve.
      * @return ResponseInterface The file response.
@@ -562,28 +561,20 @@ class GeminiController extends BaseController
     public function serveAudio(string $fileName)
     {
         $userId = (int) session()->get('userId');
-
-        // Security: Basename prevents directory traversal attacks
         $path = WRITEPATH . 'uploads/ttsaudio_secure/' . $userId . '/' . basename($fileName);
 
         if (!file_exists($path)) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
 
-        // Detect MIME type dynamically based on the actual file extension
-        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-        $mime = ($ext === 'wav') ? 'audio/wav' : 'audio/mpeg';
+        $mime = str_ends_with($path, '.wav') ? 'audio/wav' : 'audio/mpeg';
 
-        // 'inline' disposition allows the <audio> tag to play it immediately
         $this->response
             ->setHeader('Content-Type', $mime)
-            ->setHeader('Content-Length', (string)filesize($path))
-            ->setHeader('Content-Disposition', 'inline; filename="' . $fileName . '"');
+            ->setHeader('Content-Length', (string)filesize($path));
 
-        // Efficiently output file content without loading into memory
         if (readfile($path) !== false) {
-            // Auto-delete the file after serving (Serverless/Privacy optimization)
-            @unlink($path);
+            @unlink($path); // SERVERLESS COMPLIANCE: Delete immediately
         }
         return $this->response;
     }
