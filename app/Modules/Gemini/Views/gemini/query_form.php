@@ -256,6 +256,23 @@
         <!-- Scrollable Response Area -->
         <div class="gemini-response-area" id="response-area-wrapper">
 
+            <!-- Flash Messages -->
+            <?php if (session()->getFlashdata('error')): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-octagon-fill me-2"></i>
+                    <?= session()->getFlashdata('error') ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+
+            <?php if (session()->getFlashdata('success')): ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <?= session()->getFlashdata('success') ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+
             <!-- Audio Player -->
             <?php
             $audioFilePath = session()->getFlashdata('audio_file_path');
@@ -616,38 +633,46 @@
             this.setupCodeHighlighting();
             this.setupAutoScroll();
             this.setupDownloads();
-            this.setupAutoResizeTextarea();
+            this.setupDownloads();
+            this.initTinyMCE();
         }
 
-        setupAutoResizeTextarea() {
-            const tx = document.getElementById('prompt');
-            if (!tx) return;
+        initTinyMCE() {
+            if (typeof tinymce === 'undefined') return;
 
-            const resize = () => {
-                tx.style.height = 'auto';
-                tx.style.height = (tx.scrollHeight) + 'px';
-                // Toggle overflow based on max-height (handled by CSS max-height, but specific scroll check could be here)
-                if (tx.scrollHeight > 120) {
-                    tx.style.overflowY = 'auto';
-                } else {
-                    tx.style.overflowY = 'hidden';
-                }
-            };
+            tinymce.init({
+                selector: '#prompt',
+                menubar: false,
+                statusbar: false,
+                toolbar: false,
+                license_key: 'gpl',
+                plugins: 'autoresize',
+                autoresize_bottom_margin: 0,
+                autoresize_overflow_padding: 0,
+                min_height: 40,
+                max_height: 120, // Approx 4-5 lines
 
-            tx.addEventListener('input', resize);
-            // Initial resize if value exists
-            if (tx.value) resize();
+                setup: (editor) => {
+                    editor.on('keydown', (e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            if (editor.getContent().trim()) {
+                                editor.save(); // Sync content to textarea
+                                document.getElementById('geminiForm').requestSubmit();
+                            }
+                        }
+                    });
 
-            // Handle Enter to submit (Shift+Enter for newline)
-            tx.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    if (tx.value.trim()) {
-                        document.getElementById('geminiForm').requestSubmit();
-                    }
+                    // Update model placeholder
+                    editor.on('init', () => {
+                        const currentType = document.getElementById('generationType').value;
+                        this.updateModelSelectionUI(currentType);
+                    });
                 }
             });
         }
+
+
 
 
         showToast(msg) {
@@ -696,18 +721,23 @@
 
             if (type === 'text') {
                 modelInput.value = 'gemini-2.0-flash';
-                editor?.setAttribute('placeholder', 'Message Gemini...');
+                if (tinymce.activeEditor) tinymce.activeEditor.getBody().setAttribute('data-mce-placeholder', 'Message Gemini...');
+                else editor?.setAttribute('placeholder', 'Message Gemini...');
             } else {
                 area.classList.remove('d-none');
                 if (type === 'image') {
                     imgGrid.classList.remove('d-none');
-                    editor?.setAttribute('placeholder', 'Describe the image you want to generate...');
+                    imgGrid.classList.remove('d-none');
+                    if (tinymce.activeEditor) tinymce.activeEditor.getBody().setAttribute('data-mce-placeholder', 'Describe the image you want to generate...');
+                    else editor?.setAttribute('placeholder', 'Describe the image you want to generate...');
                     // Auto-select first
                     const first = imgGrid.querySelector('.model-card');
                     if (first) first.click();
                 } else if (type === 'video') {
                     vidGrid.classList.remove('d-none');
-                    editor?.setAttribute('placeholder', 'Describe the video you want to create...');
+                    vidGrid.classList.remove('d-none');
+                    if (tinymce.activeEditor) tinymce.activeEditor.getBody().setAttribute('data-mce-placeholder', 'Describe the video you want to create...');
+                    else editor?.setAttribute('placeholder', 'Describe the video you want to create...');
                     const first = vidGrid.querySelector('.model-card');
                     if (first) first.click();
                 }
@@ -1109,6 +1139,7 @@
 
             e.preventDefault();
 
+            if (typeof tinymce !== 'undefined') tinymce.triggerSave();
             const prompt = document.getElementById('prompt').value.trim();
             if (!prompt && type === 'text') {
                 this.app.ui.showToast('Please enter a prompt.');
