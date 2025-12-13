@@ -278,7 +278,8 @@
                         </div>
                     </div>
                     <div class="form-check form-switch mb-4">
-                        <input class="form-check-input" type="checkbox" id="streamOutput">
+                        <input class="form-check-input setting-toggle" type="checkbox" id="streamOutput"
+                            data-key="stream_output_enabled" <?= $stream_output_enabled ? 'checked' : '' ?>>
                         <label class="form-check-label" for="streamOutput">Stream Responses</label>
                         <div class="form-text text-muted small mt-1">
                             Typewriter effect (faster perception).

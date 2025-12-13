@@ -109,6 +109,7 @@ class GeminiController extends BaseController
             'prompts'                => $prompts,
             'assistant_mode_enabled' => $userSetting ? $userSetting->assistant_mode_enabled : true,
             'voice_output_enabled'   => $userSetting ? $userSetting->voice_output_enabled : false,
+            'stream_output_enabled'  => $userSetting ? $userSetting->stream_output_enabled : false,
             'audio_url'              => session()->getFlashdata('audio_url'),
             'maxFileSize'            => self::MAX_FILE_SIZE,
             'maxFiles'               => self::MAX_FILES,
@@ -406,7 +407,7 @@ class GeminiController extends BaseController
         if ($userId <= 0) return $this->response->setStatusCode(403);
 
         if (!$this->validate([
-            'setting_key' => 'required|in_list[assistant_mode_enabled,voice_output_enabled]',
+            'setting_key' => 'required|in_list[assistant_mode_enabled,voice_output_enabled,stream_output_enabled]',
         ])) {
             return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Invalid setting']);
         }
