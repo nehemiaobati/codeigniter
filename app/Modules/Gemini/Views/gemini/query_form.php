@@ -1268,14 +1268,14 @@
 
         handleMock(prompt, type) {
             const p = prompt.toLowerCase();
-            if (p === 'test image' && type === 'image') {
+            if (p === '<p>test image</p>' && type === 'image') {
                 setTimeout(() => {
                     this.app.ui.showMediaResult('https://picsum.photos/200/300?random=' + Date.now(), 'image');
                     this.app.ui.setLoading(false);
                 }, 1000);
                 return true;
             }
-            if (p === 'test video' && type === 'video') {
+            if (p === '<p>test video</p>' && type === 'video') {
                 setTimeout(() => {
                     this.app.ui.showMediaResult('http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', 'video');
                     this.app.ui.setLoading(false);
