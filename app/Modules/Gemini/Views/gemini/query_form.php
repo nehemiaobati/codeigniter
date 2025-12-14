@@ -19,10 +19,18 @@
     /* Scoped Styles for Gemini View */
     .gemini-view-container {
         --code-bg: #282c34;
-        height: 100vh;
+        position: fixed;
+        /* Lock to viewport to prevent body scroll on input focus */
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 100dvh;
+        /* Mobile browser address bar fix */
         width: 100vw;
         display: flex;
         overflow: hidden;
+        z-index: 1000;
     }
 
     /* Main Content Area */
@@ -33,7 +41,8 @@
         height: 100%;
         position: relative;
         min-width: 0;
-        /* Prevent flex overflow */
+        overflow: hidden;
+        /* Prevent double scrollbars */
     }
 
     /* Response / History Area */
@@ -42,6 +51,16 @@
         overflow-y: auto;
         padding: 2rem;
         scroll-behavior: smooth;
+        min-height: 0;
+        /* Allow shrinking in flex container */
+    }
+
+    /* Sticky Header */
+    .gemini-header {
+        position: sticky;
+        top: 0;
+        z-index: 1020;
+        background: var(--bs-body-bg);
     }
 
     /* Prompt Area (Sticky Bottom) */
@@ -241,6 +260,8 @@
     /* Prompt Area Layout Adjustment */
     .gemini-prompt-area {
         padding: 1rem 1.5rem;
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+        /* iOS Safe Area */
     }
 </style>
 <?= $this->endSection() ?>
@@ -251,7 +272,7 @@
     <!-- Main Content (Left/Center) -->
     <div class="gemini-main">
         <!-- Top Toolbar / Header -->
-        <div class="d-flex justify-content-between align-items-center px-4 py-2 border-bottom bg-body">
+        <div class="d-flex justify-content-between align-items-center px-4 py-2 border-bottom bg-body gemini-header">
             <a href="<?= url_to('home') ?>" class="d-flex align-items-center gap-2 text-decoration-none text-reset">
                 <i class="bi bi-stars text-primary fs-4"></i>
                 <span class="fw-bold fs-5">AI Studio</span>
