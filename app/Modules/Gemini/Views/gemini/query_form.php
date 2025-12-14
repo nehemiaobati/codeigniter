@@ -256,9 +256,14 @@
                 <i class="bi bi-stars text-primary fs-4"></i>
                 <span class="fw-bold fs-5">AI Studio</span>
             </a>
-            <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#geminiSidebar" aria-expanded="true" aria-controls="geminiSidebar">
-                <i class="bi bi-layout-sidebar-reverse"></i> Settings
-            </button>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary btn-sm theme-toggle" type="button" aria-label="Toggle theme">
+                    <i class="bi bi-circle-half"></i>
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#geminiSidebar" aria-expanded="true" aria-controls="geminiSidebar">
+                    <i class="bi bi-layout-sidebar-reverse"></i> Settings
+                </button>
+            </div>
         </div>
 
         <!-- Scrollable Response Area -->
