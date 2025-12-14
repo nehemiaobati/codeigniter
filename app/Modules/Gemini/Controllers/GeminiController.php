@@ -368,8 +368,12 @@ class GeminiController extends BaseController
         // 3. Call Stream Service
         $this->geminiService->generateStream(
             $parts,
-            function ($textChunk) {
-                echo "data: " . json_encode(['text' => $textChunk]) . "\n\n";
+            function ($chunk) {
+                if (is_array($chunk) && isset($chunk['error'])) {
+                    echo "data: " . json_encode(['error' => $chunk['error']]) . "\n\n";
+                } else {
+                    echo "data: " . json_encode(['text' => $chunk]) . "\n\n";
+                }
                 if (ob_get_level() > 0) ob_flush();
                 flush();
             },

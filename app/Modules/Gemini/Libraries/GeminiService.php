@@ -190,7 +190,7 @@ class GeminiService
     public function generateStream(array $parts, callable $chunkCallback, callable $completeCallback): void
     {
         if (!$this->apiKey) {
-            $chunkCallback("Error: API Key missing.");
+            $chunkCallback(['error' => "Error: API Key missing."]);
             return;
         }
 
@@ -223,14 +223,14 @@ class GeminiService
 
             curl_exec($ch);
             $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
+
 
             if ($code === 200) {
                 $completeCallback($fullText, $usage);
                 return;
             }
         }
-        $chunkCallback("Error: Stream failed.");
+        $chunkCallback(['error' => "Error: Stream failed."]);
     }
 
     /**

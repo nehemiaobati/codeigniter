@@ -654,6 +654,13 @@ Ensure your code is well-documented, follows the project's architectural pattern
 
 **13.2. Changelog & Release History**
 
+**v1.8.6 - 2025-12-14**
+
+### Fixed
+
+- **Stream Error Handling:** Addressed JSON parse errors and backend stream failures by catching them and displaying user-friendly flash messages.
+- **Code Quality:** Removed deprecated `curl_close` usage in `GeminiService.php` to resolve IDE warnings.
+
 **v1.8.5 - 2025-12-14**
 
 ### Added

@@ -1381,6 +1381,7 @@
                                     }
                                 } catch (e) {
                                     console.warn('JSON Parse Error in Stream:', e);
+                                    this.app.ui.injectFlashError('JSON Parse Error in Stream: ' + e.message);
                                 }
                             }
                         }
