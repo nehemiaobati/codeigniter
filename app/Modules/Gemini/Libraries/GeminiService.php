@@ -240,31 +240,60 @@ class GeminiService
     {
         $result = ['chunks' => [], 'usage' => null];
 
-        while (true) {
-            $buffer = ltrim($buffer, ", \n\r\t["); // Clean start
-            if (empty($buffer) || $buffer[0] === ']') break; // End of stream
+        // 1. Clean framing characters
+        $buffer = ltrim($buffer, ", \n\r\t[");
 
-            // Naive check: Assume one full JSON object ends with } followed by , or ] or EOL
-            if (preg_match('/^(\{.*?\})(,|\s*\]|$)/s', $buffer, $matches)) {
-                $jsonObj = $matches[1];
-                $data = json_decode($jsonObj, true);
+        // 2. Process all complete objects in buffer
+        while (!empty($buffer) && $buffer[0] === '{') {
+            $objectFound = false;
+            $len = strlen($buffer);
+            $offset = 0;
 
-                if ($data) {
+            // Search for the matching closing brace
+            while (true) {
+                $pos = strpos($buffer, '}', $offset);
+                if ($pos === false) {
+                    break; // No more braces, wait for more data
+                }
+
+                // Try to decode substring up to this brace
+                $candidate = substr($buffer, 0, $pos + 1);
+                $data = json_decode($candidate, true);
+
+                if (json_last_error() === JSON_ERROR_NONE && $data !== null) {
+                    // Valid JSON object found!
+                    $objectFound = true;
+
+                    // Extract Data
                     if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
                         $result['chunks'][] = $data['candidates'][0]['content']['parts'][0]['text'];
                     }
                     if (isset($data['usageMetadata'])) {
                         $result['usage'] = $data['usageMetadata'];
                     }
-                    // Advance buffer
-                    $buffer = substr($buffer, strlen($matches[0]));
-                } else {
-                    break; // Invalid JSON, wait for more data
+
+                    // Advance buffer past this object
+                    $buffer = substr($buffer, $pos + 1);
+                    $buffer = ltrim($buffer, ", \n\r\t");
+                    break; // Break inner loop to process next object
                 }
-            } else {
-                break; // Incomplete object
+
+                // Not a valid object yet (brace was likely inside a string), continue search
+                $offset = $pos + 1;
+            }
+
+            if (!$objectFound) {
+                // We scanned available braces but couldn't find a valid object end.
+                // Leave buffer as is and wait for next chunk.
+                break;
             }
         }
+
+        // Handle end of stream array
+        if (!empty($buffer) && $buffer[0] === ']') {
+            $buffer = '';
+        }
+
         return $result;
     }
 
