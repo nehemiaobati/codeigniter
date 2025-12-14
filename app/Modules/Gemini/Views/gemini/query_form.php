@@ -274,27 +274,19 @@
                 <?= view('App\Views\partials\flash_messages') ?>
             </div>
 
-            <!-- Audio Player -->
-            <?php
-            $audioFilePath = session()->getFlashdata('audio_file_path');
-            if ($audioFilePath && file_exists($audioFilePath)):
-                $audioBase64 = base64_encode(file_get_contents($audioFilePath));
-                $mimeType = (pathinfo($audioFilePath, PATHINFO_EXTENSION) === 'mp3') ? 'audio/mp3' : 'audio/wav';
-            ?>
-                <div class="alert alert-info d-flex align-items-center mb-4">
-                    <i class="bi bi-volume-up-fill fs-4 me-3"></i>
-                    <audio controls autoplay class="w-100">
-                        <source src="data:<?= $mimeType ?>;base64,<?= $audioBase64 ?>">
-                    </audio>
-                </div>
-            <?php elseif (session()->getFlashdata('audio_url')): ?>
-                <div class="alert alert-info d-flex align-items-center mb-4">
-                    <i class="bi bi-volume-up-fill fs-4 me-3"></i>
-                    <audio controls autoplay class="w-100">
-                        <source src="<?= url_to('gemini.serve_audio', session()->getFlashdata('audio_url')) ?>">
-                    </audio>
-                </div>
-            <?php endif; ?>
+            <!-- Audio Player Container (Dynamically Populated via AJAX) -->
+            <div id="audio-player-container">
+                <?php
+                // Server-side fallback for initial load (Non-AJAX)
+                if (session()->getFlashdata('audio_url')): ?>
+                    <div class="alert alert-info d-flex align-items-center mb-4">
+                        <i class="bi bi-volume-up-fill fs-4 me-3"></i>
+                        <audio controls autoplay class="w-100">
+                            <source src="<?= url_to('gemini.serve_audio', session()->getFlashdata('audio_url')) ?>">
+                        </audio>
+                    </div>
+                <?php endif; ?>
+            </div>
 
             <!-- Response -->
             <?php if ($result = session()->getFlashdata('result')): ?>
@@ -559,7 +551,9 @@
                     stream: '<?= url_to('gemini.stream') ?>',
                     generate: '<?= url_to('gemini.generate') ?>',
                     generateMedia: '<?= url_to('gemini.media.generate') ?>',
-                    pollMedia: '<?= url_to('gemini.media.poll') ?>'
+                    pollMedia: '<?= url_to('gemini.media.poll') ?>',
+                    // Pass placeholder to route, then strip it to prevent router crash on empty segment
+                    serveAudio: '<?= url_to('gemini.serve_audio', 'placeholder') ?>'.replace('placeholder', '')
                 }
             };
 
@@ -635,7 +629,6 @@
             this.setupCodeHighlighting();
             this.setupAutoScroll();
             this.setupDownloads();
-            this.setupDownloads();
             this.initTinyMCE();
         }
 
@@ -674,9 +667,6 @@
             });
         }
 
-
-
-
         showToast(msg) {
             const t = document.getElementById('liveToast');
             if (t) {
@@ -685,7 +675,16 @@
             }
         }
 
-
+        // Helper to inject error messages into the flash container (for Consistency)
+        injectFlashError(message) {
+            const container = document.getElementById('flash-messages-container');
+            if (container) {
+                container.innerHTML = `<div class="alert alert-danger alert-dismissible fade show">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>`;
+            }
+        }
 
         setupTabs() {
             const tabButtons = document.querySelectorAll('#generationTabs button[data-bs-toggle="tab"]');
@@ -754,6 +753,7 @@
                     fd.append('enabled', e.target.checked);
                     try {
                         const data = await this.app.sendAjax(this.app.config.endpoints.settings, fd);
+                        // Using Toast for settings toggle confirmation (Consistency Requirement)
                         this.showToast(data.status === 'success' ? 'Setting saved.' : 'Failed to save.');
                     } catch (e) {}
                 });
@@ -1229,6 +1229,7 @@
         /**
          * Handles standard (non-streaming) text generation via Fetch.
          * Updates content and injects flash messages via AJAX.
+         * Explicitly handles audio rendering if audio_url is present.
          */
         async handleStandardGeneration(formData) {
             this.app.ui.ensureResultCardExists();
@@ -1243,7 +1244,7 @@
                     this.app.ui.setupCodeHighlighting();
                     this.app.ui.setupAutoScroll();
 
-                    // Inject Flash Messages
+                    // Inject Flash Messages (Standardized)
                     if (data.flash_html) {
                         const flashContainer = document.getElementById('flash-messages-container');
                         if (flashContainer) {
@@ -1251,30 +1252,51 @@
                         }
                     }
 
-                    // Handle Audio URL if present
+                    // FIX: Handle Audio URL injection dynamically for visibility
+                    const audioContainer = document.getElementById('audio-player-container');
                     if (data.audio_url) {
-                        // Optional: Dynamically create audio player if needed
-                        this.app.ui.showToast('Audio generated.');
-                    }
-                } else if (data.status === 'error') {
-                    // Inject Error Flash Messages
-                    if (data.errors) {
-                        let errorHtml = '<div class="alert alert-danger alert-dismissible fade show"><button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
-                        if (typeof data.errors === 'object') {
-                            errorHtml += Object.values(data.errors).join('<br>');
-                        } else {
-                            errorHtml += data.message;
+                        if (audioContainer) {
+                            audioContainer.innerHTML = `
+                                <div class="alert alert-info d-flex align-items-center mb-4">
+                                    <i class="bi bi-volume-up-fill fs-4 me-3"></i>
+                                    <audio controls autoplay class="w-100">
+                                        <source src="${data.audio_url}" type="audio/mpeg">
+                                    </audio>
+                                </div>
+                            `;
                         }
-                        errorHtml += '</div>';
-                        document.getElementById('flash-messages-container').innerHTML = errorHtml;
                     } else {
-                        this.app.ui.showToast(data.message);
+                        // Clear audio container if no audio in this response
+                        if (audioContainer) audioContainer.innerHTML = '';
+                    }
+
+                } else if (data.status === 'error') {
+                    // REFACTOR: Correctly handle empty errors array vs global message
+                    let errorHtml = '<div class="alert alert-danger alert-dismissible fade show">';
+
+                    if (data.errors && Object.keys(data.errors).length > 0) {
+                        // Handle Validation Errors
+                        if (Array.isArray(data.errors)) {
+                            errorHtml += data.errors.join('<br>');
+                        } else {
+                            errorHtml += Object.values(data.errors).join('<br>');
+                        }
+                    } else {
+                        // Handle Single Global Message (e.g. Quota Exceeded)
+                        errorHtml += data.message;
+                    }
+
+                    errorHtml += '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+
+                    const flashContainer = document.getElementById('flash-messages-container');
+                    if (flashContainer) {
+                        flashContainer.innerHTML = errorHtml;
                     }
                 }
 
             } catch (e) {
                 console.error(e);
-                this.app.ui.showToast('Generation failed.');
+                this.app.ui.injectFlashError('Generation failed due to a system error.');
             } finally {
                 this.app.ui.setLoading(false);
             }
@@ -1286,6 +1308,10 @@
             // Reset UI for new stream
             const resBody = document.getElementById('ai-response-body');
             const rawRes = document.getElementById('raw-response');
+            // Clear audio container on new stream start
+            const audioContainer = document.getElementById('audio-player-container');
+            if (audioContainer) audioContainer.innerHTML = '';
+
             resBody.innerHTML = '';
             rawRes.value = '';
             this.app.ui.setupAutoScroll();
@@ -1335,7 +1361,8 @@
                                         resBody.innerHTML = marked.parse(streamAccumulator);
                                         rawRes.value += data.text;
                                     } else if (data.error) {
-                                        this.app.ui.showToast(data.error);
+                                        // REFACTOR: Use Flash Message for stream errors too
+                                        this.app.ui.injectFlashError(data.error);
                                     } else if (typeof data.cost !== 'undefined' && parseFloat(data.cost) > 0) {
                                         // Final Cost Packet: Show success flash message
                                         const costHtml = `<div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -1364,7 +1391,7 @@
 
             } catch (e) {
                 console.error(e);
-                this.app.ui.showToast('Stream error');
+                this.app.ui.injectFlashError('Stream error occurred.');
             } finally {
                 this.app.ui.setLoading(false);
             }
@@ -1383,7 +1410,8 @@
                 if (data.token) this.app.refreshCsrf(data.token);
 
                 if (data.status === 'error') {
-                    this.app.ui.showToast(data.message);
+                    // REFACTOR: Use Flash Message for Media Generation Errors
+                    this.app.ui.injectFlashError(data.message);
                 } else if (data.type === 'image') {
                     this.app.ui.showMediaResult(data.url, 'image');
                 } else if (data.type === 'video') {
@@ -1392,7 +1420,7 @@
                 }
             } catch (e) {
                 console.error(e);
-                this.app.ui.showToast('Media generation failed.');
+                this.app.ui.injectFlashError('Media generation failed.');
             }
             this.app.ui.setLoading(false);
         }
@@ -1410,7 +1438,8 @@
                         this.app.ui.setLoading(false);
                     } else if (res.status === 'failed') {
                         clearInterval(timer);
-                        this.app.ui.showToast(res.message);
+                        // REFACTOR: Use Flash Message for Polling Errors
+                        this.app.ui.injectFlashError(res.message);
                         this.app.ui.setLoading(false);
                     }
                 } catch (e) {}

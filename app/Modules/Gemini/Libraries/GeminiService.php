@@ -15,8 +15,8 @@ class GeminiService
     protected $db;
 
     public const MODEL_PRIORITIES = [
-        "gemini-3-pro-preview", // Multimodal, Thinking Level High
-        "gemini-2.5-pro",       // Multimodal, Thinking Budget
+        // "gemini-3-pro-preview", // Multimodal, Thinking Level High
+        //"gemini-2.5-pro",       // Multimodal, Thinking Budget
         "gemini-flash-latest",      // Primary: Latest Flash model for speed and efficiency
         "gemini-flash-lite-latest", // Secondary: Lite version for lower latency
         "gemini-2.5-flash",         // Fallback: Stable Flash version

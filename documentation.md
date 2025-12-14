@@ -654,6 +654,12 @@ Ensure your code is well-documented, follows the project's architectural pattern
 
 **13.2. Changelog & Release History**
 
+**v1.8.5 - 2025-12-14**
+
+### Added
+
+- **Logging:** Added successful generation log entry for Gemini TTS service to improve observability.
+
 **v1.8.4 - 2025-12-14**
 
 ### Fixed

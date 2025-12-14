@@ -534,8 +534,9 @@ class GeminiController extends BaseController
             ->setHeader('Content-Type', $mime)
             ->setHeader('Content-Length', (string)filesize($path));
 
+        // Serve and delete in one go for serverless compliance (ephemeral storage)
         if (readfile($path) !== false) {
-            @unlink($path); // SERVERLESS COMPLIANCE: Delete immediately
+            @unlink($path);
         }
         return $this->response;
     }
@@ -696,7 +697,12 @@ class GeminiController extends BaseController
         // Process Audio if present
         $audioUrl = null;
         if (!empty($result['audioData'])) {
-            $audioUrl = $this->_processAudioData($result['audioData']);
+            // Returns filename only, e.g. "speech_123.mp3"
+            $audioFilename = $this->_processAudioData($result['audioData']);
+            if ($audioFilename) {
+                // Construct full URL for Frontend
+                $audioUrl = url_to('gemini.serve_audio', $audioFilename);
+            }
         }
 
         // Set Flash Message
@@ -712,7 +718,7 @@ class GeminiController extends BaseController
 
         // Handle AJAX
         if ($this->request->isAJAX()) {
-            // Render the flash messages partial to a string
+            // Render the flash messages partial to a string to ensure consistency
             $flashHtml = view('App\Views\partials\flash_messages');
 
             $responsePayload = [
@@ -724,8 +730,8 @@ class GeminiController extends BaseController
             ];
 
             if ($audioUrl) {
+                // Return the generated URL so the frontend can create the <audio> tag
                 $responsePayload['audio_url'] = $audioUrl;
-                // Optionally pass full file path if needed, but URL is safer
             }
 
             return $this->response->setJSON($responsePayload);
@@ -737,9 +743,16 @@ class GeminiController extends BaseController
             ->with('raw_result', $result['result']);
 
         if ($audioUrl) {
-            $redirect->with('audio_url', $audioUrl);
-            $redirect->with('audio_file_path', WRITEPATH . 'uploads/ttsaudio_secure/' . $userId . '/' . basename($audioUrl));
+            // Pass the URL for the view to use in the <audio> tag
+            $redirect->with('audio_url', basename($audioUrl)); // passing filename for route consistency in view logic
         }
+
+        // For non-AJAX, we rely on the session flashdata to display the file.
+        // In serverless, if the file is deleted after the first read (by serveAudio logic),
+        // we might prefer to embed it directly if not using AJAX. 
+        // However, the existing view logic handles audio_file_path checks. 
+        // For strict serverless compliance, AJAX + Blob or ephemeral URL is preferred.
+        // We will stick to the URL pattern which works if served immediately.
 
         return $redirect;
     }
