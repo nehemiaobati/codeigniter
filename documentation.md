@@ -654,6 +654,17 @@ Ensure your code is well-documented, follows the project's architectural pattern
 
 **13.2. Changelog & Release History**
 
+**v1.8.4 - 2025-12-14**
+
+### Fixed
+
+- **Gemini Streaming Resilience:**
+  - **Controller:** Implemented explicit `flush()` logic and independent `event: close` packets in `GeminiController` to ensure final cost data is reliably sent to the client, solving potential buffering issues.
+  - **Frontend:** Refactored `handleStreaming` in `query_form.php` with a robust line-based parser. It now correctly handles mixed-content chunks (e.g., `event: close` appearing in the same packet as data), ensuring the interface consistently displays the "Cost Deducted" flash message.
+- **TinyMCE Integration:**
+  - **Prompt Loading:** Fixed issue where loading a saved prompt would not update the editor. Now explicitly uses `tinymce.get('prompt').setContent()`.
+  - **AJAX Saving:** Improved `savePrompt` workflow to dynamically update the saved prompts dropdown without triggering a full page reload.
+
 **v1.8.3 - 2025-12-14**
 
 ### Changed

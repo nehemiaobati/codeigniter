@@ -260,31 +260,24 @@ class GeminiController extends BaseController
 
     /**
      * Generates content using the Gemini API based on user input and context.
+     * Supports AJAX for non-blocking UI updates.
      *
-     * This is the core method that handles the generation workflow:
-     * 1. Validates input and user balance.
-     * 2. Prepares context (memory) and files.
-     * 3. Estimates cost and checks balance again.
-     * 4. Calls the Gemini API for text generation.
-     * 5. Optionally calls the TTS API for audio generation.
-     * 6. Updates user memory with the interaction.
-     * 7. Calculates final cost and deducts balance.
-     * 8. Returns the result to the view.
-     *
-     * @return RedirectResponse Redirects back with results or errors.
+     * @return RedirectResponse|ResponseInterface
      */
-    public function generate(): RedirectResponse
+    public function generate()
     {
         $userId = (int) session()->get('userId');
         $user = $this->userModel->find($userId);
 
-        if (!$user) return redirect()->back()->with('error', 'User not found.');
+        if (!$user) {
+            return $this->_respondError('User not found.');
+        }
 
         // Input Validation
         if (!$this->validate([
             'prompt' => 'max_length[200000]'
         ])) {
-            return redirect()->back()->withInput()->with('error', 'Prompt is too long. Maximum 200,000 characters allowed.');
+            return $this->_respondError('Prompt is too long. Maximum 200,000 characters allowed.');
         }
 
         // 1. Prepare Inputs
@@ -300,7 +293,7 @@ class GeminiController extends BaseController
         // Handle File Parts
         $filesResult = $this->_prepareFilesAndContext($uploadedFileIds, $userId);
         if (isset($filesResult['error'])) {
-            return redirect()->back()->withInput()->with('error', $filesResult['error']);
+            return $this->_respondError($filesResult['error']);
         }
         $fileParts = $filesResult['parts'];
 
@@ -310,7 +303,7 @@ class GeminiController extends BaseController
         $this->_cleanupTempFiles($uploadedFileIds, $userId); // Always cleanup
 
         if (isset($result['error'])) {
-            return redirect()->back()->withInput()->with('error', $result['error']);
+            return $this->_respondError($result['error']);
         }
 
         // 3. Build and Return Response
@@ -368,16 +361,7 @@ class GeminiController extends BaseController
             return $this->response;
         }
 
-        // Send headers now by sending a comment
-        // In CodeIgniter 4, returning response object is preferred, but for streaming we might need to flush manually.
-        // However, we are returning a ResponseInterface, so CI4 will try to send headers.
-        // But headers are sent when output starts. 
-        // We will force headers sending by echoing comments.
-
-        // Actually, let's use the standard output buffer flushing sequence.
-        // We return the response object at the end, but we echo content during execution.
         $this->response->sendHeaders();
-        // Clear buffer
         if (ob_get_level() > 0) ob_end_flush();
         flush();
 
@@ -390,9 +374,8 @@ class GeminiController extends BaseController
                 flush();
             },
             function ($fullText, $usageMetadata) use ($userId, $contextData, $inputText) {
-                // Final Completion Callback
-
-                // Update Balance
+                // 1. Calculate and Deduct Cost
+                // We do this at the end of the stream to ensure accuracy based on actual token usage.
                 $costData = ['costKSH' => 0];
                 if ($usageMetadata) {
                     $costData = $this->geminiService->calculateCost($usageMetadata);
@@ -400,32 +383,28 @@ class GeminiController extends BaseController
                     $this->userModel->deductBalance($userId, $deduction);
                 }
 
-                // Update Memory
+                // 2. Update Context Memory
+                // Store the interaction so the Assistant Mode can recall it in future queries.
                 if (isset($contextData['memoryService'])) {
-                    $contextData['memoryService']->updateMemory(
-                        $inputText,
-                        $fullText,
-                        $contextData['usedInteractionIds']
-                    );
+                    $contextData['memoryService']->updateMemory($inputText, $fullText, $contextData['usedInteractionIds']);
                 }
 
-                // Send Close Event with final data
+                // 3. Send Final Status Event
+                // We explicitly send 'event: close' separately to ensure the client parser handles it cleanly,
+                // even if it arrives in the same TCP packet as the last text chunk.
                 echo "event: close\n";
                 echo "data: " . json_encode([
-                    'csrf_token' => csrf_hash(),
+                    'csrf_token' => csrf_hash(), // Refresh CSRF for next request
                     'cost' => $costData['costKSH']
                 ]) . "\n\n";
 
+                // Force flush the buffer to ensure the client receives the close event immediately.
                 if (ob_get_level() > 0) ob_flush();
                 flush();
             }
         );
 
         $this->_cleanupTempFiles($uploadedFileIds, $userId);
-
-        // We really shouldn't return anything else as we've been streaming, 
-        // but CI expects a return. We can return the response instance.
-        // However, since we've already outputted body content, we should suppress further output.
         exit;
     }
 
@@ -705,25 +684,22 @@ class GeminiController extends BaseController
     }
 
     /**
-     * Builds the final redirect response with parsed markdown and optional audio.
+     * Builds the final response with parsed markdown and optional audio.
+     * Refactored to support AJAX with rendered partials.
      *
      * @param array $result Result array from GeminiService.
      * @param int $userId User ID for audio file path resolution.
-     * @return RedirectResponse The complete redirect response with all flash data.
+     * @return RedirectResponse|ResponseInterface
      */
-    private function _buildGenerationResponse(array $result, int $userId): RedirectResponse
+    private function _buildGenerationResponse(array $result, int $userId)
     {
         // Process Audio if present
         $audioUrl = null;
-        $audioFilePath = null;
         if (!empty($result['audioData'])) {
             $audioUrl = $this->_processAudioData($result['audioData']);
-            if ($audioUrl) {
-                $audioFilePath = WRITEPATH . 'uploads/ttsaudio_secure/' . $userId . '/' . basename($audioUrl);
-            }
         }
 
-        // Flash cost message
+        // Set Flash Message
         if ($result['costKSH'] > 0) {
             session()->setFlashdata('success', "KSH " . number_format($result['costKSH'], 2) . " deducted.");
         }
@@ -732,16 +708,37 @@ class GeminiController extends BaseController
         $parsedown = new Parsedown();
         $parsedown->setSafeMode(true);
         $parsedown->setBreaksEnabled(true);
+        $parsedHtml = $parsedown->text($result['result']);
 
+        // Handle AJAX
+        if ($this->request->isAJAX()) {
+            // Render the flash messages partial to a string
+            $flashHtml = view('App\Views\partials\flash_messages');
+
+            $responsePayload = [
+                'status' => 'success',
+                'result' => $parsedHtml,
+                'raw_result' => $result['result'],
+                'flash_html' => $flashHtml,
+                'token' => csrf_hash()
+            ];
+
+            if ($audioUrl) {
+                $responsePayload['audio_url'] = $audioUrl;
+                // Optionally pass full file path if needed, but URL is safer
+            }
+
+            return $this->response->setJSON($responsePayload);
+        }
+
+        // Handle Fallback Standard Post
         $redirect = redirect()->back()->withInput()
-            ->with('result', $parsedown->text($result['result']))
+            ->with('result', $parsedHtml)
             ->with('raw_result', $result['result']);
 
         if ($audioUrl) {
             $redirect->with('audio_url', $audioUrl);
-        }
-        if ($audioFilePath && file_exists($audioFilePath)) {
-            $redirect->with('audio_file_path', $audioFilePath);
+            $redirect->with('audio_file_path', WRITEPATH . 'uploads/ttsaudio_secure/' . $userId . '/' . basename($audioUrl));
         }
 
         return $redirect;

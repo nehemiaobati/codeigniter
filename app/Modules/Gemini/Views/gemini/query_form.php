@@ -252,10 +252,10 @@
     <div class="gemini-main">
         <!-- Top Toolbar / Header -->
         <div class="d-flex justify-content-between align-items-center px-4 py-2 border-bottom bg-body">
-            <div class="d-flex align-items-center gap-2">
+            <a href="<?= url_to('home') ?>" class="d-flex align-items-center gap-2 text-decoration-none text-reset">
                 <i class="bi bi-stars text-primary fs-4"></i>
                 <span class="fw-bold fs-5">AI Studio</span>
-            </div>
+            </a>
             <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#geminiSidebar" aria-expanded="true" aria-controls="geminiSidebar">
                 <i class="bi bi-layout-sidebar-reverse"></i> Settings
             </button>
@@ -264,22 +264,10 @@
         <!-- Scrollable Response Area -->
         <div class="gemini-response-area" id="response-area-wrapper">
 
-            <!-- Flash Messages -->
-            <?php if (session()->getFlashdata('error')): ?>
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="bi bi-exclamation-octagon-fill me-2"></i>
-                    <?= session()->getFlashdata('error') ?>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            <?php endif; ?>
-
-            <?php if (session()->getFlashdata('success')): ?>
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="bi bi-check-circle-fill me-2"></i>
-                    <?= session()->getFlashdata('success') ?>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            <?php endif; ?>
+            <!-- Flash Messages Container for AJAX Injection -->
+            <div id="flash-messages-container">
+                <?= view('App\Views\partials\flash_messages') ?>
+            </div>
 
             <!-- Audio Player -->
             <?php
@@ -1106,9 +1094,15 @@
             if (loadBtn) loadBtn.addEventListener('click', () => {
                 if (select && select.value) {
                     const el = document.getElementById('prompt');
-                    el.value = select.value;
-                    el.dispatchEvent(new Event('input')); // Trigger resize
-                    el.focus();
+                    // Check for TinyMCE instance
+                    if (typeof tinymce !== 'undefined' && tinymce.get('prompt')) {
+                        tinymce.get('prompt').setContent(select.value);
+                    } else {
+                        // Fallback for standard textarea
+                        el.value = select.value;
+                        el.focus();
+                    }
+                    el.dispatchEvent(new Event('input')); // Trigger resize if any
                 }
             });
 
@@ -1122,7 +1116,10 @@
             const form = document.querySelector('#savePromptModal form');
             if (form) {
                 document.getElementById('savePromptModal').addEventListener('show.bs.modal', () => {
-                    document.getElementById('modalPromptText').value = document.getElementById('prompt').value;
+                    const currentVal = (typeof tinymce !== 'undefined' && tinymce.get('prompt')) ?
+                        tinymce.get('prompt').getContent() :
+                        document.getElementById('prompt').value;
+                    document.getElementById('modalPromptText').value = currentVal;
                 });
 
                 form.addEventListener('submit', (e) => {
@@ -1135,17 +1132,36 @@
         async savePrompt(formData) {
             const modalEl = document.getElementById('savePromptModal');
             const modal = bootstrap.Modal.getInstance(modalEl);
+            const title = formData.get('title');
 
             try {
                 const data = await this.app.sendAjax(formData.get('action') || modalEl.querySelector('form').action, formData);
+
                 if (data.status === 'success') {
                     this.app.ui.showToast('Saved!');
                     modal.hide();
-                    location.reload();
+
+                    // Dynamic UI Update (No Reload)
+                    if (data.prompt && data.prompt.id) {
+                        const select = document.getElementById('savedPrompts');
+                        const option = document.createElement('option');
+                        option.value = data.prompt.prompt_text;
+                        option.textContent = data.prompt.title;
+                        option.dataset.id = data.prompt.id;
+                        select.appendChild(option);
+                        select.value = data.prompt.prompt_text;
+
+                        // Enable delete button
+                        const deleteBtn = document.getElementById('deletePromptBtn');
+                        if (deleteBtn) deleteBtn.disabled = false;
+                    }
                 } else {
                     this.app.ui.showToast(data.message || 'Failed');
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.error(e);
+                this.app.ui.showToast('Error saving prompt');
+            }
         }
 
         async deletePrompt() {
@@ -1176,16 +1192,9 @@
         }
 
         async handleSubmit(e) {
+            e.preventDefault();
             const type = document.getElementById('generationType').value;
             const useStreaming = document.getElementById('streamOutput')?.checked;
-
-            // Text + Standard POST -> Let browser handle it
-            if (type === 'text' && !useStreaming) {
-                setTimeout(() => this.app.ui.setLoading(true, 'Thinking...'), 10);
-                return;
-            }
-
-            e.preventDefault();
 
             if (typeof tinymce !== 'undefined') tinymce.triggerSave();
             const prompt = document.getElementById('prompt').value.trim();
@@ -1197,19 +1206,79 @@
             this.app.ui.setLoading(true);
             const fd = new FormData(document.getElementById('geminiForm'));
 
+            // Text Generation: Determine flow based on Streaming setting
+            if (type === 'text') {
+                if (useStreaming) {
+                    await this.handleStreaming(fd);
+                } else {
+                    await this.handleStandardGeneration(fd);
+                }
+                return;
+            }
 
-            if (type === 'text' && useStreaming) {
-                await this.handleStreaming(fd);
-            } else {
-                // Media (Image/Video) or Mock
-                if (this.handleMock(prompt, type)) return;
-                await this.handleMedia(fd);
+            // Media Generation
+            if (this.handleMock(prompt, type)) return;
+            await this.handleMedia(fd);
+        }
+
+        /**
+         * Handles standard (non-streaming) text generation via Fetch.
+         * Updates content and injects flash messages via AJAX.
+         */
+        async handleStandardGeneration(formData) {
+            this.app.ui.ensureResultCardExists();
+
+            try {
+                const data = await this.app.sendAjax(this.app.config.endpoints.generate, formData);
+
+                if (data.status === 'success') {
+                    // Update Content
+                    document.getElementById('ai-response-body').innerHTML = data.result;
+                    document.getElementById('raw-response').value = data.raw_result;
+                    this.app.ui.setupCodeHighlighting();
+                    this.app.ui.setupAutoScroll();
+
+                    // Inject Flash Messages
+                    if (data.flash_html) {
+                        const flashContainer = document.getElementById('flash-messages-container');
+                        if (flashContainer) {
+                            flashContainer.innerHTML = data.flash_html;
+                        }
+                    }
+
+                    // Handle Audio URL if present
+                    if (data.audio_url) {
+                        // Optional: Dynamically create audio player if needed
+                        this.app.ui.showToast('Audio generated.');
+                    }
+                } else if (data.status === 'error') {
+                    // Inject Error Flash Messages
+                    if (data.errors) {
+                        let errorHtml = '<div class="alert alert-danger alert-dismissible fade show"><button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+                        if (typeof data.errors === 'object') {
+                            errorHtml += Object.values(data.errors).join('<br>');
+                        } else {
+                            errorHtml += data.message;
+                        }
+                        errorHtml += '</div>';
+                        document.getElementById('flash-messages-container').innerHTML = errorHtml;
+                    } else {
+                        this.app.ui.showToast(data.message);
+                    }
+                }
+
+            } catch (e) {
+                console.error(e);
+                this.app.ui.showToast('Generation failed.');
+            } finally {
+                this.app.ui.setLoading(false);
             }
         }
 
         async handleStreaming(formData) {
             this.app.ui.ensureResultCardExists();
 
+            // Reset UI for new stream
             const resBody = document.getElementById('ai-response-body');
             const rawRes = document.getElementById('raw-response');
             resBody.innerHTML = '';
@@ -1228,32 +1297,60 @@
                 const decoder = new TextDecoder();
                 let buffer = '';
 
+                // Read stream chunks
                 while (true) {
                     const {
                         value,
                         done
                     } = await reader.read();
                     if (done) break;
+
                     buffer += decoder.decode(value, {
                         stream: true
                     });
+
+                    // Split by double newline which standard SSE uses to separate messages
                     const parts = buffer.split('\n\n');
-                    buffer = parts.pop();
+                    buffer = parts.pop(); // Keep incomplete message in buffer
 
                     for (const part of parts) {
-                        if (part.startsWith('data: ')) {
-                            try {
-                                const data = JSON.parse(part.substring(6));
-                                if (data.text) {
-                                    streamAccumulator += data.text;
-                                    resBody.innerHTML = marked.parse(streamAccumulator);
-                                    rawRes.value += data.text;
-                                } else if (data.error) {
-                                    this.app.ui.showToast(data.error);
-                                } else if (data.csrf_token) {
-                                    this.app.refreshCsrf(data.csrf_token);
+                        // Handle potential multiple lines within a single message block
+                        // This handles cases where 'event: close' arrives in the same block as 'data: ...'
+                        const lines = part.split('\n');
+
+                        for (const line of lines) {
+                            if (line.trim().startsWith('data: ')) {
+                                try {
+                                    const jsonStr = line.trim().substring(6);
+                                    const data = JSON.parse(jsonStr);
+
+                                    if (data.text) {
+                                        // Append text chunk and update UI
+                                        streamAccumulator += data.text;
+                                        resBody.innerHTML = marked.parse(streamAccumulator);
+                                        rawRes.value += data.text;
+                                    } else if (data.error) {
+                                        this.app.ui.showToast(data.error);
+                                    } else if (typeof data.cost !== 'undefined' && parseFloat(data.cost) > 0) {
+                                        // Final Cost Packet: Show success flash message
+                                        const costHtml = `<div class="alert alert-success alert-dismissible fade show" role="alert">
+                                            <i class="bi bi-check-circle-fill me-2"></i>
+                                            KSH ${parseFloat(data.cost).toFixed(2)} deducted.
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                        </div>`;
+
+                                        const flashContainer = document.getElementById('flash-messages-container');
+                                        if (flashContainer) {
+                                            flashContainer.innerHTML = costHtml;
+                                        }
+                                    } else if (data.csrf_token) {
+                                        // Update CSRF for subsequent requests
+                                        this.app.refreshCsrf(data.csrf_token);
+                                    }
+                                } catch (e) {
+                                    console.warn('JSON Parse Error in Stream:', e);
                                 }
-                            } catch (e) {}
+                            }
                         }
                     }
                 }
@@ -1261,6 +1358,7 @@
                 this.app.ui.setupCodeHighlighting();
 
             } catch (e) {
+                console.error(e);
                 this.app.ui.showToast('Stream error');
             } finally {
                 this.app.ui.setLoading(false);
