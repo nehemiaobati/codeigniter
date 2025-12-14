@@ -989,9 +989,12 @@
             div.className = 'file-chip fade show';
             div.innerHTML = `
                 <div class="progress-ring"></div>
-                <span class="file-name" title="${file.name}">${file.name}</span>
+                <span class="file-name" title=""></span>
                 <button type="button" class="btn-close p-1 remove-btn disabled" style="width: 0.75rem; height: 0.75rem; opacity: 0.6;" data-id="${id}"></button>
             `;
+            const span = div.querySelector('.file-name');
+            span.textContent = file.name;
+            span.title = file.name;
             document.getElementById('upload-list-wrapper').appendChild(div);
             return div;
         }

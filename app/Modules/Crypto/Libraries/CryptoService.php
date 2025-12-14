@@ -22,7 +22,7 @@ class CryptoService
 
         if (isset($data[$address]['final_balance'])) {
             $balance_satoshi = $data[$address]['final_balance'];
-            $balance_btc = $balance_satoshi / 100000000;
+            $balance_btc = bcdiv((string)$balance_satoshi, '100000000', 8);
             return [
                 'asset' => 'Bitcoin (BTC)',
                 'address' => $address,
@@ -60,7 +60,7 @@ class CryptoService
                 $receiving_addresses = [];
                 foreach ($tx['out'] as $output) {
                     if (isset($output['addr'])) {
-                        $amount = $output['value'] / 100000000;
+                        $amount = bcdiv((string)$output['value'], '100000000', 8);
                         $receiving_addresses[] = [
                             'address' => $output['addr'],
                             'amount' => rtrim(rtrim(sprintf('%.8f', $amount), '0'), '.') . ' BTC'
@@ -72,7 +72,7 @@ class CryptoService
                     'hash' => $tx['hash'],
                     'time' => date("Y-m-d H:i:s", $tx['time']) . " UTC",
                     'block_height' => $tx['block_height'] ?? 'N/A', // Handle missing block_height
-                    'fee' => rtrim(rtrim(sprintf('%.8f', ($tx['fee'] / 100000000)), '0'), '.') . ' BTC',
+                    'fee' => rtrim(rtrim(bcdiv((string)$tx['fee'], '100000000', 8), '0'), '.') . ' BTC',
                     'sending_addresses' => $sending_addresses,
                     'receiving_addresses' => $receiving_addresses
                 ];
@@ -103,7 +103,7 @@ class CryptoService
             $address_data = reset($data['data']); // Get the first element, regardless of its key
             if (isset($address_data['address']['balance'])) {
                 $balance_litoshi = $address_data['address']['balance'];
-                $balance_ltc = $balance_litoshi / 100000000;
+                $balance_ltc = bcdiv((string)$balance_litoshi, '100000000', 8);
                 return [
                     'asset' => 'Litecoin (LTC)',
                     'address' => $address,
@@ -169,7 +169,7 @@ class CryptoService
 
             $receiving_addresses = [];
             foreach ($tx['outputs'] as $output) {
-                $amount = $output['value'] / 100000000;
+                $amount = bcdiv((string)$output['value'], '100000000', 8);
                 $receiving_addresses[] = [
                     'address' => $output['recipient'],
                     'amount' => rtrim(rtrim(sprintf('%.8f', $amount), '0'), '.') . ' LTC'
@@ -180,7 +180,7 @@ class CryptoService
                 'hash' => $tx['transaction']['hash'],
                 'time' => $tx['transaction']['time'] . " UTC",
                 'block_id' => $tx['transaction']['block_id'],
-                'fee' => rtrim(rtrim(sprintf('%.8f', ($tx['transaction']['fee'] / 100000000)), '0'), '.') . ' LTC',
+                'fee' => rtrim(rtrim(bcdiv((string)$tx['transaction']['fee'], '100000000', 8), '0'), '.') . ' LTC',
                 'sending_addresses' => array_unique($sending_addresses),
                 'receiving_addresses' => $receiving_addresses
             ];
