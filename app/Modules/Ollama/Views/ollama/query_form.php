@@ -468,6 +468,7 @@
                 csrfHash: document.querySelector('input[name="<?= csrf_token() ?>"]').value,
                 maxFileSize: <?= $maxFileSize ?>,
                 maxFiles: <?= $maxFiles ?>,
+                supportedMimeTypes: <?= $supportedMimeTypes ?>,
                 endpoints: {
                     upload: '<?= url_to('ollama.upload_media') ?>',
                     deleteMedia: '<?= url_to('ollama.delete_media') ?>',
@@ -705,10 +706,24 @@
             let accepted = 0;
 
             Array.from(files).forEach(file => {
+                // 1. Check file limit
                 if (currentCount + accepted >= this.app.config.maxFiles) {
                     this.app.ui.showToast(`Max ${this.app.config.maxFiles} files allowed.`);
                     return;
                 }
+
+                // 2. Check MIME type
+                if (!this.app.config.supportedMimeTypes.includes(file.type)) {
+                    this.app.ui.showToast(`${file.name}: Unsupported file type`);
+                    return;
+                }
+
+                // 3. Check file size
+                if (file.size > this.app.config.maxFileSize) {
+                    this.app.ui.showToast(`${file.name} exceeds ${(this.app.config.maxFileSize / 1024 / 1024).toFixed(1)}MB limit`);
+                    return;
+                }
+
                 const id = Math.random().toString(36).substr(2, 9);
                 const ui = this.createFileChip(file, id);
                 this.queue.push({
