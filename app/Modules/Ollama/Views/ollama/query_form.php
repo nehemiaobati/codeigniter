@@ -534,12 +534,22 @@
         }
 
         init() {
+            this.handleResponsiveSidebar();
             this.setupSettings();
             this.setupCodeHighlighting();
             this.setupAutoScroll();
             this.setupDownloads();
             this.initTinyMCE();
             this.setupModelSelector();
+        }
+
+        handleResponsiveSidebar() {
+            if (window.innerWidth < 992) {
+                const sidebar = document.getElementById('ollamaSidebar');
+                if (sidebar && sidebar.classList.contains('show')) {
+                    sidebar.classList.remove('show');
+                }
+            }
         }
 
         initTinyMCE() {
@@ -738,7 +748,10 @@
                 }));
 
                 area.addEventListener('drop', (e) => this.handleFiles(e.dataTransfer.files));
-                input.addEventListener('change', (e) => this.handleFiles(e.target.files));
+                input.addEventListener('change', (e) => {
+                    this.handleFiles(e.target.files);
+                    input.value = ''; // Allow re-upload
+                });
 
                 const listWrapper = document.getElementById('upload-list-wrapper');
                 if (listWrapper) {
