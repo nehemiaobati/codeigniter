@@ -141,7 +141,7 @@ class OllamaController extends BaseController
     /**
      * Generates content using Ollama with Memory Integration.
      */
-    public function generate(): RedirectResponse
+    public function generate(): ResponseInterface
     {
         // Timeout Safety: Prevent PHP timeouts during slow local LLM inference
         set_time_limit(300);
@@ -204,6 +204,13 @@ class OllamaController extends BaseController
 
         if (isset($response['error']) || (isset($response['success']) && !$response['success'])) {
             $msg = $response['error'] ?? 'Unknown error';
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'status'     => 'error',
+                    'message'    => $msg,
+                    'csrf_token' => csrf_hash()
+                ]);
+            }
             return redirect()->back()->withInput()->with('error', $msg);
         }
 
@@ -216,9 +223,20 @@ class OllamaController extends BaseController
         // 4. Output
         $parsedown = new Parsedown();
         $parsedown->setSafeMode(true);
+        $finalHtml = $parsedown->text($resultText);
+
+        if ($this->request->isAJAX()) {
+            return $this->response->setJSON([
+                'status'     => 'success',
+                'result'     => $finalHtml,
+                'raw_result' => $resultText,
+                'flash_html' => view('App\Views\partials\flash_messages', ['success' => 'Generated successfully.']),
+                'csrf_token' => csrf_hash()
+            ]);
+        }
 
         return redirect()->back()->withInput()
-            ->with('result', $parsedown->text($resultText))
+            ->with('result', $finalHtml)
             ->with('raw_result', $resultText)
             ->with('success', 'Generated successfully. Cost: ' . self::COST_PER_REQUEST . ' credits.');
     }

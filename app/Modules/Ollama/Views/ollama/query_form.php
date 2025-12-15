@@ -666,6 +666,41 @@
                 btn.innerHTML = '<i class="bi bi-arrow-up text-white fs-5"></i>';
             }
         }
+
+        ensureResultCardExists() {
+            if (!document.getElementById('results-card')) {
+                const wrapper = document.getElementById('response-area-wrapper');
+                const emptyState = document.getElementById('empty-state');
+                if (emptyState) emptyState.remove();
+
+                const cardHtml = `
+                <div class="card blueprint-card shadow-sm border-success" id="results-card">
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">Studio Output</span>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-light" id="copyFullResponseBtn" title="Copy Full Text">
+                                <i class="bi bi-clipboard"></i> Copy
+                            </button>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">Export</button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item download-action" href="#" data-format="pdf">PDF</a></li>
+                                    <li><a class="dropdown-item download-action" href="#" data-format="docx">Word</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body response-content" id="ai-response-body"></div>
+                    <textarea id="raw-response" class="d-none"></textarea>
+                    <div class="card-footer bg-transparent border-0 text-center">
+                        <small class="text-muted fst-italic"><i class="bi bi-info-circle me-1"></i> AI can make mistakes. Please verify important information.</small>
+                    </div>
+                </div>`;
+                wrapper.insertAdjacentHTML('beforeend', cardHtml);
+                this.setupCodeHighlighting();
+                this.setupDownloads();
+            }
+        }
     }
 
     class MediaUploader {
@@ -673,6 +708,19 @@
             this.app = app;
             this.queue = [];
             this.isUploading = false;
+        }
+
+        clearUploads() {
+            // Remove all chips
+            const wrapper = document.getElementById('upload-list-wrapper');
+            if (wrapper) wrapper.innerHTML = '';
+
+            // Remove hidden inputs
+            const container = document.getElementById('uploaded-files-container');
+            if (container) container.innerHTML = '';
+
+            // Reset queue
+            this.queue = [];
         }
 
         init() {
@@ -942,21 +990,53 @@
             if (form) form.addEventListener('submit', (e) => this.handleSubmit(e));
         }
 
-        handleSubmit(e) {
-            // NOTE: InteractionHandler in Ollama uses standard submit for generation,
-            // unlike Gemini which uses AJAX. We only hook here to show loading state.
+        async handleSubmit(e) {
+            e.preventDefault();
 
             if (typeof tinymce !== 'undefined') tinymce.triggerSave();
             const prompt = document.getElementById('prompt').value.trim();
 
             if (!prompt) {
-                e.preventDefault();
                 this.app.ui.showToast('Please enter a prompt.');
                 return;
             }
 
             this.app.ui.setLoading(true);
-            // Allow form to submit normally
+            const form = document.getElementById('ollamaForm');
+            const fd = new FormData(form);
+
+            try {
+                const data = await this.app.sendAjax(form.action, fd);
+
+                if (data.status === 'success') {
+                    // 1. Ensure Result Card Exists
+                    this.app.ui.ensureResultCardExists();
+
+                    // 2. Update Content
+                    document.getElementById('ai-response-body').innerHTML = data.result;
+                    document.getElementById('raw-response').value = data.raw_result;
+
+                    // 3. Highlight Code & Scroll
+                    this.app.ui.setupCodeHighlighting();
+                    this.app.ui.setupAutoScroll();
+
+                    // 4. Update Flash Messages
+                    if (data.flash_html) {
+                        const flashContainer = document.getElementById('flash-messages-container');
+                        if (flashContainer) flashContainer.innerHTML = data.flash_html;
+                    }
+
+                    // 5. Clear Uploads (Since they are processed)
+                    this.app.uploader.clearUploads();
+                } else {
+                    this.app.ui.showToast(data.message || 'Generation failed.');
+                }
+            } catch (err) {
+                console.error(err);
+                this.app.ui.showToast('Error during generation.');
+            } finally {
+                this.app.ui.setLoading(false);
+            }
         }
     }
 
