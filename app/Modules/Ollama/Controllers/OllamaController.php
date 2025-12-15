@@ -223,6 +223,7 @@ class OllamaController extends BaseController
 
         // 4. Output
         $parsedown = new Parsedown();
+        $parsedown->setBreaksEnabled(true);
         $parsedown->setSafeMode(true);
         $finalHtml = $parsedown->text($resultText);
 
