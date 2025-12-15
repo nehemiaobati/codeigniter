@@ -1532,7 +1532,7 @@
             }
             if (p === '<p>test video</p>' && type === 'video') {
                 setTimeout(() => {
-                    this.app.ui.showMediaResult('http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', 'video');
+                    this.app.ui.showMediaResult('https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', 'video');
                     this.app.ui.setLoading(false);
                 }, 1500);
                 return true;
