@@ -35,7 +35,7 @@ class Ollama extends BaseConfig
     public float $hybridSearchAlpha = 0.5;
     public float $decayScore = 0.05;
     public float $rewardScore = 0.5; // Boost rate
-    public int $forcedRecentInteractions = 0;
+    public int $forcedRecentInteractions = 3;
 
     // --- NLP Configuration ---
     public array $nlpStopWords = [
