@@ -160,6 +160,7 @@ class OllamaController extends BaseController
         }
 
         $inputText = (string) $this->request->getPost('prompt');
+        $inputText = strip_tags($inputText); // Remove HTML tags for weak model that get confused by them.
         $selectedModel = (string) $this->request->getPost('model');
         $uploadedFileIds = (array) $this->request->getPost('uploaded_media');
 
