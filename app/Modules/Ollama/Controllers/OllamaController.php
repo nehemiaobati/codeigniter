@@ -292,4 +292,59 @@ class OllamaController extends BaseController
 
         return redirect()->back()->with('error', $result['message'] ?? 'Export failed.');
     }
+
+    /**
+     * Adds a new saved prompt.
+     */
+    public function addPrompt(): ResponseInterface
+    {
+        $userId = (int) session()->get('userId');
+        if ($userId <= 0) return $this->response->setStatusCode(403)->setJSON(['status' => 'error', 'message' => 'Auth required']);
+
+        $rules = [
+            'title'       => 'required|min_length[3]|max_length[255]',
+            'prompt_text' => 'required',
+        ];
+
+        if (!$this->validate($rules)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Invalid input']);
+        }
+
+        $data = [
+            'user_id'     => $userId,
+            'title'       => $this->request->getPost('title'),
+            'prompt_text' => $this->request->getPost('prompt_text'),
+        ];
+
+        $id = $this->promptModel->insert($data);
+
+        if ($id) {
+            return $this->response->setJSON([
+                'status' => 'success',
+                'prompt' => array_merge($data, ['id' => $id]),
+                'csrf_token' => csrf_hash()
+            ]);
+        }
+
+        return $this->response->setJSON(['status' => 'error', 'message' => 'Failed to save']);
+    }
+
+    /**
+     * Deletes a saved prompt.
+     */
+    public function deletePrompt($id): ResponseInterface
+    {
+        $userId = (int) session()->get('userId');
+        $prompt = $this->promptModel->find($id);
+
+        if (!$prompt || $prompt->user_id !== $userId) {
+            return $this->response->setStatusCode(403)->setJSON(['status' => 'error', 'message' => 'Unauthorized']);
+        }
+
+        if ($this->promptModel->delete($id)) {
+            return $this->response->setJSON(['status' => 'success', 'csrf_token' => csrf_hash()]);
+        }
+
+        return $this->response->setJSON(['status' => 'error', 'message' => 'Failed to delete']);
+    }
 }

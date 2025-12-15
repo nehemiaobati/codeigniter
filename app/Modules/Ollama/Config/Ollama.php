@@ -22,7 +22,7 @@ class Ollama extends BaseConfig
      * Request timeout in seconds.
      * Default: 120
      */
-    public int $timeout = 120;
+    public int $timeout = 300;
 
     /**
      * The model to use for embeddings.
