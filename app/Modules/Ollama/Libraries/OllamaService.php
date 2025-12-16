@@ -191,7 +191,7 @@ class OllamaService
             }
 
             return ['success' => true, 'usage' => $usage];
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             log_message('error', 'Ollama Stream Failed: ' . $e->getMessage());
             return ['error' => 'Streaming failed: ' . $e->getMessage()];
         }

@@ -69,6 +69,7 @@ class OllamaController extends BaseController
             'error'                  => session()->getFlashdata('error'),
             'prompts'                => $prompts,
             'assistant_mode_enabled' => $userSetting ? $userSetting->assistant_mode_enabled : true,
+            'stream_output_enabled'  => $userSetting ? $userSetting->stream_output_enabled : true, // Default to true if not set
             'maxFileSize'            => self::MAX_FILE_SIZE,
             'maxFiles'               => self::MAX_FILES,
             'supportedMimeTypes'     => json_encode(self::SUPPORTED_MIME_TYPES),
@@ -267,7 +268,12 @@ class OllamaController extends BaseController
         $user = $this->userModel->find($userId);
 
         if (!$user) {
-            return $this->response->setStatusCode(401)->setJSON(['error' => 'User not found']);
+            $this->response->setContentType('text/event-stream');
+            $this->response->setBody("data: " . json_encode([
+                'error' => 'User not found',
+                'csrf_token' => csrf_hash()
+            ]) . "\n\n");
+            return $this->response;
         }
 
         // Setup SSE Headers
@@ -275,6 +281,7 @@ class OllamaController extends BaseController
         $this->response->setHeader('Cache-Control', 'no-cache');
         $this->response->setHeader('Connection', 'keep-alive');
         $this->response->setHeader('X-Accel-Buffering', 'no');
+        $this->response->setHeader('X-CSRF-TOKEN', csrf_hash()); // Critical: Send token in header for early access
 
         // Input Validation
         $inputText = (string) $this->request->getPost('prompt');
@@ -330,6 +337,9 @@ class OllamaController extends BaseController
         if (!empty($images)) $userMessage['images'] = $images;
         $messages[] = $userMessage;
 
+        // Write session to ensure CSRF token is persisted before we possibly crash or exit
+        session_write_close();
+
         $this->response->sendHeaders();
         if (ob_get_level() > 0) ob_end_flush();
         flush();
@@ -350,6 +360,7 @@ class OllamaController extends BaseController
                 'error' => $result['error'],
                 'csrf_token' => csrf_hash()
             ]) . "\n\n";
+            exit;
         }
 
         // 5. Deduct Balance (After success/start) - Simple deduction
@@ -406,16 +417,19 @@ class OllamaController extends BaseController
     /**
      * Downloads the generated content as a document.
      */
+    /**
+     * Downloads the generated content as a document.
+     */
     public function downloadDocument()
     {
         $userId = (int) session()->get('userId');
-        if ($userId <= 0) return redirect()->back()->with('error', 'Auth required.');
+        if ($userId <= 0) return $this->response->setStatusCode(403)->setJSON(['message' => 'Auth required.']);
 
         $content = $this->request->getPost('content');
         $format  = $this->request->getPost('format');
 
         if (empty($content) || !in_array($format, ['pdf', 'docx'])) {
-            return redirect()->back()->with('error', 'Invalid content or format.');
+            return $this->response->setStatusCode(400)->setJSON(['message' => 'Invalid content or format.']);
         }
 
         $docService = new OllamaDocumentService();
@@ -430,10 +444,11 @@ class OllamaController extends BaseController
             return $this->response
                 ->setHeader('Content-Type', $contentType)
                 ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+                ->setHeader('X-CSRF-TOKEN', csrf_hash()) // CRITICAL: Send new token
                 ->setBody($result['fileData']);
         }
 
-        return redirect()->back()->with('error', $result['message'] ?? 'Export failed.');
+        return $this->response->setStatusCode(500)->setJSON(['message' => $result['message'] ?? 'Export failed.']);
     }
 
     /**

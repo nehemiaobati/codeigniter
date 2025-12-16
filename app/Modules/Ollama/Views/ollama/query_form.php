@@ -428,7 +428,6 @@
 
 <!-- Hidden Forms/Modals -->
 <form id="downloadForm" method="post" action="<?= url_to('ollama.download_document') ?>" target="_blank" class="d-none">
-    <?= csrf_field() ?>
     <input type="hidden" name="content" id="dl_content">
     <input type="hidden" name="format" id="dl_format">
 </form>
@@ -485,6 +484,7 @@
                     deleteMedia: '<?= url_to('ollama.delete_media') ?>',
                     settings: '<?= url_to('ollama.settings.update') ?>',
                     stream: '<?= url_to('ollama.stream') ?>',
+                    download: '<?= url_to('ollama.download_document') ?>',
                     deletePromptBase: '<?= url_to('ollama.prompts.delete', 0) ?>'.slice(0, -1)
                 }
             };
@@ -534,15 +534,26 @@
                         'X-Requested-With': 'XMLHttpRequest'
                     }
                 });
-                const responseData = await res.json();
 
-                const newToken = responseData.token || responseData.csrf_token;
-                if (newToken) this.refreshCsrf(newToken);
+                // 1. Check Headers for CSRF (Primary Defense)
+                const headerToken = res.headers.get('X-CSRF-TOKEN');
+                if (headerToken) this.refreshCsrf(headerToken);
+
+                // Parse JSON regardless of status to check for CSRF token in error responses
+                const responseData = await res.json().catch(() => ({}));
+
+                // 2. Check Body for CSRF (Secondary/Legacy)
+                const bodyToken = responseData.token || responseData.csrf_token;
+                if (bodyToken) this.refreshCsrf(bodyToken);
+
+                if (!res.ok) {
+                    throw new Error(responseData.message || 'Request failed');
+                }
 
                 return responseData;
             } catch (err) {
                 console.error('AJAX Error:', err);
-                this.ui.showToast('Network error occurred.');
+                this.ui.showToast(err.message || 'Network error occurred.');
                 throw err;
             }
         }
@@ -619,7 +630,10 @@
                     try {
                         const data = await this.app.sendAjax(this.app.config.endpoints.settings, fd);
                         this.showToast(data.status === 'success' ? 'Setting saved.' : 'Failed to save.');
-                    } catch (e) {}
+                    } catch (e) {
+                        // Attempt to parse/refresh if error object has token (handled by sendAjax mostly but verify)
+                        console.error(e);
+                    }
                 });
             });
         }
@@ -664,13 +678,74 @@
 
         setupDownloads() {
             document.querySelectorAll('.download-action').forEach(btn => {
-                btn.addEventListener('click', (e) => {
+                btn.addEventListener('click', async (e) => {
                     e.preventDefault();
                     const rawDoc = document.getElementById('raw-response');
-                    if (rawDoc) {
-                        document.getElementById('dl_content').value = rawDoc.value;
-                        document.getElementById('dl_format').value = e.target.dataset.format;
-                        document.getElementById('downloadForm').submit();
+                    if (!rawDoc || !rawDoc.value) return;
+
+                    const format = e.target.dataset.format;
+                    const content = rawDoc.value;
+                    const btnEl = e.target;
+
+                    // Visual Feedback
+                    const originalText = btnEl.textContent;
+                    btnEl.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Downloading...';
+                    btnEl.closest('.dropdown').querySelector('.dropdown-toggle').disabled = true;
+
+                    try {
+                        const fd = new FormData();
+                        fd.append(this.app.config.csrfName, this.app.config.csrfHash);
+                        fd.append('content', content);
+                        fd.append('format', format);
+
+                        const response = await fetch(this.app.config.endpoints.download, {
+                            method: 'POST',
+                            body: fd,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+
+                        // Check for CSRF Header
+                        const headerToken = response.headers.get('X-CSRF-TOKEN');
+                        if (headerToken) this.app.refreshCsrf(headerToken);
+
+                        if (!response.ok) {
+                            const err = await response.json();
+                            throw new Error(err.message || 'Download failed');
+                        }
+
+                        // Handle Blob
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        // Get filename from header if possible, else default
+                        const disposition = response.headers.get('Content-Disposition');
+                        let filename = `ollama-export.${format}`;
+                        if (disposition && disposition.indexOf('attachment') !== -1) {
+                            const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                            const matches = filenameRegex.exec(disposition);
+                            if (matches != null && matches[1]) {
+                                filename = matches[1].replace(/['"]/g, '');
+                            }
+                        }
+                        a.download = filename;
+
+                        document.body.appendChild(a);
+                        a.click();
+
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        this.showToast('Download started');
+
+                    } catch (err) {
+                        console.error(err);
+                        this.showToast(err.message);
+                    } finally {
+                        btnEl.textContent = originalText;
+                        btnEl.closest('.dropdown').querySelector('.dropdown-toggle').disabled = false;
                     }
                 });
             });
@@ -1053,6 +1128,9 @@
                 const data = await this.app.sendAjax(action, fd);
 
                 if (data.status === 'success') {
+                    // Update CSRF if present (sendAjax does it, but redundant check doesn't hurt)
+                    if (data.csrf_token) this.app.refreshCsrf(data.csrf_token);
+
                     // 1. Ensure Result Card Exists
                     this.app.ui.ensureResultCardExists();
 
@@ -1098,9 +1176,14 @@
                     }
                 });
 
+                // Immediate header check (Essential if stream fails/closes early)
+                const headerToken = response.headers.get('X-CSRF-TOKEN');
+                if (headerToken) this.app.refreshCsrf(headerToken);
+
                 if (!response.ok) {
                     try {
                         const errRes = await response.json();
+                        // Check body token in error response
                         if (errRes.csrf_token || errRes.token) {
                             this.app.refreshCsrf(errRes.csrf_token || errRes.token);
                         }
@@ -1121,6 +1204,7 @@
 
                 // Create a temporary content accumulator
                 let fullText = '';
+                let buffer = ''; // Buffer for split chunks
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
 
@@ -1131,39 +1215,47 @@
                     } = await reader.read();
                     if (done) break;
 
-                    const chunk = decoder.decode(value);
-                    const lines = chunk.split('\n');
+                    buffer += decoder.decode(value, {
+                        stream: true
+                    });
 
-                    for (const line of lines) {
-                        if (line.startsWith('data: ')) {
-                            try {
-                                const payload = JSON.parse(line.substring(6));
+                    // Split by double newline (SSE standard delimiter)
+                    const parts = buffer.split('\n\n');
+                    buffer = parts.pop(); // Keep incomplete message in buffer
 
-                                if (payload.error) {
-                                    this.app.ui.showToast(payload.error);
-                                    if (payload.csrf_token) this.app.refreshCsrf(payload.csrf_token);
-                                    return; // Stop
-                                }
+                    for (const part of parts) {
+                        const lines = part.split('\n');
 
-                                if (payload.text) {
-                                    fullText += payload.text;
-                                    // Use Marked if available, else raw text
-                                    if (typeof marked !== 'undefined') {
-                                        resultBody.innerHTML = marked.parse(fullText);
-                                    } else {
-                                        resultBody.innerText = fullText;
+                        for (const line of lines) {
+                            if (line.trim().startsWith('data: ')) {
+                                try {
+                                    const payload = JSON.parse(line.trim().substring(6));
+
+                                    if (payload.csrf_token) {
+                                        this.app.refreshCsrf(payload.csrf_token);
                                     }
-                                }
 
-                                if (payload.cost) {
-                                    this.app.ui.showToast(`Initial Cost: ${payload.cost}`);
-                                }
+                                    if (payload.error) {
+                                        this.app.ui.showToast(payload.error);
+                                        return; // Stop
+                                    }
 
-                                if (payload.csrf_token) {
-                                    this.app.refreshCsrf(payload.csrf_token);
+                                    if (payload.text) {
+                                        fullText += payload.text;
+                                        // Use Marked if available, else raw text
+                                        if (typeof marked !== 'undefined') {
+                                            resultBody.innerHTML = marked.parse(fullText);
+                                        } else {
+                                            resultBody.innerText = fullText;
+                                        }
+                                    }
+
+                                    if (payload.cost) {
+                                        this.app.ui.showToast(`Initial Cost: ${payload.cost}`);
+                                    }
+                                } catch (e) {
+                                    // Partial JSON ignore
                                 }
-                            } catch (e) {
-                                // Partial JSON ignore
                             }
                         }
                     }
