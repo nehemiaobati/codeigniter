@@ -264,24 +264,23 @@ class OllamaController extends BaseController
      */
     public function stream(): ResponseInterface
     {
+        // Setup SSE Headers Immediately
+        $this->response->setContentType('text/event-stream');
+        $this->response->setHeader('Cache-Control', 'no-cache');
+        $this->response->setHeader('Connection', 'keep-alive');
+        $this->response->setHeader('X-Accel-Buffering', 'no');
+        $this->response->setHeader('X-CSRF-TOKEN', csrf_hash()); // Critical: Send token in header for early access
+
         $userId = (int) session()->get('userId');
         $user = $this->userModel->find($userId);
 
         if (!$user) {
-            $this->response->setContentType('text/event-stream');
             $this->response->setBody("data: " . json_encode([
                 'error' => 'User not found',
                 'csrf_token' => csrf_hash()
             ]) . "\n\n");
             return $this->response;
         }
-
-        // Setup SSE Headers
-        $this->response->setContentType('text/event-stream');
-        $this->response->setHeader('Cache-Control', 'no-cache');
-        $this->response->setHeader('Connection', 'keep-alive');
-        $this->response->setHeader('X-Accel-Buffering', 'no');
-        $this->response->setHeader('X-CSRF-TOKEN', csrf_hash()); // Critical: Send token in header for early access
 
         // Input Validation
         $inputText = (string) $this->request->getPost('prompt');

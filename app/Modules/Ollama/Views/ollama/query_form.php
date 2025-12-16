@@ -1176,7 +1176,6 @@
                     }
                 });
 
-                // Immediate header check (Essential if stream fails/closes early)
                 const headerToken = response.headers.get('X-CSRF-TOKEN');
                 if (headerToken) this.app.refreshCsrf(headerToken);
 
