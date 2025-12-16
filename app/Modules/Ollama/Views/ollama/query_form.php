@@ -380,6 +380,16 @@
             </div>
         </div>
 
+        <!-- Stream Toggle -->
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input setting-toggle" type="checkbox" id="streamOutput"
+                data-key="stream_output_enabled" <?= (isset($stream_output_enabled) && $stream_output_enabled) ? 'checked' : '' ?>>
+            <label class="form-check-label fw-medium" for="streamOutput">Stream Response</label>
+            <div class="form-text text-muted small lh-sm">
+                Typewriter effect (Tokens appear as they are generated).
+            </div>
+        </div>
+
         <hr>
 
         <!-- Saved Prompts -->
@@ -455,6 +465,7 @@
 <?= $this->section('scripts') ?>
 <script src="<?= base_url('assets/highlight/highlight.js') ?>"></script>
 <script src="<?= base_url('assets/tinymce/tinymce.min.js') ?>"></script>
+<script src="<?= base_url('assets/marked/marked.min.js') ?>"></script>
 <script>
     /**
      * Ollama Module - Frontend Application
@@ -473,6 +484,7 @@
                     upload: '<?= url_to('ollama.upload_media') ?>',
                     deleteMedia: '<?= url_to('ollama.delete_media') ?>',
                     settings: '<?= url_to('ollama.settings.update') ?>',
+                    stream: '<?= url_to('ollama.stream') ?>',
                     deletePromptBase: '<?= url_to('ollama.prompts.delete', 0) ?>'.slice(0, -1)
                 }
             };
@@ -485,6 +497,14 @@
         }
 
         init() {
+            // Configure Marked.js
+            if (typeof marked !== 'undefined') {
+                marked.use({
+                    breaks: true,
+                    gfm: true
+                });
+            }
+
             this.ui.init();
             this.uploader.init();
             this.prompts.init();
@@ -1018,8 +1038,19 @@
             const form = document.getElementById('ollamaForm');
             const fd = new FormData(form);
 
+            // Check Stream Toggle
+            const isStream = document.getElementById('streamOutput')?.checked;
+
+            if (isStream) {
+                await this.handleStream(fd);
+            } else {
+                await this.handleStandard(fd, form.action);
+            }
+        }
+
+        async handleStandard(fd, action) {
             try {
-                const data = await this.app.sendAjax(form.action, fd);
+                const data = await this.app.sendAjax(action, fd);
 
                 if (data.status === 'success') {
                     // 1. Ensure Result Card Exists
@@ -1047,6 +1078,107 @@
             } catch (err) {
                 console.error(err);
                 this.app.ui.showToast('Error during generation.');
+            } finally {
+                this.app.ui.setLoading(false);
+            }
+        }
+
+        async handleStream(fd) {
+            try {
+                // Ensure CSRF
+                if (!fd.has(this.app.config.csrfName)) {
+                    fd.append(this.app.config.csrfName, this.app.config.csrfHash);
+                }
+
+                const response = await fetch(this.app.config.endpoints.stream, {
+                    method: 'POST',
+                    body: fd,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (!response.ok) {
+                    try {
+                        const errRes = await response.json();
+                        if (errRes.csrf_token || errRes.token) {
+                            this.app.refreshCsrf(errRes.csrf_token || errRes.token);
+                        }
+                        throw new Error(errRes.message || 'Stream failed');
+                    } catch (e) {
+                        if (e.message !== 'Stream failed') throw new Error('Network error'); // Re-throw if not ours
+                        throw e;
+                    }
+                }
+
+                this.app.ui.ensureResultCardExists();
+                const resultBody = document.getElementById('ai-response-body');
+                const rawResponse = document.getElementById('raw-response');
+
+                // Clear previous if any
+                resultBody.innerHTML = '';
+                rawResponse.value = '';
+
+                // Create a temporary content accumulator
+                let fullText = '';
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const {
+                        done,
+                        value
+                    } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const payload = JSON.parse(line.substring(6));
+
+                                if (payload.error) {
+                                    this.app.ui.showToast(payload.error);
+                                    if (payload.csrf_token) this.app.refreshCsrf(payload.csrf_token);
+                                    return; // Stop
+                                }
+
+                                if (payload.text) {
+                                    fullText += payload.text;
+                                    // Use Marked if available, else raw text
+                                    if (typeof marked !== 'undefined') {
+                                        resultBody.innerHTML = marked.parse(fullText);
+                                    } else {
+                                        resultBody.innerText = fullText;
+                                    }
+                                }
+
+                                if (payload.cost) {
+                                    this.app.ui.showToast(`Initial Cost: ${payload.cost}`);
+                                }
+
+                                if (payload.csrf_token) {
+                                    this.app.refreshCsrf(payload.csrf_token);
+                                }
+                            } catch (e) {
+                                // Partial JSON ignore
+                            }
+                        }
+                    }
+                    // Auto scroll
+                    this.app.ui.setupAutoScroll();
+                }
+
+                // Final Polish
+                rawResponse.value = fullText;
+                this.app.uploader.clearUploads();
+                this.app.ui.setupCodeHighlighting();
+
+            } catch (err) {
+                console.error(err);
+                this.app.ui.showToast('Stream failed.');
             } finally {
                 this.app.ui.setLoading(false);
             }

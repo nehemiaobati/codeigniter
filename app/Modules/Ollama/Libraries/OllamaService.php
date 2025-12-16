@@ -80,7 +80,7 @@ class OllamaService
     public function generateChat(string $model, array $messages): array
     {
         // 1. Prepare Payload
-        $config = $this->payloadService->getPayloadConfig($model, $messages, false); // stream=false for now
+        $config = $this->payloadService->getPayloadConfig($model, $messages, false); // stream=false
 
         try {
             // 2. Send Request
@@ -119,6 +119,84 @@ class OllamaService
             return ['error' => 'Failed to connect to Ollama. Is it running?'];
         }
     }
+
+    /**
+     * Generates a streaming chat response from Ollama.
+     *
+     * @param string $model
+     * @param array $messages
+     * @param callable $callback Function to handle each chunk string.
+     * @return array ['usage' => array] or ['error' => string]
+     */
+    public function generateStream(string $model, array $messages, callable $callback): array
+    {
+        $config = $this->payloadService->getPayloadConfig($model, $messages, true); // stream=true
+        $usage = [];
+
+        try {
+            // Using CURL directly for streaming as CI4 CurlRequest doesn't support stream callbacks easily in all versions
+            // or to have finer control. However, CI4 does support 'debug' or 'on_progress' but reading body chunks is cleaner with raw curl or a custom handler.
+            // Let's stick to a robust implementation using a reading loop if possible, or a callback.
+            // CI4's CurlRequest supports 'stream' option which returns a resource, but parsing JSON chunks from a stream is tricky.
+            // EASIEST WAY: Use a custom curl execution loop.
+
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $config['url']);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $config['body']);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, false); // Don't return, write to callback
+            curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $chunk) use ($callback, &$usage) {
+                // Ollama sends multiple JSON objects in one chunk sometimes, or partials.
+                // Each line is a JSON object.
+                // We need to buffer partial lines if they occur (though curl usually delivers full packets).
+                // For simplicity, let's assume line-delimited JSON.
+
+                $lines = explode("\n", $chunk);
+                foreach ($lines as $line) {
+                    $line = trim($line);
+                    if (empty($line)) continue;
+
+                    $data = json_decode($line, true);
+                    if ($data) {
+                        if (isset($data['message']['content'])) {
+                            $callback($data['message']['content']);
+                        }
+                        if (isset($data['done']) && $data['done'] === true) {
+                            $usage = [
+                                'total_duration' => $data['total_duration'] ?? 0,
+                                'load_duration' => $data['load_duration'] ?? 0,
+                                'prompt_eval_count' => $data['prompt_eval_count'] ?? 0,
+                                'eval_count' => $data['eval_count'] ?? 0,
+                            ];
+                        }
+                    }
+                }
+                return strlen($chunk);
+            });
+
+            curl_exec($ch);
+
+            if (curl_errno($ch)) {
+                $error = curl_error($ch);
+                curl_close($ch);
+                return ['error' => "Curl Error: $error"];
+            }
+
+            $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($statusCode !== 200) {
+                return ['error' => "Ollama API returned status $statusCode"];
+            }
+
+            return ['success' => true, 'usage' => $usage];
+        } catch (\Exception $e) {
+            log_message('error', 'Ollama Stream Failed: ' . $e->getMessage());
+            return ['error' => 'Streaming failed: ' . $e->getMessage()];
+        }
+    }
+
     /**
      * Wrapper for chat generation to match MemoryService expectation.
      *

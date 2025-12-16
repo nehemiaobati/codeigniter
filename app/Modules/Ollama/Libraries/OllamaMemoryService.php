@@ -36,7 +36,14 @@ class OllamaMemoryService
     /**
      * Main orchestration method for handling a user chat interaction.
      */
-    public function processChat(string $prompt, ?string $model = null): array
+    /**
+     * Main orchestration method for handling a user chat interaction.
+     *
+     * @param string $prompt
+     * @param string|null $model
+     * @param array $images Base64 encoded images
+     */
+    public function processChat(string $prompt, ?string $model = null, array $images = []): array
     {
         // 1. Build Context (Gemini Style)
         $contextData = $this->_getRelevantContext($prompt);
@@ -44,10 +51,15 @@ class OllamaMemoryService
         // 2. Construct System Prompt
         $systemPrompt = $this->_constructSystemPrompt($contextData['context']);
 
-        // 3. Assemble Messages (System + User only, as history is in context)
+        // 3. Assemble Messages (System + User + Images)
+        $userMessage = ['role' => 'user', 'content' => $prompt];
+        if (!empty($images)) {
+            $userMessage['images'] = $images;
+        }
+
         $messages = [
             ['role' => 'system', 'content' => $systemPrompt],
-            ['role' => 'user', 'content' => $prompt]
+            $userMessage
         ];
 
         // 4. Call API
