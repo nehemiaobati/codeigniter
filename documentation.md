@@ -654,6 +654,19 @@ Ensure your code is well-documented, follows the project's architectural pattern
 
 **13.2. Changelog & Release History**
 
+**v1.8.7 - 2025-12-17**
+
+### Changed
+
+- **Ollama Module Refactoring (PHP 8.2+ Modernization):**
+  - Applied **Constructor Property Promotion** across all 5 Ollama module files for cleaner, more concise code.
+  - **OllamaController:** Extracted helper methods (`_processUploadedFiles`, `_hasBalance`, `_buildMessages`, `_buildUserMessage`) following DRY principle to eliminate code duplication in `generate()` and `stream()` methods.
+  - **OllamaService:** Refactored with constructor property promotion and removed redundant comments for improved readability.
+  - **OllamaMemoryService:** Streamlined context building loop and simplified decay logic with fluent query chains.
+  - **OllamaDocumentService:** Replaced `if-elseif` block with **PHP 8.0 `match` expression** for format selection, improving code clarity.
+  - **OllamaPayloadService:** Simplified message formatting using `array_map()` for cleaner array transformations.
+  - All files now follow **PSR-12** strictly and leverage modern PHP syntax while maintaining 100% backward compatibility.
+
 **v1.8.6 - 2025-12-14**
 
 ### Fixed
