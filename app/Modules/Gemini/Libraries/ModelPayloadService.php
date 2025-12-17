@@ -44,7 +44,11 @@ class ModelPayloadService
                 'method' => $isStream ? 'streamGenerateContent' : 'generateContent',
                 'payload' => [
                     "contents" => [["role" => "user", "parts" => $parts]],
-                    "generationConfig" => ["thinkingConfig" => ["thinkingLevel" => "HIGH"]],
+                    "generationConfig" => [
+                        "thinkingConfig" => ["thinkingLevel" => "HIGH"],
+                        "temperature" => 1,
+                        "topP" => 0.95,
+                    ],
                     "tools" => [["googleSearch" => new stdClass()]],
                 ]
             ],
@@ -52,7 +56,11 @@ class ModelPayloadService
                 'method' => $isStream ? 'streamGenerateContent' : 'generateContent',
                 'payload' => [
                     "contents" => [["role" => "user", "parts" => $parts]],
-                    "generationConfig" => ["thinkingConfig" => ["thinkingBudget" => 32768]],
+                    "generationConfig" => [
+                        "thinkingConfig" => ["thinkingBudget" => 32768],
+                        "temperature" => 1,
+                        "topP" => 0.95,
+                    ],
                     "tools" => [["googleSearch" => new stdClass()]],
                 ]
             ],
@@ -62,7 +70,11 @@ class ModelPayloadService
                 'method' => $isStream ? 'streamGenerateContent' : 'generateContent',
                 'payload' => [
                     "contents" => [["role" => "user", "parts" => $parts]],
-                    "generationConfig" => ["thinkingConfig" => ["thinkingBudget" => -1]],
+                    "generationConfig" => [
+                        "thinkingConfig" => ["thinkingBudget" => -1],
+                        "temperature" => 1,
+                        "topP" => 0.95,
+                    ],
                     "tools" => [["googleSearch" => new stdClass()]],
                 ]
             ],
@@ -70,7 +82,11 @@ class ModelPayloadService
                 'method' => $isStream ? 'streamGenerateContent' : 'generateContent',
                 'payload' => [
                     "contents" => [["role" => "user", "parts" => $parts]],
-                    "generationConfig" => ["thinkingConfig" => ["thinkingBudget" => 0]],
+                    "generationConfig" => [
+                        "thinkingConfig" => ["thinkingBudget" => 0],
+                        "temperature" => 1,
+                        "topP" => 0.95,
+                    ],
                     "tools" => [["googleSearch" => new stdClass()]],
                 ]
             ],
@@ -80,7 +96,10 @@ class ModelPayloadService
                 'method' => $isStream ? 'streamGenerateContent' : 'generateContent',
                 'payload' => [
                     "contents" => [["role" => "user", "parts" => $parts]],
-                    "generationConfig" => new stdClass(),
+                    "generationConfig" => [
+                        "temperature" => 1,
+                        "topP" => 0.95,
+                    ],
                     "tools" => [["googleSearch" => new stdClass()]],
                 ]
             ],
@@ -88,7 +107,10 @@ class ModelPayloadService
                 'method' => $isStream ? 'streamGenerateContent' : 'generateContent',
                 'payload' => [
                     "contents" => [["role" => "user", "parts" => $parts]],
-                    "generationConfig" => new stdClass(),
+                    "generationConfig" => [
+                        "temperature" => 1,
+                        "topP" => 0.95,
+                    ],
                 ]
             ],
 
@@ -100,6 +122,8 @@ class ModelPayloadService
                     "generationConfig" => [
                         "responseModalities" => ["IMAGE", "TEXT"],
                         "imageConfig" => ["image_size" => "1K"],
+                        "temperature" => 1,
+                        "topP" => 0.95,
                     ],
                     "tools" => [["googleSearch" => new stdClass()]],
                 ]
@@ -110,6 +134,8 @@ class ModelPayloadService
                     "contents" => [["role" => "user", "parts" => $parts]],
                     "generationConfig" => [
                         "responseModalities" => ["IMAGE", "TEXT"],
+                        "temperature" => 1,
+                        "topP" => 0.95,
                     ],
                 ]
             ],
