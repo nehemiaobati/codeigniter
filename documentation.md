@@ -654,6 +654,19 @@ Ensure your code is well-documented, follows the project's architectural pattern
 
 **13.2. Changelog & Release History**
 
+**v1.8.8 - 2025-12-17**
+
+### Changed
+
+- **Gemini Module Refactoring (PHP 8.2+ Modernization & Logic Centralization):**
+  - Applied **Constructor Property Promotion** across all 6 Gemini module files (MemoryService, GeminiService, GeminiController, ModelPayloadService, DocumentService, MediaController).
+  - **MemoryService:** Created new `buildContextualPrompt()` method to centralize duplicated prompt construction logic previously found in both `GeminiController` and `GeminiService`. This eliminates ~40 lines of code duplication and establishes a single source of truth for context-aware prompt building.
+  - **GeminiService:** Removed duplicated `_prepareContext()` method, now delegates to `MemoryService::buildContextualPrompt()`.
+  - **GeminiController:** Removed duplicated `_prepareContext()` method, integrated with centralized `MemoryService::buildContextualPrompt()`.
+  - **ModelPayloadService:** Replaced large `switch ($modelId)` statement with **PHP 8.0 `match` expression** for cleaner, more maintainable model configuration selection.
+  - **DocumentService:** Replaced `if-elseif` format selection with **PHP 8.0 `match` expression**.
+  - All files now leverage modern PHP 8.2+ syntax while maintaining 100% business logic compatibility and passing syntax validation.
+
 **v1.8.7 - 2025-12-17**
 
 ### Changed
