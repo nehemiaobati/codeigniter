@@ -307,7 +307,11 @@ class OllamaController extends BaseController
             $selectedModel,
             $messages,
             function ($chunk) {
-                echo "data: " . json_encode(['text' => $chunk]) . "\n\n";
+                // Send each chunk with CSRF token for frontend refresh
+                echo "data: " . json_encode([
+                    'text' => $chunk,
+                    'csrf_token' => csrf_hash() // Inject fresh token with every chunk
+                ]) . "\n\n";
                 if (ob_get_level() > 0) ob_flush();
                 flush();
             }
@@ -317,8 +321,10 @@ class OllamaController extends BaseController
         if (isset($result['status']) && $result['status'] === 'error') {
             echo "data: " . json_encode([
                 'error' => $result['message'],
-                'csrf_token' => csrf_hash()
+                'csrf_token' => csrf_hash() // Inject fresh token for recovery
             ]) . "\n\n";
+            if (ob_get_level() > 0) ob_flush();
+            flush();
             exit;
         }
 
@@ -326,8 +332,10 @@ class OllamaController extends BaseController
         if (isset($result['error'])) {
             echo "data: " . json_encode([
                 'error' => $result['error'],
-                'csrf_token' => csrf_hash()
+                'csrf_token' => csrf_hash() // Inject fresh token for recovery
             ]) . "\n\n";
+            if (ob_get_level() > 0) ob_flush();
+            flush();
             exit;
         }
 
