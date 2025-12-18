@@ -229,8 +229,6 @@ class OllamaController extends BaseController
             return redirect()->back()->withInput()->with('error', $msg);
         }
 
-        log_message('debug', 'Response: ' . json_encode($response));
-
         // Extract result from new format or legacy format
         $resultText = $response['data']['result'] ?? $response['result'] ?? $response['response'] ?? '';
 
