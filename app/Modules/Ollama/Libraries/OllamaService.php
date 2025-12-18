@@ -255,117 +255,104 @@ class OllamaService
      * @param callable $callback Function to call for each chunk: function(string $chunk): void
      * @return array Response with 'status', 'message', and 'data' (containing 'usage' stats)
      */
-    public function generateStream(string $model, array $messages, callable $callback): array
+    /**
+     * Generate Chat Completion with Streaming (SSE)
+     *
+     * Streams chat response chunks in real-time using Server-Sent Events.
+     * Mirrored from GeminiService structure to support controller callbacks.
+     *
+     * @param string $model Model identifier
+     * @param array $messages Array of message objects
+     * @param callable $chunkCallback Function(string|array $chunk): void
+     * @param callable $completeCallback Function(string $fullText, ?array $usage): void
+     * @return void
+     */
+    public function generateStream(string $model, array $messages, callable $chunkCallback, callable $completeCallback = null): void
     {
-        // Input validation
+        // Default to no-op if completeCallback is missing (backward compatibility protection)
+        $completeCallback = $completeCallback ?? function () {};
+
         if (empty($model)) {
-            return [
-                'status' => 'error',
-                'message' => 'Model name cannot be empty',
-                'data' => null
-            ];
-        }
-
-        if (empty($messages)) {
-            return [
-                'status' => 'error',
-                'message' => 'Messages array cannot be empty',
-                'data' => null
-            ];
-        }
-
-        if (!is_callable($callback)) {
-            return [
-                'status' => 'error',
-                'message' => 'Callback must be a valid callable',
-                'data' => null
-            ];
+            $chunkCallback(['error' => 'Model name cannot be empty']);
+            return;
         }
 
         $config = $this->payloadService->getPayloadConfig($model, $messages, true);
-        $usage = [];
+
+        $buffer = '';
+        $fullText = '';
+        $usage = null;
 
         try {
             $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $config['url']);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $config['body']);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
-            curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $chunk) use ($callback, &$usage) {
-                $lines = explode("\n", $chunk);
-                foreach ($lines as $line) {
-                    $line = trim($line);
-                    if (empty($line)) continue;
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $config['url'],
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => $config['body'],
+                CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+                CURLOPT_WRITEFUNCTION => function ($ch, $chunk) use (&$buffer, &$fullText, &$usage, $chunkCallback) {
+                    $buffer .= $chunk;
+                    // Ollama sends JSON objects line by line (ndjson)
+                    // We process the buffer to extract complete lines
+                    while (($pos = strpos($buffer, "\n")) !== false) {
+                        $line = substr($buffer, 0, $pos);
+                        $buffer = substr($buffer, $pos + 1);
 
-                    $data = json_decode($line, true);
-                    if ($data) {
-                        if (isset($data['message']['content'])) {
-                            $callback($data['message']['content']);
-                        }
-                        if (isset($data['done']) && $data['done'] === true) {
-                            $usage = [
-                                'total_duration' => $data['total_duration'] ?? 0,
-                                'load_duration' => $data['load_duration'] ?? 0,
-                                'prompt_eval_count' => $data['prompt_eval_count'] ?? 0,
-                                'eval_count' => $data['eval_count'] ?? 0,
-                            ];
+                        $line = trim($line);
+                        if (empty($line)) continue;
+
+                        $data = json_decode($line, true);
+                        if ($data) {
+                            if (isset($data['message']['content'])) {
+                                $text = $data['message']['content'];
+                                $fullText .= $text;
+                                $chunkCallback($text);
+                            }
+                            if (isset($data['done']) && $data['done'] === true) {
+                                $usage = [
+                                    'total_duration' => $data['total_duration'] ?? 0,
+                                    'load_duration' => $data['load_duration'] ?? 0,
+                                    'prompt_eval_count' => $data['prompt_eval_count'] ?? 0,
+                                    'eval_count' => $data['eval_count'] ?? 0,
+                                ];
+                            }
+                            if (isset($data['error'])) {
+                                $chunkCallback(['error' => $data['error']]);
+                            }
                         }
                     }
+                    return strlen($chunk);
                 }
-                return strlen($chunk);
-            });
+            ]);
 
             curl_exec($ch);
 
             if (curl_errno($ch)) {
                 $error = curl_error($ch);
-                $errorNumber = curl_errno($ch);
                 curl_close($ch);
-                log_message('error', 'Ollama Stream cURL Error', [
-                    'error' => $error,
-                    'error_number' => $errorNumber,
-                    'model' => $model
-                ]);
-                return [
-                    'status' => 'error',
-                    'message' => "Connection Error: $error",
-                    'data' => null
-                ];
+                $chunkCallback(['error' => "Connection Error: $error"]);
+                return;
             }
 
             $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
 
             if ($statusCode !== 200) {
-                log_message('error', 'Ollama Stream Non-200 Status', [
-                    'status_code' => $statusCode,
-                    'model' => $model,
-                    'url' => $config['url']
-                ]);
-                return [
-                    'status' => 'error',
-                    'message' => "Ollama API returned status {$statusCode}",
-                    'data' => null
-                ];
+                // If 404/500, the last line in buffer might contain the error if not processed
+                // But usually we've handled errors in the loop if they were proper JSON.
+                // If it's a raw HTML error page, we might need to handle it.
+                $chunkCallback(['error' => "Ollama API returned status {$statusCode}"]);
+                return;
             }
 
-            return [
-                'status' => 'success',
-                'message' => 'Stream completed successfully',
-                'data' => ['usage' => $usage]
-            ];
+            // Stream finished successfully
+            $completeCallback($fullText, $usage);
         } catch (\Throwable $e) {
             log_message('error', 'Ollama Stream Failed', [
                 'exception' => $e->getMessage(),
-                'model' => $model,
-                'trace' => $e->getTraceAsString()
+                'model' => $model
             ]);
-            return [
-                'status' => 'error',
-                'message' => 'Streaming failed: ' . $e->getMessage(),
-                'data' => null
-            ];
+            $chunkCallback(['error' => 'Streaming failed: ' . $e->getMessage()]);
         }
     }
 

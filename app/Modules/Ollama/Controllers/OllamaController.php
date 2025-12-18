@@ -70,8 +70,11 @@ class OllamaController extends BaseController
         protected UserModel $userModel = new UserModel(),
         protected OllamaService $ollamaService = new OllamaService(),
         protected OllamaPromptModel $promptModel = new OllamaPromptModel(),
-        protected OllamaUserSettingsModel $userSettingsModel = new OllamaUserSettingsModel()
-    ) {}
+        protected OllamaUserSettingsModel $userSettingsModel = new OllamaUserSettingsModel(),
+        protected $db = null
+    ) {
+        $this->db = $db ?? \Config\Database::connect();
+    }
 
     public function index(): string
     {
@@ -255,6 +258,12 @@ class OllamaController extends BaseController
             ->with('success', 'Generated successfully. Cost: ' . self::COST_PER_REQUEST . ' credits.');
     }
 
+    /**
+     * Handles streaming text generation via Server-Sent Events (SSE).
+     * Mirrored strictly from GeminiController::stream.
+     *
+     * @return ResponseInterface
+     */
     public function stream(): ResponseInterface
     {
         $userId = (int) session()->get('userId');
@@ -264,11 +273,11 @@ class OllamaController extends BaseController
             return $this->response->setStatusCode(401)->setJSON(['error' => 'User not found']);
         }
 
-        // Setup SSE Headers
+        // Setup SSE Headers (Mirrors Gemini _setupSSEHeaders inline or via method if copied)
         $this->response->setContentType('text/event-stream');
         $this->response->setHeader('Cache-Control', 'no-cache');
         $this->response->setHeader('Connection', 'keep-alive');
-        $this->response->setHeader('X-Accel-Buffering', 'no');
+        $this->response->setHeader('X-Accel-Buffering', 'no'); // Disable buffering for Nginx
 
         // Input Validation
         $inputText = (string) $this->request->getPost('prompt');
@@ -292,66 +301,73 @@ class OllamaController extends BaseController
             return $this->response;
         }
 
-        // Process Files
+        // 1. Prepare Context & Files
         $images = $this->_processUploadedFiles($uploadedFileIds, $userId);
 
-        // Build Messages
         $userSetting = $this->userSettingsModel->where('user_id', $userId)->first();
         $isAssistantMode = $userSetting ? $userSetting->assistant_mode_enabled : true;
 
+        // Context Construction (Simplified for Ollama compared to Gemini's MemoryService for now, but preserving flow)
         $messages = $isAssistantMode
             ? [['role' => 'system', 'content' => 'You are a helpful AI assistant.']]
             : [];
 
         $messages[] = $this->_buildUserMessage($inputText, $images);
 
-        // CRITICAL: Do NOT call session_write_close() - keep session open for CSRF token persistence
+        // Session Locking Prevention (Crucial mirroring of Gemini)
+        session_write_close();
 
         $this->response->sendHeaders();
         if (ob_get_level() > 0) ob_end_flush();
         flush();
 
-        $result = $this->ollamaService->generateStream(
+        // 3. Call Stream Service
+        // Note: We are adapting OllamaService to match GeminiService's signature: (params, chunkCallback, completeCallback)
+        $this->ollamaService->generateStream(
             $selectedModel,
             $messages,
             function ($chunk) {
-                // Send text chunks without CSRF token (like Gemini)
-                echo "data: " . json_encode(['text' => $chunk]) . "\n\n";
+                if (is_array($chunk) && isset($chunk['error'])) {
+                    echo "data: " . json_encode([
+                        'error' => $chunk['error'],
+                        'csrf_token' => csrf_hash()
+                    ]) . "\n\n";
+                } else {
+                    echo "data: " . json_encode(['text' => $chunk]) . "\n\n";
+                }
+                if (ob_get_level() > 0) ob_flush();
+                flush();
+            },
+            function ($fullText, $usageMetadata) use ($userId, $user) {
+                // 1. Calculate and Deduct Cost (Simplified for Ollama fixed cost)
+                // Re-open DB connection/transaction if needed, but for now strict mirror of logic flow
+
+                // Gemini wraps this in transaction, so we should too if possible, 
+                // but OllamaController simple logic used direct calls. 
+                // We will mirror the transaction block from Gemini for safety.
+                $this->db->transStart();
+
+                $this->userModel->deductBalance((int)$user->id, (string)self::COST_PER_REQUEST);
+
+                // Update Memory (If implemented in Ollama similarly)
+                // For now, we just perform the deduction as per original Ollama logic but in the completion callback
+
+                $this->db->transComplete();
+
+                // 3. Send Final Status Event
+                // Mirrors Gemini's `event: close` payload structure
+                $finalPayload = [
+                    'csrf_token' => csrf_hash(),
+                    'cost' => self::COST_PER_REQUEST
+                ];
+
+                echo "event: close\n";
+                echo "data: " . json_encode($finalPayload) . "\n\n";
+
                 if (ob_get_level() > 0) ob_flush();
                 flush();
             }
         );
-
-        // Handle errors with CSRF token  
-        if (isset($result['status']) && $result['status'] === 'error') {
-            echo "data: " . json_encode([
-                'error' => $result['message'],
-                'csrf_token' => csrf_hash() // Inject fresh token for recovery
-            ]) . "\n\n";
-            if (ob_get_level() > 0) ob_flush();
-            flush();
-            exit;
-        }
-
-        if (isset($result['error'])) {
-            echo "data: " . json_encode([
-                'error' => $result['error'],
-                'csrf_token' => csrf_hash() // Inject fresh token for recovery
-            ]) . "\n\n";
-            if (ob_get_level() > 0) ob_flush();
-            flush();
-            exit;
-        }
-
-        // Deduct balance after successful stream
-        $this->userModel->deductBalance((int)$user->id, (string)self::COST_PER_REQUEST);
-
-        // Send close event with CSRF token (like Gemini)
-        echo "event: close\n";
-        echo "data: " . json_encode([
-            'csrf_token' => csrf_hash(),
-            'cost' => self::COST_PER_REQUEST
-        ]) . "\n\n";
 
         exit;
     }
