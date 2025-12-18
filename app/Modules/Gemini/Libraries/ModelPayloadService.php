@@ -48,6 +48,7 @@ class ModelPayloadService
                         "thinkingConfig" => ["thinkingLevel" => "HIGH"],
                         "temperature" => 1,
                         "topP" => 0.95,
+                        "maxOutputTokens" => 8192,
                     ],
                     "tools" => [["googleSearch" => new stdClass()]],
                 ]
@@ -60,6 +61,7 @@ class ModelPayloadService
                         "thinkingConfig" => ["thinkingBudget" => 32768],
                         "temperature" => 1,
                         "topP" => 0.95,
+                        "maxOutputTokens" => 8192,
                     ],
                     "tools" => [["googleSearch" => new stdClass()]],
                 ]
@@ -74,6 +76,7 @@ class ModelPayloadService
                         "thinkingConfig" => ["thinkingBudget" => -1],
                         "temperature" => 1,
                         "topP" => 0.95,
+                        "maxOutputTokens" => 8192,
                     ],
                     "tools" => [["googleSearch" => new stdClass()]],
                 ]
@@ -86,6 +89,7 @@ class ModelPayloadService
                         "thinkingConfig" => ["thinkingBudget" => 0],
                         "temperature" => 1,
                         "topP" => 0.95,
+                        "maxOutputTokens" => 8192,
                     ],
                     "tools" => [["googleSearch" => new stdClass()]],
                 ]
@@ -99,6 +103,7 @@ class ModelPayloadService
                     "generationConfig" => [
                         "temperature" => 1,
                         "topP" => 0.95,
+                        "maxOutputTokens" => 8192,
                     ],
                     "tools" => [["googleSearch" => new stdClass()]],
                 ]
@@ -110,6 +115,7 @@ class ModelPayloadService
                     "generationConfig" => [
                         "temperature" => 1,
                         "topP" => 0.95,
+                        "maxOutputTokens" => 8192,
                     ],
                 ]
             ],
@@ -124,6 +130,7 @@ class ModelPayloadService
                         "imageConfig" => ["image_size" => "1K"],
                         "temperature" => 1,
                         "topP" => 0.95,
+                        "maxOutputTokens" => 8192,
                     ],
                     "tools" => [["googleSearch" => new stdClass()]],
                 ]
@@ -136,6 +143,7 @@ class ModelPayloadService
                         "responseModalities" => ["IMAGE", "TEXT"],
                         "temperature" => 1,
                         "topP" => 0.95,
+                        "maxOutputTokens" => 8192,
                     ],
                 ]
             ],
