@@ -40,7 +40,7 @@ class ModelPayloadService
         // Match expression returns structured config with method + payload
         $config = match ($modelId) {
             // Advanced Thinking Models (Pro) - Standard API
-            'gemini-3-pro-preview' => [
+            'gemini-3-pro-preview', 'gemini-3-flash-preview' => [
                 'method' => $isStream ? 'streamGenerateContent' : 'generateContent',
                 'payload' => [
                     "contents" => [["role" => "user", "parts" => $parts]],
