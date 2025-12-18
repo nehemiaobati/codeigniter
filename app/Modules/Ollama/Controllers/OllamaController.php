@@ -257,27 +257,33 @@ class OllamaController extends BaseController
 
     public function stream(): ResponseInterface
     {
-        $this->response->setContentType('text/event-stream');
-        $this->response->setHeader('Cache-Control', 'no-cache');
-        $this->response->setHeader('Connection', 'keep-alive');
-        $this->response->setHeader('X-Accel-Buffering', 'no');
-        $this->response->setHeader('X-CSRF-TOKEN', csrf_hash());
-
         $userId = (int) session()->get('userId');
         $user = $this->userModel->find($userId);
 
         if (!$user) {
+            return $this->response->setStatusCode(401)->setJSON(['error' => 'User not found']);
+        }
+
+        // Setup SSE Headers
+        $this->response->setContentType('text/event-stream');
+        $this->response->setHeader('Cache-Control', 'no-cache');
+        $this->response->setHeader('Connection', 'keep-alive');
+        $this->response->setHeader('X-Accel-Buffering', 'no');
+
+        // Input Validation
+        $inputText = (string) $this->request->getPost('prompt');
+        $uploadedFileIds = (array) $this->request->getPost('uploaded_media');
+        $selectedModel = (string) $this->request->getPost('model');
+
+        if (empty(trim($inputText)) && empty($uploadedFileIds)) {
             $this->response->setBody("data: " . json_encode([
-                'error' => 'User not found',
+                'error' => 'Please provide a prompt.',
                 'csrf_token' => csrf_hash()
             ]) . "\n\n");
             return $this->response;
         }
 
-        $inputText = (string) $this->request->getPost('prompt');
-        $uploadedFileIds = (array) $this->request->getPost('uploaded_media');
-        $selectedModel = (string) $this->request->getPost('model');
-
+        // Check Balance
         if (!$this->_hasBalance($user, self::COST_PER_REQUEST)) {
             $this->response->setBody("data: " . json_encode([
                 'error' => "Insufficient balance.",
@@ -286,8 +292,10 @@ class OllamaController extends BaseController
             return $this->response;
         }
 
+        // Process Files
         $images = $this->_processUploadedFiles($uploadedFileIds, $userId);
 
+        // Build Messages
         $userSetting = $this->userSettingsModel->where('user_id', $userId)->first();
         $isAssistantMode = $userSetting ? $userSetting->assistant_mode_enabled : true;
 
@@ -297,7 +305,7 @@ class OllamaController extends BaseController
 
         $messages[] = $this->_buildUserMessage($inputText, $images);
 
-        session_write_close();
+        // CRITICAL: Do NOT call session_write_close() - keep session open for CSRF token persistence
 
         $this->response->sendHeaders();
         if (ob_get_level() > 0) ob_end_flush();
@@ -307,17 +315,14 @@ class OllamaController extends BaseController
             $selectedModel,
             $messages,
             function ($chunk) {
-                // Send each chunk with CSRF token for frontend refresh
-                echo "data: " . json_encode([
-                    'text' => $chunk,
-                    'csrf_token' => csrf_hash() // Inject fresh token with every chunk
-                ]) . "\n\n";
+                // Send text chunks without CSRF token (like Gemini)
+                echo "data: " . json_encode(['text' => $chunk]) . "\n\n";
                 if (ob_get_level() > 0) ob_flush();
                 flush();
             }
         );
 
-        // Handle new standardized return format
+        // Handle errors with CSRF token  
         if (isset($result['status']) && $result['status'] === 'error') {
             echo "data: " . json_encode([
                 'error' => $result['message'],
@@ -328,7 +333,6 @@ class OllamaController extends BaseController
             exit;
         }
 
-        // Legacy error handling
         if (isset($result['error'])) {
             echo "data: " . json_encode([
                 'error' => $result['error'],
@@ -339,8 +343,10 @@ class OllamaController extends BaseController
             exit;
         }
 
+        // Deduct balance after successful stream
         $this->userModel->deductBalance((int)$user->id, (string)self::COST_PER_REQUEST);
 
+        // Send close event with CSRF token (like Gemini)
         echo "event: close\n";
         echo "data: " . json_encode([
             'csrf_token' => csrf_hash(),

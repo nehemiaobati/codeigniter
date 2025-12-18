@@ -1162,12 +1162,18 @@
         }
 
         async handleStream(fd) {
-            try {
-                // Ensure CSRF
-                if (!fd.has(this.app.config.csrfName)) {
-                    fd.append(this.app.config.csrfName, this.app.config.csrfHash);
-                }
+            this.app.ui.ensureResultCardExists();
+            const resultBody = document.getElementById('ai-response-body');
+            const rawResponse = document.getElementById('raw-response');
 
+            // Clear previous content
+            resultBody.innerHTML = '';
+            rawResponse.value = '';
+
+            let fullText = '';
+            let buffer = '';
+
+            try {
                 const response = await fetch(this.app.config.endpoints.stream, {
                     method: 'POST',
                     body: fd,
@@ -1176,34 +1182,7 @@
                     }
                 });
 
-                const headerToken = response.headers.get('X-CSRF-TOKEN');
-                if (headerToken) this.app.refreshCsrf(headerToken);
-
-                if (!response.ok) {
-                    try {
-                        const errRes = await response.json();
-                        // Check body token in error response
-                        if (errRes.csrf_token || errRes.token) {
-                            this.app.refreshCsrf(errRes.csrf_token || errRes.token);
-                        }
-                        throw new Error(errRes.message || 'Stream failed');
-                    } catch (e) {
-                        if (e.message !== 'Stream failed') throw new Error('Network error'); // Re-throw if not ours
-                        throw e;
-                    }
-                }
-
-                this.app.ui.ensureResultCardExists();
-                const resultBody = document.getElementById('ai-response-body');
-                const rawResponse = document.getElementById('raw-response');
-
-                // Clear previous if any
-                resultBody.innerHTML = '';
-                rawResponse.value = '';
-
-                // Create a temporary content accumulator
-                let fullText = '';
-                let buffer = ''; // Buffer for split chunks
+                // Read stream (don't check response.ok first - errors are in SSE format)
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
 
@@ -1230,15 +1209,18 @@
                                 try {
                                     const payload = JSON.parse(line.trim().substring(6));
 
+                                    // Handle CSRF token refresh (CRITICAL)
                                     if (payload.csrf_token) {
                                         this.app.refreshCsrf(payload.csrf_token);
                                     }
 
+                                    // Handle errors (with CSRF token already captured above)
                                     if (payload.error) {
                                         this.app.ui.showToast(payload.error);
-                                        return; // Stop
+                                        return; // Stop processing
                                     }
 
+                                    // Handle text chunks
                                     if (payload.text) {
                                         fullText += payload.text;
                                         // Use Marked if available, else raw text
@@ -1249,11 +1231,13 @@
                                         }
                                     }
 
+                                    // Handle cost/success message
                                     if (payload.cost) {
-                                        this.app.ui.showToast(`Initial Cost: ${payload.cost}`);
+                                        this.app.ui.showToast(`Cost: ${payload.cost}`);
                                     }
                                 } catch (e) {
                                     // Partial JSON ignore
+                                    console.warn('SSE parse error:', e);
                                 }
                             }
                         }
