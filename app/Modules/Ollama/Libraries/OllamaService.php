@@ -267,7 +267,7 @@ class OllamaService
      * @param callable $completeCallback Function(string $fullText, ?array $usage): void
      * @return void
      */
-    public function generateStream(string $model, array $messages, callable $chunkCallback, callable $completeCallback = null): void
+    public function generateStream(string $model, array $messages, callable $chunkCallback, ?callable $completeCallback = null): void
     {
         // Default to no-op if completeCallback is missing (backward compatibility protection)
         $completeCallback = $completeCallback ?? function () {};
@@ -329,13 +329,11 @@ class OllamaService
 
             if (curl_errno($ch)) {
                 $error = curl_error($ch);
-                curl_close($ch);
                 $chunkCallback(['error' => "Connection Error: $error"]);
                 return;
             }
 
             $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
 
             if ($statusCode !== 200) {
                 // If 404/500, the last line in buffer might contain the error if not processed
