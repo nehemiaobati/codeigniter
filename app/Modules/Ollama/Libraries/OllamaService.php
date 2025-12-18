@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules\Ollama\Libraries;
 
 use App\Modules\Ollama\Config\Ollama as OllamaConfig;
@@ -50,18 +52,55 @@ class OllamaService
         ]);
     }
 
-    public function checkConnection(): bool
+    /**
+     * Check Ollama Server Connection
+     *
+     * Performs a health check by sending a GET request to the Ollama server base URL.
+     * Used to verify server availability before making API calls.
+     *
+     * @return array Status array with 'status', 'message', and 'data' keys
+     */
+    public function checkConnection(): array
     {
         try {
             $url = rtrim($this->config->baseUrl, '/') . '/';
             $response = $this->client->get($url);
-            return $response->getStatusCode() === 200;
+
+            if ($response->getStatusCode() === 200) {
+                return [
+                    'status' => 'success',
+                    'message' => 'Connection successful',
+                    'data' => ['url' => $url]
+                ];
+            }
+
+            return [
+                'status' => 'error',
+                'message' => 'Server returned non-200 status',
+                'data' => ['status_code' => $response->getStatusCode()]
+            ];
         } catch (\Exception $e) {
-            log_message('error', 'Ollama Connection Check Failed: ' . $e->getMessage());
-            return false;
+            log_message('error', 'Ollama Connection Check Failed', [
+                'exception' => $e->getMessage(),
+                'url' => $url ?? $this->config->baseUrl,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return [
+                'status' => 'error',
+                'message' => 'Failed to connect to Ollama server',
+                'data' => ['error' => $e->getMessage()]
+            ];
         }
     }
 
+    /**
+     * Get Available Models from Ollama Server
+     *
+     * Fetches the list of installed models from the Ollama server.
+     * Returns model names in a standardized response structure.
+     *
+     * @return array Status array with 'status', 'message', and 'data' (array of model names)
+     */
     public function getModels(): array
     {
         try {
@@ -69,7 +108,16 @@ class OllamaService
             $response = $this->client->get($url);
 
             if ($response->getStatusCode() !== 200) {
-                return [];
+                log_message('error', 'Ollama Get Models Failed - Non-200 Status', [
+                    'status_code' => $response->getStatusCode(),
+                    'url' => $url,
+                    'response_body' => $response->getBody()
+                ]);
+                return [
+                    'status' => 'error',
+                    'message' => 'Failed to retrieve models from server',
+                    'data' => []
+                ];
             }
 
             $data = json_decode($response->getBody(), true);
@@ -81,15 +129,54 @@ class OllamaService
                 }
             }
 
-            return $models;
+            return [
+                'status' => 'success',
+                'message' => 'Models retrieved successfully',
+                'data' => $models
+            ];
         } catch (\Exception $e) {
-            log_message('error', 'Ollama Get Models Failed: ' . $e->getMessage());
-            return [];
+            log_message('error', 'Ollama Get Models Failed', [
+                'exception' => $e->getMessage(),
+                'url' => $url ?? 'unknown',
+                'trace' => $e->getTraceAsString()
+            ]);
+            return [
+                'status' => 'error',
+                'message' => 'Failed to connect to Ollama server',
+                'data' => []
+            ];
         }
     }
 
+    /**
+     * Generate Chat Completion (Synchronous)
+     *
+     * Sends a chat request to Ollama and waits for the complete response.
+     * Supports multimodal input (text + images) for vision-capable models.
+     *
+     * @param string $model Model identifier (e.g., 'llama3', 'mistral')
+     * @param array $messages Array of message objects with 'role' and 'content' keys
+     * @return array Response with 'status', 'message', and 'data' (containing 'result' and 'usage')
+     */
     public function generateChat(string $model, array $messages): array
     {
+        // Input validation
+        if (empty($model)) {
+            return [
+                'status' => 'error',
+                'message' => 'Model name cannot be empty',
+                'data' => null
+            ];
+        }
+
+        if (empty($messages)) {
+            return [
+                'status' => 'error',
+                'message' => 'Messages array cannot be empty',
+                'data' => null
+            ];
+        }
+
         $config = $this->payloadService->getPayloadConfig($model, $messages, false);
 
         try {
@@ -103,33 +190,98 @@ class OllamaService
 
             if ($statusCode !== 200) {
                 $error = json_decode($body, true)['error'] ?? 'Unknown API error';
-                log_message('error', "Ollama API Error ({$statusCode}): {$error}");
-                return ['error' => "Ollama Error: {$error}"];
+                log_message('error', 'Ollama API Error', [
+                    'status_code' => $statusCode,
+                    'error' => $error,
+                    'model' => $model,
+                    'url' => $config['url']
+                ]);
+                return [
+                    'status' => 'error',
+                    'message' => "Ollama Error: {$error}",
+                    'data' => null
+                ];
             }
 
             $data = json_decode($body, true);
 
             if (isset($data['message']['content'])) {
                 return [
-                    'result' => $data['message']['content'],
-                    'usage' => [
-                        'total_duration' => $data['total_duration'] ?? 0,
-                        'load_duration' => $data['load_duration'] ?? 0,
-                        'prompt_eval_count' => $data['prompt_eval_count'] ?? 0,
-                        'eval_count' => $data['eval_count'] ?? 0,
+                    'status' => 'success',
+                    'message' => 'Chat generated successfully',
+                    'data' => [
+                        'result' => $data['message']['content'],
+                        'usage' => [
+                            'total_duration' => $data['total_duration'] ?? 0,
+                            'load_duration' => $data['load_duration'] ?? 0,
+                            'prompt_eval_count' => $data['prompt_eval_count'] ?? 0,
+                            'eval_count' => $data['eval_count'] ?? 0,
+                        ]
                     ]
                 ];
             }
 
-            return ['error' => 'Invalid response format from Ollama.'];
+            log_message('error', 'Ollama Invalid Response Format', [
+                'model' => $model,
+                'response_keys' => array_keys($data)
+            ]);
+            return [
+                'status' => 'error',
+                'message' => 'Invalid response format from Ollama',
+                'data' => null
+            ];
         } catch (\Exception $e) {
-            log_message('error', 'Ollama Generate Failed: ' . $e->getMessage());
-            return ['error' => 'Failed to connect to Ollama. Is it running?'];
+            log_message('error', 'Ollama Generate Failed', [
+                'exception' => $e->getMessage(),
+                'model' => $model,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return [
+                'status' => 'error',
+                'message' => 'Failed to connect to Ollama. Is it running?',
+                'data' => null
+            ];
         }
     }
 
+    /**
+     * Generate Chat Completion with Streaming (SSE)
+     *
+     * Streams chat response chunks in real-time using Server-Sent Events.
+     * Each chunk is passed to the callback function as it arrives.
+     *
+     * @param string $model Model identifier (e.g., 'llama3', 'mistral')
+     * @param array $messages Array of message objects with 'role' and 'content' keys
+     * @param callable $callback Function to call for each chunk: function(string $chunk): void
+     * @return array Response with 'status', 'message', and 'data' (containing 'usage' stats)
+     */
     public function generateStream(string $model, array $messages, callable $callback): array
     {
+        // Input validation
+        if (empty($model)) {
+            return [
+                'status' => 'error',
+                'message' => 'Model name cannot be empty',
+                'data' => null
+            ];
+        }
+
+        if (empty($messages)) {
+            return [
+                'status' => 'error',
+                'message' => 'Messages array cannot be empty',
+                'data' => null
+            ];
+        }
+
+        if (!is_callable($callback)) {
+            return [
+                'status' => 'error',
+                'message' => 'Callback must be a valid callable',
+                'data' => null
+            ];
+        }
+
         $config = $this->payloadService->getPayloadConfig($model, $messages, true);
         $usage = [];
 
@@ -168,43 +320,115 @@ class OllamaService
 
             if (curl_errno($ch)) {
                 $error = curl_error($ch);
+                $errorNumber = curl_errno($ch);
                 curl_close($ch);
-                return ['error' => "Curl Error: $error"];
+                log_message('error', 'Ollama Stream cURL Error', [
+                    'error' => $error,
+                    'error_number' => $errorNumber,
+                    'model' => $model
+                ]);
+                return [
+                    'status' => 'error',
+                    'message' => "Connection Error: $error",
+                    'data' => null
+                ];
             }
 
             $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
 
             if ($statusCode !== 200) {
-                return ['error' => "Ollama API returned status $statusCode"];
+                log_message('error', 'Ollama Stream Non-200 Status', [
+                    'status_code' => $statusCode,
+                    'model' => $model,
+                    'url' => $config['url']
+                ]);
+                return [
+                    'status' => 'error',
+                    'message' => "Ollama API returned status {$statusCode}",
+                    'data' => null
+                ];
             }
 
-            return ['success' => true, 'usage' => $usage];
+            return [
+                'status' => 'success',
+                'message' => 'Stream completed successfully',
+                'data' => ['usage' => $usage]
+            ];
         } catch (\Throwable $e) {
-            log_message('error', 'Ollama Stream Failed: ' . $e->getMessage());
-            return ['error' => 'Streaming failed: ' . $e->getMessage()];
+            log_message('error', 'Ollama Stream Failed', [
+                'exception' => $e->getMessage(),
+                'model' => $model,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return [
+                'status' => 'error',
+                'message' => 'Streaming failed: ' . $e->getMessage(),
+                'data' => null
+            ];
         }
     }
 
+    /**
+     * Chat Wrapper Method (Legacy Compatibility)
+     *
+     * Convenience wrapper around generateChat() with optional model parameter.
+     * Uses the default model from config if not specified.
+     *
+     * @param array $messages Array of message objects with 'role' and 'content' keys
+     * @param string|null $model Optional model identifier (uses default if null)
+     * @return array Response with 'status', 'message', and 'data' (containing 'response', 'model', 'usage')
+     */
     public function chat(array $messages, ?string $model = null): array
     {
+        // Input validation
+        if (empty($messages)) {
+            return [
+                'status' => 'error',
+                'message' => 'Messages array cannot be empty',
+                'data' => null
+            ];
+        }
+
         $model = $model ?? $this->config->defaultModel;
         $response = $this->generateChat($model, $messages);
 
-        if (isset($response['error'])) {
-            return ['success' => false, 'error' => $response['error']];
+        // generateChat now returns standardized format
+        if ($response['status'] === 'error') {
+            return $response;
         }
 
         return [
-            'success'  => true,
-            'response' => $response['result'],
-            'model'    => $model,
-            'usage'    => $response['usage'] ?? []
+            'status'  => 'success',
+            'message' => 'Chat completed successfully',
+            'data' => [
+                'response' => $response['data']['result'],
+                'model'    => $model,
+                'usage'    => $response['data']['usage'] ?? []
+            ]
         ];
     }
 
+    /**
+     * Generate Vector Embeddings
+     *
+     * Converts text input into a dense vector representation using the configured
+     * embedding model. Used for semantic search and memory retrieval.
+     *
+     * @param string $input Text to convert into embedding vector
+     * @return array Response with 'status', 'message', and 'data' (array of floats or empty on error)
+     */
     public function embed(string $input): array
     {
+        // Input validation
+        if (empty($input)) {
+            return [
+                'status' => 'error',
+                'message' => 'Input text cannot be empty',
+                'data' => []
+            ];
+        }
+
         $url = rtrim($this->config->baseUrl, '/') . '/api/embed';
 
         $payload = [
@@ -213,7 +437,10 @@ class OllamaService
         ];
 
         try {
-            log_message('info', 'Ollama Embed Request: ' . json_encode($payload));
+            log_message('info', 'Ollama Embed Request', [
+                'model' => $this->config->embeddingModel,
+                'input_length' => strlen($input)
+            ]);
 
             $response = $this->client->post($url, [
                 'body'        => json_encode($payload),
@@ -222,8 +449,16 @@ class OllamaService
             ]);
 
             if ($response->getStatusCode() !== 200) {
-                log_message('error', 'Ollama Embed Error: ' . $response->getBody());
-                return [];
+                log_message('error', 'Ollama Embed Error', [
+                    'status_code' => $response->getStatusCode(),
+                    'response_body' => $response->getBody(),
+                    'model' => $this->config->embeddingModel
+                ]);
+                return [
+                    'status' => 'error',
+                    'message' => 'Failed to generate embeddings',
+                    'data' => []
+                ];
             }
 
             $data = json_decode($response->getBody(), true);
@@ -236,15 +471,38 @@ class OllamaService
             }
 
             if (empty($embedding)) {
-                log_message('error', 'Ollama Embed Empty Response: ' . json_encode($data));
-            } else {
-                log_message('info', 'Ollama Embed Success. Vector Size: ' . count($embedding));
+                log_message('error', 'Ollama Embed Empty Response', [
+                    'response_keys' => array_keys($data),
+                    'model' => $this->config->embeddingModel
+                ]);
+                return [
+                    'status' => 'error',
+                    'message' => 'Received empty embedding from server',
+                    'data' => []
+                ];
             }
 
-            return $embedding;
+            log_message('info', 'Ollama Embed Success', [
+                'vector_size' => count($embedding),
+                'model' => $this->config->embeddingModel
+            ]);
+
+            return [
+                'status' => 'success',
+                'message' => 'Embedding generated successfully',
+                'data' => $embedding
+            ];
         } catch (\Exception $e) {
-            log_message('error', 'Ollama Embed Failed: ' . $e->getMessage());
-            return [];
+            log_message('error', 'Ollama Embed Failed', [
+                'exception' => $e->getMessage(),
+                'model' => $this->config->embeddingModel,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return [
+                'status' => 'error',
+                'message' => 'Failed to connect to Ollama server',
+                'data' => []
+            ];
         }
     }
 }

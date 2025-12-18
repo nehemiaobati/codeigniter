@@ -79,10 +79,10 @@ class OllamaController extends BaseController
         $prompts = $this->promptModel->where('user_id', $userId)->findAll();
         $userSetting = $this->userSettingsModel->where('user_id', $userId)->first();
 
-        $availableModels = $this->ollamaService->getModels();
-        if (empty($availableModels)) {
-            $availableModels = ['llama3'];
-        }
+        $modelsResponse = $this->ollamaService->getModels();
+        $availableModels = ($modelsResponse['status'] === 'success' && !empty($modelsResponse['data']))
+            ? $modelsResponse['data']
+            : ['llama3'];
 
         $data = [
             'pageTitle'              => 'Local AI Workspace | Ollama',
@@ -203,6 +203,20 @@ class OllamaController extends BaseController
             ? (new \App\Modules\Ollama\Libraries\OllamaMemoryService($userId))->processChat($inputText, $selectedModel, $images)
             : $this->ollamaService->generateChat($selectedModel, $this->_buildMessages($inputText, $images));
 
+        // Handle new standardized return format
+        if (isset($response['status']) && $response['status'] === 'error') {
+            $msg = $response['message'] ?? 'Unknown error';
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'status'     => 'error',
+                    'message'    => $msg,
+                    'csrf_token' => csrf_hash()
+                ]);
+            }
+            return redirect()->back()->withInput()->with('error', $msg);
+        }
+
+        // Legacy error handling for non-standardized responses (e.g., from OllamaMemoryService)
         if (isset($response['error']) || (isset($response['success']) && !$response['success'])) {
             $msg = $response['error'] ?? 'Unknown error';
             if ($this->request->isAJAX()) {
@@ -216,7 +230,9 @@ class OllamaController extends BaseController
         }
 
         log_message('debug', 'Response: ' . json_encode($response));
-        $resultText = $response['result'] ?? $response['response'] ?? '';
+
+        // Extract result from new format or legacy format
+        $resultText = $response['data']['result'] ?? $response['result'] ?? $response['response'] ?? '';
 
         $this->userModel->deductBalance((int)$user->id, (string)self::COST_PER_REQUEST);
 
@@ -299,6 +315,16 @@ class OllamaController extends BaseController
             }
         );
 
+        // Handle new standardized return format
+        if (isset($result['status']) && $result['status'] === 'error') {
+            echo "data: " . json_encode([
+                'error' => $result['message'],
+                'csrf_token' => csrf_hash()
+            ]) . "\n\n";
+            exit;
+        }
+
+        // Legacy error handling
         if (isset($result['error'])) {
             echo "data: " . json_encode([
                 'error' => $result['error'],
