@@ -404,16 +404,19 @@
 
         <label class="form-label small fw-bold text-uppercase text-muted">Saved Prompts</label>
         <div id="saved-prompts-wrapper">
-            <?php if (!empty($prompts)): ?>
-                <div class="input-group mb-3">
-                    <select class="form-select form-select-sm" id="savedPrompts">
-                        <option value="" disabled selected>Select...</option>
+            <div class="input-group mb-3 <?= empty($prompts) ? 'd-none' : '' ?>" id="savedPromptsContainer">
+                <select class="form-select form-select-sm" id="savedPrompts">
+                    <option value="" disabled selected>Select...</option>
+                    <?php if (!empty($prompts)): ?>
                         <?php foreach ($prompts as $p): ?><option value="<?= esc($p->prompt_text, 'attr') ?>" data-id="<?= $p->id ?>"><?= esc($p->title) ?></option><?php endforeach; ?>
-                    </select>
-                    <button class="btn btn-outline-secondary btn-sm" type="button" id="usePromptBtn">Load</button>
-                    <button class="btn btn-outline-danger btn-sm" type="button" id="deletePromptBtn" disabled><i class="bi bi-trash"></i></button>
-                </div>
-            <?php else: ?><div class="alert alert-light border mb-3 small text-muted">No saved prompts yet.</div><?php endif; ?>
+                    <?php endif; ?>
+                </select>
+                <button class="btn btn-outline-secondary btn-sm" type="button" id="usePromptBtn">Load</button>
+                <button class="btn btn-outline-danger btn-sm" type="button" id="deletePromptBtn" disabled><i class="bi bi-trash"></i></button>
+            </div>
+            <div id="no-prompts-alert" class="alert alert-light border mb-3 small text-muted <?= !empty($prompts) ? 'd-none' : '' ?>">
+                No saved prompts yet.
+            </div>
         </div>
 
         <hr>
@@ -446,7 +449,7 @@
     </div>
 </div>
 
-<div class="toast-container position-fixed bottom-0 p-3 gemini-toast-container">
+<div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3 gemini-toast-container">
     <div id="liveToast" class="toast text-bg-dark" role="alert">
         <div class="toast-body"></div>
     </div>
@@ -667,6 +670,9 @@
             if (document.getElementById('results-card')) return;
 
             const container = document.getElementById('response-area-wrapper');
+            const emptyState = document.getElementById('empty-state');
+            if (emptyState) emptyState.remove();
+
             const html = `
         <div class="card blueprint-card shadow-sm border-primary" id="results-card">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
@@ -721,6 +727,9 @@
             const row = document.getElementById('response-area-wrapper');
             const existing = document.getElementById('results-card');
             if (existing) existing.remove();
+
+            const emptyState = document.getElementById('empty-state');
+            if (emptyState) emptyState.remove();
 
             const processingClass = isProcessing ? 'polling-pulse' : '';
             const title = isProcessing ? 'Generating Content...' : 'Studio Output';
@@ -902,34 +911,55 @@
                 });
                 form.onsubmit = (e) => {
                     e.preventDefault();
-                    this.savePrompt(new FormData(form));
+                    this.savePrompt(new FormData(form), form.action);
                 };
             }
         }
-        async savePrompt(fd) {
+        async savePrompt(fd, action) {
             const m = bootstrap.Modal.getInstance(document.getElementById('savePromptModal'));
             try {
-                const d = await this.app.sendAjax(fd.get('action'), fd);
+                const d = await this.app.sendAjax(action || fd.get('action'), fd);
                 if (d.status === 'success') {
                     this.app.ui.showToast('Saved!');
                     m.hide();
+
+                    const container = document.getElementById('savedPromptsContainer');
+                    const alert = document.getElementById('no-prompts-alert');
+                    if (container) container.classList.remove('d-none');
+                    if (alert) alert.classList.add('d-none');
+
                     const opt = document.createElement('option');
                     opt.value = d.prompt.prompt_text;
                     opt.textContent = d.prompt.title;
                     opt.dataset.id = d.prompt.id;
                     const sel = document.getElementById('savedPrompts');
-                    sel.appendChild(opt);
-                    sel.value = d.prompt.prompt_text;
-                    document.getElementById('deletePromptBtn').disabled = false;
-                } else this.app.ui.showToast(d.message);
-            } catch (e) {}
+                    if (sel) {
+                        sel.appendChild(opt);
+                        sel.value = d.prompt.prompt_text;
+                    }
+                    const delBtn = document.getElementById('deletePromptBtn');
+                    if (delBtn) delBtn.disabled = false;
+                } else this.app.ui.showToast(d.message || 'Failed');
+            } catch (e) {
+                console.error('Save Prompt Error:', e);
+                this.app.ui.showToast('Error saving prompt: ' + (e.message || 'System error'));
+            }
         }
         async deletePrompt() {
             const sel = document.getElementById('savedPrompts');
-            if (confirm('Delete?')) {
+            if (sel && sel.selectedIndex !== -1 && confirm('Delete?')) {
                 try {
-                    await this.app.sendAjax(this.app.config.endpoints.deletePromptBase + sel.options[sel.selectedIndex].dataset.id);
-                    sel.options[sel.selectedIndex].remove();
+                    const id = sel.options[sel.selectedIndex].dataset.id;
+                    const d = await this.app.sendAjax(this.app.config.endpoints.deletePromptBase + id);
+                    if (d.status === 'success') {
+                        sel.options[sel.selectedIndex].remove();
+                        if (sel.options.length <= 1) { // Only "Select..." left
+                            document.getElementById('savedPromptsContainer')?.classList.add('d-none');
+                            document.getElementById('no-prompts-alert')?.classList.remove('d-none');
+                        }
+                        sel.value = '';
+                        document.getElementById('deletePromptBtn').disabled = true;
+                    }
                 } catch (e) {}
             }
         }
