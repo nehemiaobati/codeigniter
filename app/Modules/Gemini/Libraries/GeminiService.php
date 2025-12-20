@@ -101,6 +101,7 @@ class GeminiService
             $contextData['memoryService']->updateMemory(
                 $prompt,
                 $apiResponse['result'],
+                $apiResponse['raw'] ?? '',
                 $contextData['usedInteractionIds'] ?? []
             );
         }
@@ -178,12 +179,21 @@ class GeminiService
                 }
 
                 $data = json_decode($response->getBody(), true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    log_message('error', "[GeminiService] JSON Decode Error: " . json_last_error_msg());
+                    return ['error' => 'Failed to decode API response.'];
+                }
+
                 $text = '';
                 foreach ($data['candidates'][0]['content']['parts'] ?? [] as $part) {
                     $text .= $part['text'] ?? '';
                 }
 
-                return ['result' => $text, 'usage' => $data['usageMetadata'] ?? null];
+                return [
+                    'result' => $text,
+                    'usage' => $data['usageMetadata'] ?? null,
+                    'raw' => $data
+                ];
             } catch (\Exception $e) {
                 log_message('error', "[GeminiService] Exception for model: {$model}, attempt {$i}/{$maxRetries} - {$e->getMessage()}");
                 if ($i === $maxRetries) {
@@ -210,6 +220,7 @@ class GeminiService
             $buffer = '';
             $fullText = '';
             $usage = null;
+            $rawChunks = [];
 
             $ch = curl_init();
             curl_setopt_array($ch, [
@@ -217,12 +228,15 @@ class GeminiService
                 CURLOPT_POST => true,
                 CURLOPT_POSTFIELDS => $config['body'],
                 CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-                CURLOPT_WRITEFUNCTION => function ($ch, $chunk) use (&$buffer, &$fullText, &$usage, $chunkCallback) {
+                CURLOPT_WRITEFUNCTION => function ($ch, $chunk) use (&$buffer, &$fullText, &$usage, &$rawChunks, $chunkCallback) {
                     $buffer .= $chunk;
                     $parsed = $this->_processStreamBuffer($buffer);
                     foreach ($parsed['chunks'] as $text) {
                         $fullText .= $text;
                         $chunkCallback($text);
+                    }
+                    if (!empty($parsed['raw_chunks'])) {
+                        $rawChunks = array_merge($rawChunks, $parsed['raw_chunks']);
                     }
                     if ($parsed['usage']) $usage = $parsed['usage'];
                     return strlen($chunk);
@@ -233,7 +247,7 @@ class GeminiService
             $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
             if ($code === 200) {
-                $completeCallback($fullText, $usage);
+                $completeCallback($fullText, $usage, $rawChunks);
                 return;
             }
         }
@@ -242,7 +256,7 @@ class GeminiService
 
     private function _processStreamBuffer(string &$buffer): array
     {
-        $result = ['chunks' => [], 'usage' => null];
+        $result = ['chunks' => [], 'usage' => null, 'raw_chunks' => []];
 
         // 1. Clean framing characters
         $buffer = ltrim($buffer, ", \n\r\t[");
@@ -274,6 +288,7 @@ class GeminiService
                     if (isset($data['usageMetadata'])) {
                         $result['usage'] = $data['usageMetadata'];
                     }
+                    $result['raw_chunks'][] = $data;
 
                     // Advance buffer past this object
                     $buffer = substr($buffer, $pos + 1);

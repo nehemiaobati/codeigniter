@@ -395,7 +395,7 @@ class GeminiController extends BaseController
                 if (ob_get_level() > 0) ob_flush();
                 flush();
             },
-            function ($fullText, $usageMetadata) use ($userId, $contextData, $inputText, $isVoiceEnabled) {
+            function ($fullText, $usageMetadata, $rawChunks = []) use ($userId, $contextData, $inputText, $isVoiceEnabled) {
                 // 1. Calculate and Deduct Cost
                 $audioUsage = null;
                 $audioUrl = null;
@@ -423,7 +423,7 @@ class GeminiController extends BaseController
 
                 // 2. Update Context Memory
                 if (isset($contextData['memoryService'])) {
-                    $contextData['memoryService']->updateMemory($inputText, $fullText, $contextData['usedInteractionIds']);
+                    $contextData['memoryService']->updateMemory($inputText, $fullText, $rawChunks, $contextData['usedInteractionIds']);
                 }
 
                 $this->db->transComplete();
