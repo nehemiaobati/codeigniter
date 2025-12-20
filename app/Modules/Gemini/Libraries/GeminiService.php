@@ -489,4 +489,87 @@ class GeminiService
             return ['status' => false, 'error' => 'Could not connect to the speech synthesis service.'];
         }
     }
+    /**
+     * Finalizes the streaming interaction by handling billing, memory updates, and audio generation.
+     * Use this to keep the Controller 'skinny'.
+     */
+    public function finalizeStreamInteraction(
+        int $userId,
+        string $inputText,
+        string $fullText,
+        ?array $usageMetadata,
+        array $rawChunks,
+        array $contextData,
+        bool $isVoiceEnabled
+    ): array {
+        $audioUsage = null;
+        $audioData = null;
+
+        // 1. Audio Generation (Optional)
+        if ($isVoiceEnabled && !empty($fullText)) {
+            $audioResult = $this->generateSpeech($fullText);
+            if ($audioResult['status']) {
+                $audioUsage = $audioResult['usage'] ?? null;
+                $audioData = $audioResult['audioData'];
+            }
+        }
+
+        $costData = ['costKSH' => 0];
+
+        // 2. Transaction: Billing & Memory
+        $this->db->transStart();
+
+        // Calculate & Deduct Cost
+        if ($usageMetadata) {
+            $costData = $this->calculateCost($usageMetadata, $audioUsage);
+            $deduction = number_format($costData['costKSH'], 4, '.', '');
+            $this->userModel->deductBalance($userId, $deduction);
+        }
+
+        // Update Memory
+        if (isset($contextData['memoryService'])) {
+            $contextData['memoryService']->updateMemory(
+                $inputText,
+                $fullText,
+                $rawChunks,
+                $contextData['usedInteractionIds'] ?? []
+            );
+        }
+
+        $this->db->transComplete();
+
+        if ($this->db->transStatus() === false) {
+            log_message('error', "[GeminiService] Transaction failed for User ID: {$userId}");
+            // We don't throw here to avoid crashing the stream close, but we log critically
+        }
+
+        return [
+            'costKSH' => $costData['costKSH'],
+            'audioData' => $audioData
+        ];
+    }
+    /**
+     * Stores a temporary file for Gemini multimodal context.
+     *
+     * @param \CodeIgniter\HTTP\Files\UploadedFile $file
+     * @param int $userId
+     * @return array [status => bool, filename => string, error => string|null]
+     */
+    public function storeTempMedia($file, int $userId): array
+    {
+        $userTempPath = WRITEPATH . 'uploads/gemini_temp/' . $userId . '/';
+
+        if (!is_dir($userTempPath)) {
+            if (!mkdir($userTempPath, 0755, true)) {
+                return ['status' => false, 'error' => 'Failed to create directory.'];
+            }
+        }
+
+        $fileName = $file->getRandomName();
+        if (!$file->move($userTempPath, $fileName)) {
+            return ['status' => false, 'error' => $file->getErrorString()];
+        }
+
+        return ['status' => true, 'filename' => $fileName, 'original_name' => $file->getClientName()];
+    }
 }

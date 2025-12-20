@@ -120,8 +120,12 @@ configure_project() {
     # Ensure composer installs dependencies required by your code (dompdf, php-ffmpeg, nlp-tools)
     composer install --no-dev --optimize-autoloader
 
-    echo "Creating .env file..."
-    create_env_file
+    if [ ! -f "${PROJECT_PATH}/.env" ]; then
+        echo "Creating .env file..."
+        create_env_file
+    else
+        echo ".env file already exists. Skipping creation to preserve your keys."
+    fi
 
     echo "Setting up Directory Permissions..."
     # Create specific directories required by your Controllers/Services

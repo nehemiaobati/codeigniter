@@ -217,22 +217,19 @@ class GeminiController extends BaseController
         }
 
         $file = $this->request->getFile('file');
-        $userTempPath = WRITEPATH . 'uploads/gemini_temp/' . $userId . '/';
 
-        if (!is_dir($userTempPath)) {
-            mkdir($userTempPath, 0755, true);
-        }
+        // Delegate storage to Service
+        $result = $this->geminiService->storeTempMedia($file, $userId);
 
-        $fileName = $file->getRandomName();
-        if (!$file->move($userTempPath, $fileName)) {
-            log_message('error', "Upload failed User {$userId}: " . $file->getErrorString());
+        if (!$result['status']) {
+            log_message('error', "Upload failed User {$userId}: " . ($result['error'] ?? 'Unknown error'));
             return $this->response->setStatusCode(500)->setJSON(['status' => 'error', 'message' => 'Save failed.']);
         }
 
         return $this->response->setJSON([
             'status'        => 'success',
-            'file_id'       => $fileName,
-            'original_name' => $file->getClientName(),
+            'file_id'       => $result['filename'],
+            'original_name' => $result['original_name'],
             'csrf_token'    => csrf_hash(),
         ]);
     }
@@ -402,48 +399,34 @@ class GeminiController extends BaseController
                 flush();
             },
             function ($fullText, $usageMetadata, $rawChunks = []) use ($userId, $contextData, $inputText, $isVoiceEnabled) {
-                // 1. Calculate and Deduct Cost
-                $audioUsage = null;
-                $audioUrl = null;
+                // Delegate all business logic to Service
+                $result = $this->geminiService->finalizeStreamInteraction(
+                    $userId,
+                    $inputText,
+                    $fullText,
+                    $usageMetadata,
+                    $rawChunks,
+                    $contextData,
+                    $isVoiceEnabled
+                );
 
-                // --- AUDIO GENERATION FOR STREAMING ---
-                if ($isVoiceEnabled && !empty($fullText)) {
-                    $audioResult = $this->geminiService->generateSpeech($fullText);
-                    if ($audioResult['status']) {
-                        $audioUsage = $audioResult['usage'] ?? null;
-                        // REFACTOR: Use _processAudioForServing to get URL/Filename (Persist file temporarily)
-                        $audioUrl = $this->_processAudioForServing($audioResult['audioData']);
+                // Prepare Audio URL if audio data was generated
+                $audioUrl = null;
+                if (!empty($result['audioData'])) {
+                    $audioFilename = $this->_processAudioForServing($result['audioData']);
+                    if ($audioFilename) {
+                        $audioUrl = url_to('gemini.serve_audio', $audioFilename);
                     }
                 }
 
-                $costData = ['costKSH' => 0];
-
-                // REFACTOR: Wrap Financial/Memory Logic in Transaction
-                $this->db->transStart();
-
-                if ($usageMetadata) {
-                    $costData = $this->geminiService->calculateCost($usageMetadata, $audioUsage);
-                    $deduction = number_format($costData['costKSH'], 4, '.', '');
-                    $this->userModel->deductBalance($userId, $deduction);
-                }
-
-                // 2. Update Context Memory
-                if (isset($contextData['memoryService'])) {
-                    $contextData['memoryService']->updateMemory($inputText, $fullText, $rawChunks, $contextData['usedInteractionIds']);
-                }
-
-                $this->db->transComplete();
-                // End Transaction
-
-                // 3. Send Final Status Event with Cost AND Audio
+                // Send Final Status Event
                 $finalPayload = [
                     'csrf_token' => csrf_hash(),
-                    'cost' => $costData['costKSH']
+                    'cost'       => $result['costKSH']
                 ];
 
                 if ($audioUrl) {
-                    // Send URL to serveAudio route
-                    $finalPayload['audio_url'] = url_to('gemini.serve_audio', $audioUrl);
+                    $finalPayload['audio_url'] = $audioUrl;
                 }
 
                 echo "event: close\n";

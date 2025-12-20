@@ -338,7 +338,7 @@ The application uses CodeIgniter's service container to manage class instances. 
   - `Controllers/`: Contains `OllamaController`.
   - `Config/`: Contains `Ollama.php` configuration.
 - `app/Controllers/`: Contains core controllers like `AuthController`, `AdminController`.
-- `app/Libraries/`: Contains shared services like `RecaptchaService`.
+- `app/Libraries/`: Contains shared services like `RecaptchaService`, `WalletService` (Balance Management), `LogViewer` (Secure Log Reading).
 - `writable/nlp/`: Stores trained Naive Bayes models (`classifier.model`).
 - `writable/uploads/`: Stores temporary media, PDF generation artifacts, and secure audio files.
 
@@ -496,7 +496,7 @@ This module (`App\Modules\Gemini`) is the core of the platform.
 
 - **6.5.1. User Management**: `AdminController.php` provides methods to list, search, view details, update balances, and delete users.
 - **6.5.2. Sending Email Campaigns**: `CampaignController.php` allows an administrator to compose an email that is sent to every registered user. It also provides functionality to save, load, and delete campaign templates.
-- **6.5.3. Viewing Application Logs**: `AdminController::logs()` provides a secure interface for administrators to view and select daily log files from the `writable/logs/` directory for debugging purposes.
+- **6.5.3. Viewing Application Logs**: `AdminController::logs()` uses the `LogViewer` library to securely view and select daily log files from the `writable/logs/` directory for debugging purposes.
 
 **6.6. Blog & Content Management**
 
