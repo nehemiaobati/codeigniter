@@ -404,7 +404,7 @@ class OllamaController extends BaseController
             ]);
         }
 
-        $content = $this->request->getPost('content');
+        $content = $this->request->getPost('raw_response');
         $format  = $this->request->getPost('format');
 
         if (empty($content) || !in_array($format, ['pdf', 'docx'])) {
