@@ -687,6 +687,8 @@
                 autoresize_overflow_padding: 0,
                 min_height: 40,
                 max_height: 120,
+                highlight_on_focus: false, // Prevents TinyMCE's specific focus highlighting
+                content_style: 'body { outline: none !important; }',
                 setup: (editor) => {
                     editor.on('keydown', (e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
