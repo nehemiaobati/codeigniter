@@ -244,6 +244,10 @@
         border-top: 4px solid rgba(0, 0, 0, 0.8);
     }
 
+    #results-card {
+        overflow: hidden;
+    }
+
     /* Drag & Drop */
     #mediaUploadArea {
         border-radius: 0.5rem;

@@ -149,6 +149,11 @@
         margin-bottom: 0.5rem;
     }
 
+    /* Fix malformed border radius */
+    #results-card {
+        overflow: hidden;
+    }
+
     .file-chip {
         display: flex;
         align-items: center;
