@@ -215,6 +215,8 @@ email.mailType = 'html'
 GEMINI_API_KEY="" 
 # ^^^ ENTER YOUR GOOGLE GEMINI API KEY ABOVE ^^^
 
+OLLAMA_BASE_URL = "http://localhost:11434"
+
 #--------------------------------------------------------------------
 # OTHER CONFIGS
 #--------------------------------------------------------------------
