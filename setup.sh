@@ -153,6 +153,9 @@ configure_project() {
     # but we will leave that for manual execution or a seeder.
     
     php spark cache:clear
+
+    echo "Optimizing Session Table (Critical Fix)..."
+    mysql -u "${DB_USER}" -p"${DB_PASSWORD}" "${DB_NAME}" -e "ALTER TABLE ci_sessions MODIFY data MEDIUMBLOB;"
 }
 
 create_env_file() {
