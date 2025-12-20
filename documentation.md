@@ -69,6 +69,10 @@
 6.6.2. Admin Management Interface
 6.7. Self-Hosted Documentation
 6.7.1. Serving Documentation Pages
+6.8. Local AI Service (Ollama)
+6.8.1. Configuration & Model Selection
+6.8.2. Chat & Assistant Mode
+6.8.3. Multimodal Input
 
 ---
 
@@ -241,6 +245,9 @@ The `setup.sh` script is designed for a clean Ubuntu server and automates the en
 7.  **Run Migrations:** Run `php spark migrate` to create all necessary tables (including `interactions`, `entities`, `user_settings`).
 8.  **Set Permissions:** Ensure the `writable/` directory is writable by the web server. Specifically ensure `writable/uploads` and `writable/nlp` are writable.
 9.  **Configure Web Server:** Point your web server's document root to the project's `public/` directory.
+
+    > [!IMPORTANT] > **Session Schema Warning:** The default CodeIgniter session table (`ci_sessions`) uses a `BLOB` field for data, which is limited to 64KB. This is insufficient for this application's AI context. You **MUST** manually alter the table to use `MEDIUMBLOB` (16MB) or larger to prevent session truncation and data loss.
+    > SQL: `ALTER TABLE ci_sessions MODIFY data MEDIUMBLOB;`
 
 **3.4. Environment Configuration (`.env`)**
 
@@ -878,20 +885,24 @@ Ensure your code is well-documented, follows the project's architectural pattern
 
 **Part V: Documentation Maintenance Guide**
 
-**15. A Guide for the Project Owner**
+**14. A Guide for the Project Owner**
 
-This section serves as the standard operating procedure (SOP) for maintaining this project's documentation. Its purpose is to ensure accuracy, consistency, and longevity, whether updates are performed by you or an AI assistant.
+14.1. The Philosophy of Living Documentation
+14.2. Your Role vs. the AI's Role
+14.3. The Documentation Update Workflow
+14.4. Procedure: How to Review the Codebase for Changes
+14.5. Procedure: Updating the Changelog and Managing Releases
 
-**15.1. The Philosophy of Living Documentation**
+**14.1. The Philosophy of Living Documentation**
 
 Treat this documentation as a core part of the codebase. It should evolve in lockstep with every feature change, bug fix, or architectural adjustment. An undocumented change is an incomplete change. The goal is to ensure that a new developer, or you in six months, can understand the _what_, _how_, and _why_ of the system just by reading this document.
 
-**15.2. Your Role vs. the AI's Role**
+**14.2. Your Role vs. the AI's Role**
 
 - **The AI's Role (Efficiency & Accuracy):** The AI is the primary documentation writer. It excels at systematically analyzing code changes (`git diff`), identifying affected components, and generating accurate, detailed descriptions based on the established structure. It is responsible for the heavy lifting of drafting content.
 - **Your Role (Clarity & Context):** Your role is that of an editor and strategist. You review the AI-generated content for clarity, human readability, and high-level context that the code alone cannot provide. You ensure the "why" behind a change is captured, not just the "what."
 
-**15.3. The Documentation Update Workflow**
+**14.3. The Documentation Update Workflow**
 
 This workflow applies to any code changes committed to the main branch.
 
@@ -911,7 +922,7 @@ This workflow applies to any code changes committed to the main branch.
 4.  **Update Changelog:** Follow the procedure in section **15.5** to add an entry to the Changelog and determine if the version number needs to be updated.
 5.  **Review and Commit:** Read through all changes from the perspective of someone unfamiliar with the update. Is it clear? Is anything missing? Once satisfied, commit the changes.
 
-**15.4. Procedure: How to Review the Codebase for Changes**
+**14.4. Procedure: How to Review the Codebase for Changes**
 
 The most efficient way to find what needs documenting is by analyzing the difference between your feature branch and the main branch using Git.
 
@@ -935,7 +946,7 @@ The most efficient way to find what needs documenting is by analyzing the differ
 | `app/Modules/[ModuleName]/Views/*`                        | Usually doesn't require a doc change unless a major new UI feature is introduced. |
 | `composer.json` (new dependencies)                        | **1.4. Technology Stack**, **3.1. Server Requirements**                           |
 
-**15.5. Procedure: Updating the Changelog and Managing Releases**
+**14.5. Procedure: Updating the Changelog and Managing Releases**
 
 This project follows **Semantic Versioning (SemVer)**: `MAJOR.MINOR.PATCH`.
 

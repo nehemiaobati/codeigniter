@@ -95,8 +95,9 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
   - MUST be enabled globally.
   - All HTML `POST` forms MUST include `csrf_field()`.
   - **Backend Responsibility:** The Backend MUST include a fresh CSRF token in every JSON response (success or error) to allow the frontend to refresh its token (e.g., `['token' => csrf_hash()]`).
-  - **Frontend Handling:** All AJAX/Fetch requests MUST check for and update the CSRF token from the response payload to prevent "disallowed action" errors on subsequent requests.
-  - **Strict Native Usage:** Use CI4's native `csrf_field()` and `csrf_hash()` exclusively. Manual cookie handling or override logic for CSRF is **STRICTLY FORBIDDEN**.
+  - **Streaming:** For SSE, the fresh CSRF token MUST be sent in the initial data packet (or early in the stream) to ensure the client can recover if the stream is interrupted.
+  - **Frontend Handling:** All AJAX/Fetch/EventSource requests MUST listen for and update the CSRF token from the response payload to prevent "disallowed action" errors on subsequent requests.
+  - **Strict Native Usage:** Manual cookie override logic is FORBIDDEN. Passing the native token via payload (`csrf_hash()`) is the ONLY permitted synchronization method.
 - **Database Interaction:** The Query Builder or Entities are the ONLY permitted methods.
 - **Validation:** All user-supplied data MUST be validated using the Validation library before use.
 - **Throttling:** The Throttler MUST be enabled on authentication and password reset routes.
@@ -139,6 +140,16 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
   - **Processed Uploads:** Immediately after reading the file into memory (e.g., `file_get_contents`), you MUST call `@unlink($path)`.
   - **Generated Documents:** Intermediate files (HTML) and final outputs (PDF/DOCX) MUST be deleted immediately after they are read for the response.
   - **Retention Tip:** To retain files for debugging or history (e.g., in a persistent environment), simply comment out the `@unlink($path)` line.
+
+#### **3.8. Streaming Protocols (SSE)**
+
+- **Header Management:**
+  - Headers MUST be flushed immediately (`ob_flush(); flush();`) to prevent server-side buffering delays.
+  - The `Content-Type` MUST be `text/event-stream`.
+- **Session Locking:**
+  - You MUST call `session_write_close()` before entering the streaming loop. This releases the session file lock, allowing other requests (like CSRF checks) to proceed parallel to the long-running stream.
+- **CSRF Synchronization:**
+  - The stream MUST send a structured data packet containing the new CSRF token as one of its first events. This ensures the client remains authenticated even if the stream fails midway.
 
 ---
 
