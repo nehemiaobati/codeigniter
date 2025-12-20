@@ -96,6 +96,7 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
   - All HTML `POST` forms MUST include `csrf_field()`.
   - **Backend Responsibility:** The Backend MUST include a fresh CSRF token in every JSON response (success or error) to allow the frontend to refresh its token (e.g., `['token' => csrf_hash()]`).
   - **Frontend Handling:** All AJAX/Fetch requests MUST check for and update the CSRF token from the response payload to prevent "disallowed action" errors on subsequent requests.
+  - **Strict Native Usage:** Use CI4's native `csrf_field()` and `csrf_hash()` exclusively. Manual cookie handling or override logic for CSRF is **STRICTLY FORBIDDEN**.
 - **Database Interaction:** The Query Builder or Entities are the ONLY permitted methods.
 - **Validation:** All user-supplied data MUST be validated using the Validation library before use.
 - **Throttling:** The Throttler MUST be enabled on authentication and password reset routes.

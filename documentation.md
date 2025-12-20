@@ -649,10 +649,21 @@ Ensure your code is well-documented, follows the project's architectural pattern
 
 - **Module:** A self-contained directory in `app/Modules/` that encapsulates a single business feature.
 - **Embeddings:** Numerical representations of text used for semantic search.
-- **Hybrid Search:** A search technique combining vector similarity and keyword matching.
+  - **Hybrid Search:** A search technique combining vector similarity and keyword matching.
 - **PCM:** Pulse-Code Modulation, a raw audio format returned by Gemini API.
 
 **13.2. Changelog & Release History**
+
+**v1.8.9 - 2025-12-20**
+
+### Fixed
+
+- **CSRF Streaming Session Lock:**
+  - Fixed critical issue where second and subsequent streaming requests would fail with "The action you requested is not allowed" error.
+  - **Root Cause:** Session remained locked during streaming, preventing CSRF verification filter from accessing session on subsequent requests.
+  - **Solution:** Added `session_write_close()` in `GeminiController::stream()` method before sending headers, releasing session lock while preserving session data.
+  - This matches the pattern already correctly implemented in `OllamaController::stream()` (line 318).
+  - Now all streaming requests (first, second, nth) work reliably with proper CSRF token verification.
 
 **v1.8.8 - 2025-12-17**
 

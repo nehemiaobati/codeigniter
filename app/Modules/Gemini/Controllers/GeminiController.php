@@ -376,6 +376,9 @@ class GeminiController extends BaseController
             return $this->response;
         }
 
+        // Session Locking Prevention (Critical for CSRF verification on subsequent requests)
+        session_write_close();
+
         $this->response->sendHeaders();
         if (ob_get_level() > 0) ob_end_flush();
         flush();
