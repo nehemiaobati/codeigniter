@@ -240,11 +240,12 @@ class OllamaController extends BaseController
         $finalHtml = $parsedown->text($resultText);
 
         if ($this->request->isAJAX()) {
+            session()->setFlashdata('success', 'Generated successfully. Cost: ' . self::COST_PER_REQUEST . ' credits.');
             return $this->response->setJSON([
                 'status'     => 'success',
                 'result'     => $finalHtml,
                 'raw_result' => $resultText,
-                'flash_html' => view('App\Views\partials\flash_messages', ['success' => 'Generated successfully.']),
+                'flash_html' => view('App\Views\partials\flash_messages'),
                 'csrf_token' => csrf_hash()
             ]);
         }
