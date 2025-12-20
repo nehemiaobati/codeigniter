@@ -319,6 +319,9 @@ class OllamaController extends BaseController
 
         $this->response->sendHeaders();
         if (ob_get_level() > 0) ob_end_flush();
+
+        // Send CSRF token immediately to ensure client has it even if stream fails later
+        echo "data: " . json_encode(['csrf_token' => csrf_hash()]) . "\n\n";
         flush();
 
         // 3. Call Stream Service

@@ -654,6 +654,16 @@ Ensure your code is well-documented, follows the project's architectural pattern
 
 **13.2. Changelog & Release History**
 
+**v1.9.0 - 2025-12-20**
+
+### Fixed
+
+- **Streaming CSRF Synchronization (Ollama & Gemini):**
+  - **Issue:** Streaming requests (especially second/subsequent attempts) would often fail with a 403 Forbidden (CSRF) error if the previous stream was interrupted or failed before completion.
+  - **Root Cause:** The client only received a fresh CSRF token at the _end_ of a successful stream (`event: close`). If the stream died early, the client was left with a stale token.
+  - **Resolution:** Updated both `GeminiController` and `OllamaController` to transmit the new CSRF token immediately at the **start** of the stream (as a `data: {"csrf_token": "..."}` packet).
+  - **Impact:** Robust reliability for streaming interfaces; clients now possess a valid token for the next request regardless of stream stability.
+
 **v1.8.9 - 2025-12-20**
 
 ### Fixed
