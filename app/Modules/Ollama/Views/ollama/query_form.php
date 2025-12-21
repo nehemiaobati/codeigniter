@@ -792,7 +792,7 @@
                     if (d.flash_html) document.getElementById('flash-messages-container').innerHTML = d.flash_html;
                     if (d.audio_url) {
                         const ac = document.getElementById('audio-player-container');
-                        if (ac) ac.innerHTML = `<div class="alert alert-info d-flex align-items-center mb-4"><i class="bi bi-volume-up-fill fs-4 me-3"></i><audio controls autoplay class="w-100"><source src="${d.audio_url}" type="audio/mpeg"></audio></div>`;
+                        if (ac) ac.innerHTML = `<div class="alert alert-info d-flex align-items-center mb-4"><i class="bi bi-volume-up-fill fs-4 me-3"></i><audio controls autoplay class="w-100"><source src="${d.audio_url}" type="audio/mpeg"><source src="${d.audio_url}" type="audio/wav">Your browser does not support the audio element.</audio></div>`;
                     }
                 } else this.app.ui.injectFlashError(d.message || 'Generation failed.');
             } catch (e) {
@@ -853,7 +853,7 @@
                                     }
                                     if (d.audio_url) {
                                         const ac = document.getElementById('audio-player-container');
-                                        if (ac) ac.innerHTML = `<div class="alert alert-info d-flex align-items-center mb-4"><i class="bi bi-volume-up-fill fs-4 me-3"></i><audio controls autoplay class="w-100"><source src="${d.audio_url}" type="audio/mpeg"></audio></div>`;
+                                        if (ac) ac.innerHTML = `<div class="alert alert-info d-flex align-items-center mb-4"><i class="bi bi-volume-up-fill fs-4 me-3"></i><audio controls autoplay class="w-100"><source src="${d.audio_url}" type="audio/mpeg"><source src="${d.audio_url}" type="audio/wav">Your browser does not support the audio element.</audio></div>`;
                                     }
                                     if (d.csrf_token) this.app.refreshCsrf(d.csrf_token);
                                 } catch (e) {}

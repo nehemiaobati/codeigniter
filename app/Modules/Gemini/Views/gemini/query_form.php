@@ -361,7 +361,9 @@
                     <div class="alert alert-info d-flex align-items-center mb-4">
                         <i class="bi bi-volume-up-fill fs-4 me-3"></i>
                         <audio controls autoplay class="w-100">
-                            <source src="<?= url_to('gemini.serve_audio', session()->getFlashdata('audio_url')) ?>">
+                            <source src="<?= url_to('gemini.serve_audio', session()->getFlashdata('audio_url')) ?>" type="audio/mpeg">
+                            <source src="<?= url_to('gemini.serve_audio', session()->getFlashdata('audio_url')) ?>" type="audio/wav">
+                            Your browser does not support the audio element.
                         </audio>
                     </div>
                 <?php endif; ?>
@@ -1137,7 +1139,11 @@
             document.getElementById('audio-player-container').innerHTML = `
                 <div class="alert alert-info d-flex align-items-center mb-4">
                     <i class="bi bi-volume-up-fill fs-4 me-3"></i>
-                    <audio controls autoplay class="w-100"><source src="${url}" type="audio/mpeg"></audio>
+                    <audio controls autoplay class="w-100">
+                        <source src="${url}" type="audio/mpeg">
+                        <source src="${url}" type="audio/wav">
+                        Your browser does not support the audio element.
+                    </audio>
                 </div>`;
         }
     }
