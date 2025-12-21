@@ -864,7 +864,8 @@
 
         setupAutoScroll() {
             setTimeout(() => document.getElementById('results-card')?.scrollIntoView({
-                behavior: 'smooth'
+                behavior: 'smooth',
+                block: 'nearest'
             }), 100);
         }
 
@@ -1066,11 +1067,14 @@
                                         accum += d.text;
                                         resBody.innerHTML = marked.parse(accum);
                                         rawRes.value += d.text;
-                                    } else if (d.error) {
+                                    }
+                                    if (d.error) {
                                         this.app.ui.injectFlashError(d.error);
-                                    } else if (d.cost) {
+                                    }
+                                    if (d.cost) {
                                         document.getElementById('flash-messages-container').innerHTML = `<div class="alert alert-success alert-dismissible fade show">KSH ${parseFloat(d.cost).toFixed(2)} deducted.<button class="btn-close" data-bs-dismiss="alert"></button></div>`;
-                                    } else if (d.audio_url) {
+                                    }
+                                    if (d.audio_url) {
                                         this.renderAudio(d.audio_url);
                                     }
                                     if (d.csrf_token) this.app.refreshCsrf(d.csrf_token);
