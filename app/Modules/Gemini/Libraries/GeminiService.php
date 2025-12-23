@@ -16,6 +16,10 @@ use App\Models\UserModel;
  *
  * @package App\Modules\Gemini\Libraries
  */
+
+use App\Modules\Gemini\Models\PromptModel;
+use App\Modules\Gemini\Models\UserSettingsModel;
+
 class GeminiService
 {
     public const MODEL_PRIORITIES = [
@@ -26,6 +30,26 @@ class GeminiService
         "gemini-2.5-flash-lite",    // Fallback: Stable Lite version
         "gemini-2.0-flash",         // Legacy Fallback
         "gemini-2.0-flash-lite",    // Legacy Fallback
+    ];
+
+    public const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    public const SUPPORTED_MIME_TYPES = [
+        'image/png',
+        'image/jpeg',
+        'image/webp',
+        'audio/mpeg',
+        'audio/mp3',
+        'audio/wav',
+        'video/mov',
+        'video/mpeg',
+        'video/mp4',
+        'video/mpg',
+        'video/avi',
+        'video/wmv',
+        'video/mpegps',
+        'video/flv',
+        'application/pdf',
+        'text/plain'
     ];
 
     private const PRICING = [
@@ -47,13 +71,17 @@ class GeminiService
         protected $payloadService = null,
         protected ?UserModel $userModel = null,
         protected $db = null,
-        protected $ffmpegService = null
+        protected $ffmpegService = null,
+        protected ?PromptModel $promptModel = null,
+        protected ?UserSettingsModel $userSettingsModel = null
     ) {
         $this->apiKey = $apiKey ?? env('GEMINI_API_KEY');
         $this->payloadService = $payloadService ?? service('modelPayloadService');
         $this->userModel = $userModel ?? new UserModel();
         $this->db = $db ?? \Config\Database::connect();
         $this->ffmpegService = service('ffmpegService');
+        $this->promptModel = $promptModel ?? new PromptModel();
+        $this->userSettingsModel = $userSettingsModel ?? new UserSettingsModel();
     }
 
     public function processInteraction(int $userId, string $prompt, array $fileParts, array $options): array
@@ -585,25 +613,8 @@ class GeminiService
     {
         $parts = [];
         $userTempPath = WRITEPATH . 'uploads/gemini_temp/' . $userId . '/';
-        // Check for supported mime types - should match controller constant but good to have safety here or centralized config
-        $supportedMimeTypes = [
-            'image/png',
-            'image/jpeg',
-            'image/webp',
-            'audio/mpeg',
-            'audio/mp3',
-            'audio/wav',
-            'video/mov',
-            'video/mpeg',
-            'video/mp4',
-            'video/mpg',
-            'video/avi',
-            'video/wmv',
-            'video/mpegps',
-            'video/flv',
-            'application/pdf',
-            'text/plain'
-        ];
+        // Check for supported mime types - using centralized constant
+        $supportedMimeTypes = self::SUPPORTED_MIME_TYPES;
 
         foreach ($fileIds as $fileId) {
             $filePath = $userTempPath . basename($fileId);
@@ -668,5 +679,109 @@ class GeminiService
         }
 
         return $result['fileName'];
+    }
+    /**
+     * Retrieves user settings.
+     *
+     * @param int $userId
+     * @return object|null
+     */
+    public function getUserSettings(int $userId)
+    {
+        return $this->userSettingsModel->where('user_id', $userId)->first();
+    }
+
+    /**
+     * Updates or creates a user setting.
+     *
+     * @param int $userId
+     * @param string $key
+     * @param bool $value
+     * @return bool
+     */
+    public function updateUserSetting(int $userId, string $key, bool $value): bool
+    {
+        $setting = $this->getUserSettings($userId);
+
+        if ($setting) {
+            return $this->userSettingsModel->update($setting->id, [$key => $value]);
+        }
+
+        return (bool) $this->userSettingsModel->save([
+            'user_id' => $userId,
+            $key      => $value
+        ]);
+    }
+
+    /**
+     * Retrieves user prompts.
+     *
+     * @param int $userId
+     * @return array
+     */
+    public function getUserPrompts(int $userId): array
+    {
+        return $this->promptModel->where('user_id', $userId)->findAll();
+    }
+
+    /**
+     * Adds a new prompt.
+     *
+     * @param int $userId
+     * @param array $data
+     * @return int|bool Insert ID or false
+     */
+    public function addPrompt(int $userId, array $data)
+    {
+        return $this->promptModel->insert([
+            'user_id'     => $userId,
+            'title'       => $data['title'],
+            'prompt_text' => $data['prompt_text']
+        ]);
+    }
+
+    /**
+     * Deletes a prompt if it belongs to the user.
+     *
+     * @param int $userId
+     * @param int $promptId
+     * @return bool
+     */
+    public function deletePrompt(int $userId, int $promptId): bool
+    {
+        $prompt = $this->promptModel->find($promptId);
+        if ($prompt && $prompt->user_id == $userId) {
+            return $this->promptModel->delete($promptId);
+        }
+        return false;
+    }
+
+    /**
+     * Deletes a specific temporary media file.
+     *
+     * @param int $userId
+     * @param string $fileId
+     * @return bool
+     */
+    public function deleteTempMedia(int $userId, string $fileId): bool
+    {
+        $filePath = WRITEPATH . 'uploads/gemini_temp/' . $userId . '/' . basename($fileId);
+        if (file_exists($filePath) && unlink($filePath)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Resolves the path for a served audio file.
+     *
+     * @param int $userId
+     * @param string $fileName
+     * @return string|null Absolute path or null if not found
+     */
+    public function getAudioFilePath(int $userId, string $fileName): ?string
+    {
+        $path = WRITEPATH . 'uploads/ttsaudio_secure/' . $userId . '/' . basename($fileName);
+        return file_exists($path) ? $path : null;
     }
 }

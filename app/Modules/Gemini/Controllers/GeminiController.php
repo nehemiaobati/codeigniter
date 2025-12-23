@@ -8,11 +8,7 @@ use App\Controllers\BaseController;
 use App\Entities\User;
 use App\Modules\Gemini\Libraries\GeminiService;
 use App\Modules\Gemini\Libraries\MemoryService;
-use App\Modules\Gemini\Models\EntityModel;
-use App\Modules\Gemini\Models\InteractionModel;
-use App\Modules\Gemini\Models\PromptModel;
 use App\Models\UserModel;
-use App\Modules\Gemini\Models\UserSettingsModel;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\ResponseInterface;
 use App\Modules\Gemini\Libraries\DocumentService;
@@ -32,58 +28,17 @@ use Parsedown;
  */
 class GeminiController extends BaseController
 {
-    private $cachedUserSettings = null;
-
-    private const SUPPORTED_MIME_TYPES = [
-        'image/png',
-        'image/jpeg',
-        'image/webp',
-        'audio/mpeg',
-        'audio/mp3',
-        'audio/wav',
-        'video/mov',
-        'video/mpeg',
-        'video/mp4',
-        'video/mpg',
-        'video/avi',
-        'video/wmv',
-        'video/mpegps',
-        'video/flv',
-        'application/pdf',
-        'text/plain'
-    ];
-    private const MAX_FILE_SIZE = 10 * 1024 * 1024;
-    private const MAX_FILES = 5;
-
     public function __construct(
         protected ?UserModel $userModel = null,
-        protected ?GeminiService $geminiService = null,
-        protected ?PromptModel $promptModel = null,
-        protected ?UserSettingsModel $userSettingsModel = null,
-        protected $db = null
+        protected ?GeminiService $geminiService = null
     ) {
         $this->userModel = $userModel ?? new UserModel();
         $this->geminiService = $geminiService ?? service('geminiService');
-        $this->promptModel = $promptModel ?? new PromptModel();
-        $this->userSettingsModel = $userSettingsModel ?? new UserSettingsModel();
-        $this->db = $db ?? \Config\Database::connect();
     }
 
     // --- Core Helper Methods ---
 
-    /**
-     * Retrieves user settings with memoization to prevent redundant queries.
-     *
-     * @param int $userId The user ID.
-     * @return object|null UserSetting entity or null.
-     */
-    private function _getUserSettings(int $userId)
-    {
-        if ($this->cachedUserSettings === null) {
-            $this->cachedUserSettings = $this->userSettingsModel->where('user_id', $userId)->first();
-        }
-        return $this->cachedUserSettings;
-    }
+
 
     /**
      * Returns success response (AJAX JSON or redirect).
@@ -164,8 +119,8 @@ class GeminiController extends BaseController
     public function index(): string
     {
         $userId = (int) session()->get('userId');
-        $prompts = $this->promptModel->where('user_id', $userId)->findAll();
-        $userSetting = $this->_getUserSettings($userId);
+        $prompts = $this->geminiService->getUserPrompts($userId);
+        $userSetting = $this->geminiService->getUserSettings($userId);
 
         // Fetch Media Configs for Dynamic Tabs
         $mediaConfigs = MediaGenerationService::MEDIA_CONFIGS;
@@ -182,9 +137,10 @@ class GeminiController extends BaseController
             'stream_output_enabled'  => $userSetting ? $userSetting->stream_output_enabled : false,
             // CHANGED: Use audio_url instead of base64 for session hygiene
             'audio_url'              => session()->getFlashdata('audio_url'),
-            'maxFileSize'            => self::MAX_FILE_SIZE,
-            'maxFiles'               => self::MAX_FILES,
-            'supportedMimeTypes'     => json_encode(self::SUPPORTED_MIME_TYPES),
+            // Re-define constants locally or fetch from config if needed
+            'maxFileSize'            => GeminiService::MAX_FILE_SIZE,
+            'maxFiles'               => 5,
+            'supportedMimeTypes'     => json_encode(GeminiService::SUPPORTED_MIME_TYPES),
             'mediaConfigs'           => $mediaConfigs, // Pass to view
         ];
         $data['robotsTag'] = 'noindex, follow';
@@ -210,7 +166,7 @@ class GeminiController extends BaseController
         if (!$this->validate([
             'file' => [
                 'label' => 'File',
-                'rules' => 'uploaded[file]|max_size[file,' . (self::MAX_FILE_SIZE / 1024) . ']|mime_in[file,' . implode(',', self::SUPPORTED_MIME_TYPES) . ']',
+                'rules' => 'uploaded[file]|max_size[file,' . (GeminiService::MAX_FILE_SIZE / 1024) . ']|mime_in[file,' . implode(',', GeminiService::SUPPORTED_MIME_TYPES) . ']',
             ],
         ])) {
             return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => $this->validator->getErrors()['file']]);
@@ -247,9 +203,7 @@ class GeminiController extends BaseController
         $fileId = $this->request->getPost('file_id');
         if (!$fileId) return $this->response->setStatusCode(400);
 
-        $filePath = WRITEPATH . 'uploads/gemini_temp/' . $userId . '/' . basename($fileId);
-
-        if (file_exists($filePath) && unlink($filePath)) {
+        if ($this->geminiService->deleteTempMedia($userId, $fileId)) {
             return $this->response->setJSON(['status' => 'success', 'csrf_token' => csrf_hash()]);
         }
 
@@ -279,7 +233,7 @@ class GeminiController extends BaseController
         }
 
         // 1. Prepare Inputs
-        $userSetting = $this->_getUserSettings($userId);
+        $userSetting = $this->geminiService->getUserSettings($userId);
         $options = [
             'assistant_mode' => $userSetting ? $userSetting->assistant_mode_enabled : true,
             'voice_mode' => $userSetting ? $userSetting->voice_output_enabled : false,
@@ -339,7 +293,7 @@ class GeminiController extends BaseController
         }
 
         // 1. Prepare Context & Files
-        $userSetting = $this->_getUserSettings($userId);
+        $userSetting = $this->geminiService->getUserSettings($userId);
         $isAssistantMode = $userSetting ? $userSetting->assistant_mode_enabled : true;
         // Check for voice output preference
         $isVoiceEnabled = $userSetting ? $userSetting->voice_output_enabled : false;
@@ -462,16 +416,7 @@ class GeminiController extends BaseController
         $settingKey = $this->request->getPost('setting_key'); // 'assistant_mode_enabled' or 'voice_output_enabled'
         $isEnabled = $this->request->getPost('enabled') === 'true';
 
-        $setting = $this->userSettingsModel->where('user_id', $userId)->first();
-
-        if ($setting) {
-            $this->userSettingsModel->update($setting->id, [$settingKey => $isEnabled]);
-        } else {
-            $this->userSettingsModel->save([
-                'user_id' => $userId,
-                $settingKey => $isEnabled
-            ]);
-        }
+        $this->geminiService->updateUserSetting($userId, $settingKey, $isEnabled);
 
         return $this->response->setJSON(['status' => 'success', 'csrf_token' => csrf_hash()]);
     }
@@ -494,9 +439,8 @@ class GeminiController extends BaseController
             return $this->_respondError('Invalid input.', $this->validator->getErrors());
         }
 
-        $id = $this->promptModel->insert([
-            'user_id' => $userId,
-            'title' => $this->request->getPost('title'),
+        $id = $this->geminiService->addPrompt($userId, [
+            'title'       => $this->request->getPost('title'),
             'prompt_text' => $this->request->getPost('prompt_text')
         ]);
 
@@ -518,10 +462,7 @@ class GeminiController extends BaseController
     public function deletePrompt(int $id)
     {
         $userId = (int) session()->get('userId');
-        $prompt = $this->promptModel->find($id);
-
-        if ($prompt && $prompt->user_id == $userId) {
-            $this->promptModel->delete($id);
+        if ($this->geminiService->deletePrompt($userId, $id)) {
             return $this->_respondSuccess('Prompt deleted.');
         }
 
@@ -556,9 +497,9 @@ class GeminiController extends BaseController
     public function serveAudio(string $fileName)
     {
         $userId = (int) session()->get('userId');
-        $path = WRITEPATH . 'uploads/ttsaudio_secure/' . $userId . '/' . basename($fileName);
+        $path = $this->geminiService->getAudioFilePath($userId, basename($fileName));
 
-        if (!file_exists($path)) {
+        if (!$path) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
 
