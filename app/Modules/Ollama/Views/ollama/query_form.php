@@ -884,6 +884,16 @@
                 deleteBtn.onclick = () => this.deletePrompt(select.selectedOptions[0].dataset.id);
             }
 
+            // Auto-populate Save Prompt Modal
+            const modal = document.getElementById('savePromptModal');
+            if (modal) {
+                modal.addEventListener('show.bs.modal', () => {
+                    const editor = (typeof tinymce !== 'undefined') ? tinymce.get('prompt') : null;
+                    const val = editor ? editor.getContent() : document.getElementById('prompt').value;
+                    document.getElementById('modalPromptText').value = val;
+                });
+            }
+
             document.querySelector('#savePromptModal form')?.addEventListener('submit', (e) => this.inputSavePrompt(e));
         }
 
