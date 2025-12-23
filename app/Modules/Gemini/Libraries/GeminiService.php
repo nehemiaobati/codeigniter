@@ -46,12 +46,14 @@ class GeminiService
         protected ?string $apiKey = null,
         protected $payloadService = null,
         protected ?UserModel $userModel = null,
-        protected $db = null
+        protected $db = null,
+        protected $ffmpegService = null
     ) {
         $this->apiKey = $apiKey ?? env('GEMINI_API_KEY');
         $this->payloadService = $payloadService ?? service('modelPayloadService');
         $this->userModel = $userModel ?? new UserModel();
         $this->db = $db ?? \Config\Database::connect();
+        $this->ffmpegService = service('ffmpegService');
     }
 
     public function processInteraction(int $userId, string $prompt, array $fileParts, array $options): array
@@ -571,5 +573,100 @@ class GeminiService
         }
 
         return ['status' => true, 'filename' => $fileName, 'original_name' => $file->getClientName()];
+    }
+    /**
+     * Processing uploaded files for Gemini API.
+     *
+     * @param array $fileIds
+     * @param int $userId
+     * @return array
+     */
+    public function prepareUploadedFiles(array $fileIds, int $userId): array
+    {
+        $parts = [];
+        $userTempPath = WRITEPATH . 'uploads/gemini_temp/' . $userId . '/';
+        // Check for supported mime types - should match controller constant but good to have safety here or centralized config
+        $supportedMimeTypes = [
+            'image/png',
+            'image/jpeg',
+            'image/webp',
+            'audio/mpeg',
+            'audio/mp3',
+            'audio/wav',
+            'video/mov',
+            'video/mpeg',
+            'video/mp4',
+            'video/mpg',
+            'video/avi',
+            'video/wmv',
+            'video/mpegps',
+            'video/flv',
+            'application/pdf',
+            'text/plain'
+        ];
+
+        foreach ($fileIds as $fileId) {
+            $filePath = $userTempPath . basename($fileId);
+
+            if (!file_exists($filePath)) {
+                return ['error' => "File not found. Please upload again."];
+            }
+
+            $mimeType = mime_content_type($filePath);
+            if (!in_array($mimeType, $supportedMimeTypes, true)) {
+                return ['error' => "Unsupported file type."];
+            }
+
+            $parts[] = ['inlineData' => [
+                'mimeType' => $mimeType,
+                'data' => base64_encode(file_get_contents($filePath))
+            ]];
+        }
+        return ['parts' => $parts];
+    }
+
+    /**
+     * Cleans up temporary files after processing.
+     *
+     * @param array $fileIds
+     * @param int $userId
+     * @return void
+     */
+    public function cleanupTempFiles(array $fileIds, int $userId): void
+    {
+        foreach ($fileIds as $fileId) {
+            @unlink(WRITEPATH . 'uploads/gemini_temp/' . $userId . '/' . basename($fileId));
+        }
+    }
+
+    /**
+     * Processes raw audio data into a file for serving.
+     *
+     * @param string $base64Data
+     * @param int $userId
+     * @return string|null Filename
+     */
+    public function processAudioForServing(string $base64Data, int $userId): ?string
+    {
+        $securePath = WRITEPATH . 'uploads/ttsaudio_secure/' . $userId . '/';
+
+        if (!is_dir($securePath)) {
+            mkdir($securePath, 0755, true);
+        }
+
+        $filenameBase = 'speech_' . bin2hex(random_bytes(8));
+
+        // Use the injected service
+        $result = $this->ffmpegService->processAudio(
+            $base64Data,
+            $securePath,
+            $filenameBase
+        );
+
+        if (!$result['success'] || !$result['fileName']) {
+            return null;
+        }
+
+        return $result['fileName'];
     }
 }

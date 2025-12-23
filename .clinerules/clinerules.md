@@ -1,5 +1,6 @@
 ### **Guiding Principles**
 
+- **Simple over Easy:** Prioritize objective simplicity (disentangled, single responsibility) over subjective ease (familiarity, shortcuts). "Easy" allows you to move fast today; "Simple" allows you to keep moving fast in the future.
 - **Clarity over Cleverness:** Code must be simple, readable, and self-documenting.
 - **Security is Not Optional:** Every line of code must be written with security as a primary concern.
 - **Consistency is Key:** The framework and these rules provide one right way to build features. Follow it.
@@ -276,3 +277,45 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
   - MUST run `composer install --no-dev --optimize-autoloader`.
   - MUST run `php spark optimize` to cache config and routes.
   - MUST point document root strictly to `/public`.
+
+N/B
+
+# Simple vs. Easy: Summary
+
+This framework is based on the 2011 talk "Simple Made Easy" by Rich Hickey (creator of the Clojure programming language). It challenges the common industry habit of choosing "convenient" tools that eventually lead to unmanageable complexity.
+
+## Simple (Objective)
+
+- **Definition:** Originates from _simplex_, meaning "one fold" or "one braid."
+- **Focus:** Concern, task, and role. It is about the lack of entanglement.
+- **Key Characteristics:**
+  - **Single Responsibility:** Each part does exactly one thing.
+  - **Disentangled:** Components are not "braided" or tied together; they can be moved or changed independently.
+  - **The Cost:** Requires significant upfront design, thought, and untangling.
+  - **The Benefit:** Makes systems easier to understand, debug, and scale over the long term.
+
+## Easy (Subjective)
+
+- **Definition:** Originates from _adjacens_, meaning "lying nearby" or "at hand."
+- **Focus:** Familiarity and accessibility.
+- **Key Characteristics:**
+  - **Near at Hand:** It's "easy" because it's already installed, familiar, or reachable.
+  - **Frictionless:** "Copy, paste, ship" or "Install a package." It feels fast initially.
+  - **The Trap:** What is "easy" (familiar) isn't always "simple" (unentangled).
+  - **The Cost:** Choosing "easy" often creates "complected" (intertwined) systems that become impossible to change later.
+
+## Comparison Table
+
+| Feature     | Simple                             | Easy                                   |
+| :---------- | :--------------------------------- | :------------------------------------- |
+| **Nature**  | Objective (The system's structure) | Subjective (The developer's comfort)   |
+| **Focus**   | One fold / one braid               | Adjacent / reachable                   |
+| **Effort**  | Requires design and untangling     | "Just put it closer" / Familiarity     |
+| **Action**  | Single responsibility              | Copy, paste, ship                      |
+| **Outcome** | Long-term reliability and speed    | Short-term speed, long-term complexity |
+
+## The Core Message
+
+> _"Conflating [Simple and Easy] is why we’re drowning in complexity."_
+
+While "easy" things allow us to move fast today, only "simple" designs allow us to keep moving fast in the future.

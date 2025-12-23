@@ -288,9 +288,10 @@ class GeminiController extends BaseController
         $inputText = (string) $this->request->getPost('prompt');
         $uploadedFileIds = (array) $this->request->getPost('uploaded_media');
 
-        // Handle File Parts
-        $filesResult = $this->_prepareFilesAndContext($uploadedFileIds, $userId);
+        // Handle File Parts via Service
+        $filesResult = $this->geminiService->prepareUploadedFiles($uploadedFileIds, $userId);
         if (isset($filesResult['error'])) {
+            $this->geminiService->cleanupTempFiles($uploadedFileIds, $userId);
             return $this->_respondError($filesResult['error']);
         }
         $fileParts = $filesResult['parts'];
@@ -298,7 +299,7 @@ class GeminiController extends BaseController
         // 2. Process Interaction via Service
         $result = $this->geminiService->processInteraction($userId, $inputText, $fileParts, $options);
 
-        $this->_cleanupTempFiles($uploadedFileIds, $userId); // Always cleanup
+        $this->geminiService->cleanupTempFiles($uploadedFileIds, $userId); // Always cleanup
 
         if (isset($result['error'])) {
             return $this->_respondError($result['error']);
@@ -348,7 +349,7 @@ class GeminiController extends BaseController
             ? $memoryService->buildContextualPrompt($inputText)
             : ['finalPrompt' => $inputText, 'memoryService' => null, 'usedInteractionIds' => []];
 
-        $filesResult = $this->_prepareFilesAndContext($uploadedFileIds, $userId);
+        $filesResult = $this->geminiService->prepareUploadedFiles($uploadedFileIds, $userId);
         if (isset($filesResult['error'])) {
             $this->response->setBody("data: " . json_encode([
                 'error' => $filesResult['error'],
@@ -365,7 +366,7 @@ class GeminiController extends BaseController
         // 2. Estimate Cost & Check Balance
         $estimate = $this->geminiService->estimateCost($parts);
         if ($estimate['status'] && $user->balance < $estimate['costKSH']) {
-            $this->_cleanupTempFiles($uploadedFileIds, $userId);
+            $this->geminiService->cleanupTempFiles($uploadedFileIds, $userId);
             $this->response->setBody("data: " . json_encode([
                 'error' => "Insufficient balance. Estimated: KSH " . number_format($estimate['costKSH'], 2),
                 'csrf_token' => csrf_hash()
@@ -413,7 +414,7 @@ class GeminiController extends BaseController
                 // Prepare Audio URL if audio data was generated
                 $audioUrl = null;
                 if (!empty($result['audioData'])) {
-                    $audioFilename = $this->_processAudioForServing($result['audioData']);
+                    $audioFilename = $this->geminiService->processAudioForServing($result['audioData'], $userId);
                     if ($audioFilename) {
                         $audioUrl = url_to('gemini.serve_audio', $audioFilename);
                     }
@@ -437,7 +438,7 @@ class GeminiController extends BaseController
             }
         );
 
-        $this->_cleanupTempFiles($uploadedFileIds, $userId);
+        $this->geminiService->cleanupTempFiles($uploadedFileIds, $userId);
         exit;
     }
 
@@ -617,73 +618,7 @@ class GeminiController extends BaseController
 
 
 
-    /**
-     * Prepares files and assembles file parts array for API request.
-     *
-     * @param array $uploadedFileIds Array of uploaded file IDs.
-     * @param int $userId User ID for file path resolution.
-     * @return array Returns ['error' => string] on failure, or ['parts' => array] on success.
-     */
-    private function _prepareFilesAndContext(array $uploadedFileIds, int $userId): array
-    {
-        $uploadResult = $this->_handlePreUploadedFiles($uploadedFileIds, $userId);
-
-        if (isset($uploadResult['error'])) {
-            $this->_cleanupTempFiles($uploadedFileIds, $userId);
-            return ['error' => $uploadResult['error']];
-        }
-
-        return ['parts' => $uploadResult['parts']];
-    }
-
-    /**
-     * Processes files that were uploaded asynchronously.
-     *
-     * Reads the temporary files, validates their MIME types, and converts them
-     * to the base64 format expected by the Gemini API.
-     *
-     * @param array $fileIds Array of file IDs (filenames) to process.
-     * @param int $userId The user ID.
-     * @return array An array containing 'parts' (array of API-ready file objects) or 'error' (string).
-     */
-    private function _handlePreUploadedFiles(array $fileIds, int $userId): array
-    {
-        $parts = [];
-        $userTempPath = WRITEPATH . 'uploads/gemini_temp/' . $userId . '/';
-
-        foreach ($fileIds as $fileId) {
-            $filePath = $userTempPath . basename($fileId);
-
-            if (!file_exists($filePath)) {
-                return ['error' => "File not found. Please upload again."];
-            }
-
-            $mimeType = mime_content_type($filePath);
-            if (!in_array($mimeType, self::SUPPORTED_MIME_TYPES, true)) {
-                return ['error' => "Unsupported file type."];
-            }
-
-            $parts[] = ['inlineData' => [
-                'mimeType' => $mimeType,
-                'data' => base64_encode(file_get_contents($filePath))
-            ]];
-        }
-        return ['parts' => $parts];
-    }
-
-    /**
-     * Cleans up temporary files after processing.
-     *
-     * @param array $fileIds Array of file IDs to delete.
-     * @param int $userId The user ID.
-     */
-    private function _cleanupTempFiles(array $fileIds, int $userId): void
-    {
-        foreach ($fileIds as $fileId) {
-            @unlink(WRITEPATH . 'uploads/gemini_temp/' . $userId . '/' . basename($fileId));
-        }
-    }
-
+        // Private Helper Methods Removed: Refactored to GeminiService
     /**
      * Builds the final response with parsed markdown and optional audio.
      * Refactored to support AJAX with rendered partials.
@@ -697,8 +632,8 @@ class GeminiController extends BaseController
         // Process Audio if present
         $audioUrl = null;
         if (!empty($result['audioData'])) {
-            // REFACTOR: Use _processAudioForServing to persist file and return filename
-            $audioFilename = $this->_processAudioForServing($result['audioData']);
+            // REFACTOR: Use GeminiService to persist file and return filename
+            $audioFilename = $this->geminiService->processAudioForServing($result['audioData'], $userId);
             if ($audioFilename) {
                 // Return URL for serveAudio
                 $audioUrl = url_to('gemini.serve_audio', $audioFilename);
@@ -748,41 +683,5 @@ class GeminiController extends BaseController
         }
 
         return $redirect;
-    }
-
-    /**
-     * Handles the processing of raw audio data into a temporary file for serving.
-     *
-     * This method converts the raw PCM data using FFmpeg (or PHP fallback)
-     * and saves it to a secure directory. The filename is returned, which the
-     * frontend can use to call serveAudio. ServeAudio will then stream and delete the file.
-     *
-     * @param string $base64Data Base64 encoded raw audio data (PCM/WAV).
-     * @return string|null The Filename (e.g. "speech_xyz.mp3") or null on failure.
-     */
-    private function _processAudioForServing(string $base64Data): ?string
-    {
-        $userId = (int) session()->get('userId');
-        // Use a temp path that is safe for ephemeral storage
-        $securePath = WRITEPATH . 'uploads/ttsaudio_secure/' . $userId . '/';
-
-        if (!is_dir($securePath)) mkdir($securePath, 0755, true);
-
-        // Generate temporary base name
-        $filenameBase = 'speech_' . bin2hex(random_bytes(8));
-
-        // Delegate to Service (Returns {success, fileName})
-        $result = service('ffmpegService')->processAudio(
-            $base64Data,
-            $securePath,
-            $filenameBase
-        );
-
-        if (!$result['success'] || !$result['fileName']) {
-            return null;
-        }
-
-        // Return filename. File persists until serveAudio is called.
-        return $result['fileName'];
     }
 }
