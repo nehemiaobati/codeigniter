@@ -1,0 +1,14 @@
+{
+  "contents": [
+    {
+      "role": "user",
+      "parts": [{ "text": "how many r are there in strawberry" }]
+    }
+  ],
+  "generationConfig": {
+    "thinkingConfig": {
+      "thinkingBudget": 2048,
+      "includeThoughts": true
+    }
+  }
+}

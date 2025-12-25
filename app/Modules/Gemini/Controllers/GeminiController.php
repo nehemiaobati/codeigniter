@@ -377,7 +377,11 @@ class GeminiController extends BaseController
                 // Send Final Status Event
                 $finalPayload = [
                     'csrf_token' => csrf_hash(),
-                    'cost'       => $result['costKSH']
+                    'cost'       => $result['costKSH'],
+                    'used_interaction_ids' => $result['used_interaction_ids'] ?? [],
+                    'new_interaction_id' => $result['new_interaction_id'] ?? null,
+                    'timestamp' => $result['timestamp'] ?? null,
+                    'user_input' => $inputText
                 ];
 
                 if ($audioUrl) {
@@ -483,6 +487,46 @@ class GeminiController extends BaseController
             $success ? 'success' : 'error',
             $success ? 'Memory cleared.' : 'Failed to clear memory.'
         );
+    }
+
+    /**
+     * Fetches user interaction history.
+     *
+     * @return ResponseInterface
+     */
+    public function fetchHistory()
+    {
+        $userId = (int) session()->get('userId');
+        $limit = $this->request->getVar('limit') ?? 20;
+        $offset = $this->request->getVar('offset') ?? 0;
+
+        $history = service('memory', $userId)->getUserHistory($userId, (int)$limit, (int)$offset);
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'history' => $history,
+            'token' => csrf_hash()
+        ]);
+    }
+
+    /**
+     * Deletes a specific interaction.
+     *
+     * @return ResponseInterface
+     */
+    public function deleteHistory()
+    {
+        $userId = (int) session()->get('userId');
+        $uniqueId = $this->request->getPost('unique_id');
+
+        if (!$uniqueId) {
+            return $this->_respondError('Invalid ID.');
+        }
+
+        if (service('memory', $userId)->deleteInteraction($userId, $uniqueId)) {
+            return $this->response->setJSON(['status' => 'success', 'token' => csrf_hash()]);
+        }
+        return $this->_respondError('Failed to delete.');
     }
 
     /**
@@ -602,6 +646,10 @@ class GeminiController extends BaseController
                 'result' => $parsedHtml,
                 'raw_result' => $result['result'],
                 'flash_html' => $flashHtml,
+                'used_interaction_ids' => $result['used_interaction_ids'] ?? [],
+                'new_interaction_id' => $result['new_interaction_id'] ?? null,
+                'timestamp' => $result['timestamp'] ?? null,
+                'user_input' => ($this->request->getPost('prompt') ?? ''),
                 'token' => csrf_hash()
             ];
 

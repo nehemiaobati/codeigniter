@@ -318,6 +318,51 @@
             border-color: var(--bs-primary);
         }
     }
+
+    /* =========================================
+       8. Memory Stream Styles
+       ========================================= */
+    .memory-item {
+        font-size: 0.9rem;
+        border-left: 3px solid transparent;
+        transition: all 0.2s;
+        cursor: default;
+    }
+
+    .memory-item:hover {
+        background-color: var(--bs-tertiary-bg);
+    }
+
+    .memory-item.active-context {
+        border-left-color: var(--bs-warning);
+        background-color: rgba(255, 193, 7, 0.1);
+        border-radius: 4px;
+    }
+
+    .memory-date-header {
+        font-size: 0.75rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        color: var(--bs-secondary);
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+        position: sticky;
+        top: 0;
+        background: var(--bs-tertiary-bg);
+        /* Match sidebar bg */
+        z-index: 5;
+        padding-top: 4px;
+        padding-bottom: 4px;
+    }
+
+    .delete-memory-btn {
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+
+    .memory-item:hover .delete-memory-btn {
+        opacity: 1;
+    }
 </style>
 <?= $this->endSection() ?>
 
@@ -500,58 +545,87 @@
 
     <!-- Right Sidebar (Settings & History) -->
     <div class="gemini-sidebar collapse collapse-horizontal show" id="geminiSidebar">
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h5 class="fw-bold m-0"><i class="bi bi-sliders"></i> Configuration</h5>
-            <button class="btn-close d-lg-none" data-bs-toggle="collapse" data-bs-target="#geminiSidebar"></button>
+        <!-- Header with Tabs -->
+        <div class="d-flex align-items-center mb-3">
+            <ul class="nav nav-pills nav-fill flex-grow-1 p-1 bg-body rounded" id="sidebarTabs" role="tablist" style="font-size: 0.9rem;">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active py-1" id="config-tab" data-bs-toggle="tab" data-bs-target="#config-pane" type="button" role="tab"><i class="bi bi-sliders me-1"></i> Config</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link py-1" id="memory-tab" data-bs-toggle="tab" data-bs-target="#memory-pane" type="button" role="tab"><i class="bi bi-activity me-1"></i> History</button>
+                </li>
+            </ul>
+            <button class="btn-close ms-2 d-lg-none" data-bs-toggle="collapse" data-bs-target="#geminiSidebar"></button>
         </div>
 
-        <!-- Toggles -->
-        <div class="form-check form-switch mb-3">
-            <input class="form-check-input setting-toggle" type="checkbox" id="assistantMode" data-key="assistant_mode_enabled" <?= $assistant_mode_enabled ? 'checked' : '' ?>>
-            <label class="form-check-label fw-medium" for="assistantMode">Conversational Memory</label>
-        </div>
-        <div class="form-check form-switch mb-3">
-            <input class="form-check-input setting-toggle" type="checkbox" id="voiceOutput" data-key="voice_output_enabled" <?= $voice_output_enabled ? 'checked' : '' ?>>
-            <label class="form-check-label fw-medium" for="voiceOutput">Voice Output (TTS)</label>
-        </div>
-        <div class="form-check form-switch mb-4">
-            <input class="form-check-input setting-toggle" type="checkbox" id="streamOutput" data-key="stream_output_enabled" <?= $stream_output_enabled ? 'checked' : '' ?>>
-            <label class="form-check-label fw-medium" for="streamOutput">Stream Responses</label>
-        </div>
+        <div class="tab-content h-100 overflow-hidden d-flex flex-column">
 
-        <hr>
+            <!-- Configuration Pane -->
+            <div class="tab-pane fade show active h-100 overflow-auto custom-scrollbar" id="config-pane" role="tabpanel">
 
-        <!-- Saved Prompts -->
-        <label class="form-label small fw-bold text-uppercase text-muted">Saved Prompts</label>
-        <div id="saved-prompts-wrapper">
-            <div class="input-group mb-3 <?= empty($prompts) ? 'd-none' : '' ?>" id="savedPromptsContainer">
-                <select class="form-select form-select-sm" id="savedPrompts">
-                    <option value="" disabled selected>Select...</option>
-                    <?php if (!empty($prompts)): ?>
-                        <?php foreach ($prompts as $p): ?>
-                            <option value="<?= esc($p->prompt_text, 'attr') ?>" data-id="<?= $p->id ?>"><?= esc($p->title) ?></option>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </select>
-                <button class="btn btn-outline-secondary btn-sm" type="button" id="usePromptBtn">Load</button>
-                <button class="btn btn-outline-danger btn-sm" type="button" id="deletePromptBtn" disabled><i class="bi bi-trash"></i></button>
+                <!-- Toggles -->
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input setting-toggle" type="checkbox" id="assistantMode" data-key="assistant_mode_enabled" <?= $assistant_mode_enabled ? 'checked' : '' ?>>
+                    <label class="form-check-label fw-medium" for="assistantMode">Conversational Memory</label>
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input setting-toggle" type="checkbox" id="voiceOutput" data-key="voice_output_enabled" <?= $voice_output_enabled ? 'checked' : '' ?>>
+                    <label class="form-check-label fw-medium" for="voiceOutput">Voice Output (TTS)</label>
+                </div>
+                <div class="form-check form-switch mb-4">
+                    <input class="form-check-input setting-toggle" type="checkbox" id="streamOutput" data-key="stream_output_enabled" <?= $stream_output_enabled ? 'checked' : '' ?>>
+                    <label class="form-check-label fw-medium" for="streamOutput">Stream Responses</label>
+                </div>
+
+                <hr>
+
+                <!-- Saved Prompts -->
+                <label class="form-label small fw-bold text-uppercase text-muted">Saved Prompts</label>
+                <div id="saved-prompts-wrapper">
+                    <div class="input-group mb-3 <?= empty($prompts) ? 'd-none' : '' ?>" id="savedPromptsContainer">
+                        <select class="form-select form-select-sm" id="savedPrompts">
+                            <option value="" disabled selected>Select...</option>
+                            <?php if (!empty($prompts)): ?>
+                                <?php foreach ($prompts as $p): ?>
+                                    <option value="<?= esc($p->prompt_text, 'attr') ?>" data-id="<?= $p->id ?>"><?= esc($p->title) ?></option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                        <button class="btn btn-outline-secondary btn-sm" type="button" id="usePromptBtn">Load</button>
+                        <button class="btn btn-outline-danger btn-sm" type="button" id="deletePromptBtn" disabled><i class="bi bi-trash"></i></button>
+                    </div>
+                    <div id="no-prompts-alert" class="alert alert-light border mb-3 small text-muted <?= !empty($prompts) ? 'd-none' : '' ?>">
+                        No saved prompts yet.
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Danger Zone -->
+                <form action="<?= url_to('gemini.memory.clear') ?>" method="post" onsubmit="return confirm('Clear all history?');">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="btn btn-outline-danger w-100 btn-sm"><i class="bi bi-trash me-2"></i> Clear History</button>
+                </form>
+
+                <div class="mt-4 pt-4 text-center">
+                    <small class="text-muted">AFRIKENKID AI Studio v2</small>
+                </div>
             </div>
-            <div id="no-prompts-alert" class="alert alert-light border mb-3 small text-muted <?= !empty($prompts) ? 'd-none' : '' ?>">
-                No saved prompts yet.
+
+            <!-- Memory Stream Pane -->
+            <div class="tab-pane fade h-100 overflow-auto custom-scrollbar" id="memory-pane" role="tabpanel">
+                <div id="memory-loading" class="text-center py-4 d-none">
+                    <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
+                </div>
+                <div id="history-list" class="d-flex flex-column pb-5">
+                    <!-- History items will be injected here -->
+                    <div class="text-center text-muted small mt-5">
+                        <i class="bi bi-clock-history fs-4 mb-2 d-block"></i>
+                        Select the History tab to load interactions.
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <hr>
-
-        <!-- Danger Zone -->
-        <form action="<?= url_to('gemini.memory.clear') ?>" method="post" onsubmit="return confirm('Clear all history?');">
-            <?= csrf_field() ?>
-            <button type="submit" class="btn btn-outline-danger w-100 btn-sm"><i class="bi bi-trash me-2"></i> Clear History</button>
-        </form>
-
-        <div class="mt-auto pt-4 text-center">
-            <small class="text-muted">AFRIKENKID AI Studio v2</small>
         </div>
     </div>
 </div>
@@ -626,7 +700,9 @@
             stream: '<?= url_to('gemini.stream') ?>',
             generate: '<?= url_to('gemini.generate') ?>',
             generateMedia: '<?= url_to('gemini.media.generate') ?>',
-            pollMedia: '<?= url_to('gemini.media.poll') ?>'
+            pollMedia: '<?= url_to('gemini.media.poll') ?>',
+            history: '<?= url_to('gemini.history.fetch') ?>',
+            deleteHistory: '<?= url_to('gemini.history.delete') ?>'
         }
     };
 
@@ -641,6 +717,7 @@
             this.ui = new UIManager(this);
             this.uploader = new MediaUploader(this);
             this.prompts = new PromptManager(this);
+            this.history = new HistoryManager(this);
             this.streamer = new StreamHandler(this);
             this.interaction = new InteractionHandler(this);
         }
@@ -656,6 +733,7 @@
             this.ui.init();
             this.uploader.init();
             this.prompts.init();
+            this.history.init();
             this.interaction.init();
 
             // Expose for debugging
@@ -1059,6 +1137,17 @@
                     this.app.ui.scrollToBottom();
                     if (d.flash_html) document.getElementById('flash-messages-container').innerHTML = d.flash_html;
                     this.app.ui.renderAudio(d.audio_url);
+
+                    // Dynamic History Update
+                    if (d.new_interaction_id) {
+                        this.app.history.addItem({
+                            id: d.new_interaction_id,
+                            timestamp: d.timestamp,
+                            user_input: d.user_input
+                        }, d.raw_result); // Pass raw result for truncation in UI
+                    }
+
+                    if (d.used_interaction_ids) this.app.history.highlightContext(d.used_interaction_ids);
                 } else {
                     this.app.ui.setError(d.message || 'Generation failed.');
                 }
@@ -1180,6 +1269,17 @@
                         if (d.cost) document.getElementById('flash-messages-container').innerHTML = `<div class="alert alert-success alert-dismissible fade show">KSH ${parseFloat(d.cost).toFixed(2)} deducted.<button class="btn-close" data-bs-dismiss="alert"></button></div>`;
                         if (d.audio_url) this.app.ui.renderAudio(d.audio_url);
                         if (d.csrf_token) this.app.refreshCsrf(d.csrf_token);
+
+                        // Dynamic History Update
+                        if (d.new_interaction_id) {
+                            this.app.history.addItem({
+                                id: d.new_interaction_id,
+                                timestamp: d.timestamp,
+                                user_input: d.user_input
+                            }, this.app.streamer.currentFullText ?? '');
+                        }
+
+                        if (d.used_interaction_ids) this.app.history.highlightContext(d.used_interaction_ids);
                     } catch (e) {
                         /* Ignore partial JSON */
                     }
@@ -1440,6 +1540,303 @@
                 // Reset select
                 select.value = '';
             }
+        }
+    }
+
+    /**
+     * 7. History Manager (Memory Stream)
+     */
+    class HistoryManager {
+        static HISTORY_PAGE_SIZE = 5;
+
+        constructor(app) {
+            this.app = app;
+            this.listEl = document.getElementById('history-list');
+            this.loadingEl = document.getElementById('memory-loading');
+            this.isLoaded = false;
+            this.offset = 0;
+            this.limit = HistoryManager.HISTORY_PAGE_SIZE;
+            this.hasMore = true;
+            this.currentLastDate = ''; // Track last date in memory
+        }
+
+        init() {
+            // Load history when tab is shown
+            const tabBtn = document.getElementById('memory-tab');
+            if (tabBtn) {
+                tabBtn.addEventListener('shown.bs.tab', () => {
+                    if (!this.isLoaded) this.fetchHistory();
+                });
+            }
+
+            // Bind click events for deletion and load more
+            this.listEl.addEventListener('click', (e) => {
+                const deleteBtn = e.target.closest('.delete-memory-btn');
+                if (deleteBtn) {
+                    e.stopPropagation();
+                    this.deleteItem(deleteBtn.dataset.id);
+                    return;
+                }
+
+                const loadMoreBtn = e.target.closest('.load-more-btn');
+                if (loadMoreBtn) {
+                    e.preventDefault();
+                    this.loadMore();
+                }
+            });
+        }
+
+        async fetchHistory(append = false) {
+            if (!append) {
+                this.loadingEl.classList.remove('d-none');
+                this.listEl.classList.add('d-none');
+            }
+
+            // Show loading state on Load More button if appending
+            const loadMoreBtn = this.listEl.querySelector('.load-more-btn');
+            if (append && loadMoreBtn) {
+                loadMoreBtn.disabled = true;
+                loadMoreBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
+            }
+
+            try {
+                const fd = new FormData();
+                fd.append('limit', this.limit);
+                fd.append('offset', this.offset);
+                const d = await this.app.sendAjax(APP_CONFIG.endpoints.history, fd);
+
+                if (d.status === 'success') {
+                    this.renderList(d.history, append);
+                    this.isLoaded = true;
+
+                    // Update pagination state
+                    this.offset += d.history.length;
+                    this.hasMore = d.history.length === this.limit;
+
+                    // Update or remove Load More button
+                    this.updateLoadMoreButton();
+                }
+            } catch (e) {
+                if (!append) {
+                    this.listEl.innerHTML = '<div class="text-center text-danger mt-4"><small>Failed to load history.</small></div>';
+                }
+            } finally {
+                if (!append) {
+                    this.loadingEl.classList.add('d-none');
+                    this.listEl.classList.remove('d-none');
+                }
+            }
+        }
+
+        renderList(items, append = false) {
+            if (!items || items.length === 0) {
+                if (!append) {
+                    this.listEl.innerHTML = '<div class="text-center text-muted mt-5 small">No interaction history yet.</div>';
+                }
+                return;
+            }
+
+            if (!append) {
+                this.listEl.innerHTML = '';
+                this.currentLastDate = ''; // Reset when clearing list
+            } else {
+                // Remove existing Load More button before appending
+                const existingBtn = this.listEl.querySelector('.load-more-btn');
+                if (existingBtn) existingBtn.remove();
+            }
+
+            let lastDate = this.currentLastDate;
+
+            items.forEach(item => {
+                const date = this.formatDate(item.timestamp);
+
+                if (date !== lastDate) {
+                    const header = document.createElement('div');
+                    header.className = 'memory-date-header ps-2';
+                    header.textContent = date;
+                    this.listEl.appendChild(header);
+                    lastDate = date;
+                    this.currentLastDate = date; // Update memory tracker
+                }
+
+                const el = document.createElement('div');
+                el.className = 'memory-item p-2 mb-1 position-relative';
+                el.dataset.id = item.unique_id;
+                el.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="text-truncate fw-medium" style="max-width: 85%; font-size: 0.85rem;" title="${this.escapeHtml(item.user_input_raw)}">
+                            ${this.escapeHtml(item.user_input_raw)}
+                        </div>
+                        <button class="btn btn-link text-danger p-0 delete-memory-btn" style="font-size: 0.8rem;" data-id="${item.unique_id}" title="Forget">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                    <div class="text-muted text-truncate small" style="opacity: 0.7;">
+                        ${this.escapeHtml(item.ai_output)}
+                    </div>
+                `;
+                this.listEl.appendChild(el);
+            });
+        }
+
+        async deleteItem(id) {
+            if (!confirm('Forget this interaction?')) return;
+
+            const itemEl = this.listEl.querySelector(`.memory-item[data-id="${id}"]`);
+            if (itemEl) itemEl.style.opacity = '0.5';
+
+            const fd = new FormData();
+            fd.append('unique_id', id);
+
+            try {
+                const d = await this.app.sendAjax(APP_CONFIG.endpoints.deleteHistory, fd);
+                if (d.status === 'success') {
+                    if (itemEl) itemEl.remove();
+                    // Remove header if no items left under it (simple check)
+                    // ... (Implementation optional for brevity)
+                } else {
+                    if (itemEl) itemEl.style.opacity = '1';
+                    this.app.ui.showToast('Failed to delete.');
+                }
+            } catch (e) {
+                if (itemEl) itemEl.style.opacity = '1';
+                this.app.ui.showToast('Error deleting item.');
+            }
+        }
+
+        highlightContext(ids) {
+            // Clear previous
+            this.listEl.querySelectorAll('.active-context').forEach(el => el.classList.remove('active-context'));
+
+            if (!ids || !ids.length) return;
+
+            // Highlight matches
+            let firstMatch = null;
+            ids.forEach(id => {
+                const el = this.listEl.querySelector(`.memory-item[data-id="${id}"]`);
+                if (el) {
+                    el.classList.add('active-context');
+                    if (!firstMatch) firstMatch = el;
+                }
+            });
+
+            // Switch to tab and scroll
+            if (firstMatch) {
+                // If we are in assistant mode, maybe auto-switch tab?
+                // For now, just scroll if visible
+                const memTab = new bootstrap.Tab(document.getElementById('memory-tab'));
+                // Only switch if not already viewing settings? Or always?
+                // Let's rely on user intent or small indicator.
+                // Requirement said: "Force the Sidebar to switch to the Memory Stream tab if assistant_mode is enabled."
+                if (document.getElementById('assistantMode').checked) {
+                    // Fix: Use Bootstrap 5 API correctly via instance get or create
+                    const tabEl = document.getElementById('memory-tab');
+                    const tab = bootstrap.Tab.getInstance(tabEl) || new bootstrap.Tab(tabEl);
+                    tab.show();
+
+                    setTimeout(() => firstMatch.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    }), 300);
+                }
+            }
+        }
+
+        addItem(item, aiOutputRaw) {
+            // Remove empty state if present
+            if (this.listEl.querySelector('.text-center.text-muted')) {
+                this.listEl.innerHTML = '';
+            }
+
+            const dateStr = this.formatDate(item.timestamp);
+
+            //Check if header exists for today/this date, else create
+            // Simple approach: Just prepend for "Today" effectively
+            let header = this.listEl.querySelector('.memory-date-header');
+            if (!header || header.textContent !== dateStr) {
+                // If the top header isn't for this date, insert new header
+                const newHeader = document.createElement('div');
+                newHeader.className = 'memory-date-header ps-2';
+                newHeader.textContent = dateStr;
+                this.listEl.insertBefore(newHeader, this.listEl.firstChild);
+            }
+
+            const el = document.createElement('div');
+            el.className = 'memory-item p-2 mb-1 position-relative';
+            el.dataset.id = item.id;
+            el.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="text-truncate fw-medium" style="max-width: 85%; font-size: 0.85rem;" title="${this.escapeHtml(item.user_input)}">
+                        ${this.escapeHtml(item.user_input)}
+                    </div>
+                    <button class="btn btn-link text-danger p-0 delete-memory-btn" style="font-size: 0.8rem;" data-id="${item.id}" title="Forget">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+                <div class="text-muted text-truncate small" style="opacity: 0.7;">
+                    ${this.escapeHtml(typeof aiOutputRaw === 'string' ? aiOutputRaw : JSON.stringify(aiOutputRaw))}
+                </div>
+            `;
+
+            // Insert after the first header
+            const firstHeader = this.listEl.querySelector('.memory-date-header');
+            if (firstHeader && firstHeader.nextSibling) {
+                this.listEl.insertBefore(el, firstHeader.nextSibling);
+            } else {
+                this.listEl.appendChild(el);
+            }
+        }
+
+        async loadMore() {
+            await this.fetchHistory(true); // Append mode
+        }
+
+        updateLoadMoreButton() {
+            // Remove existing button if present
+            const existingBtn = this.listEl.querySelector('.load-more-btn');
+            if (existingBtn) existingBtn.remove();
+
+            // Add button only if there are more items
+            if (this.hasMore) {
+                const btnContainer = document.createElement('div');
+                btnContainer.className = 'text-center py-3';
+                btnContainer.innerHTML = `
+                    <button class="btn btn-sm btn-outline-primary load-more-btn">
+                        Load More <i class="bi bi-arrow-down-circle ms-1"></i>
+                    </button>
+                `;
+                this.listEl.appendChild(btnContainer);
+            }
+        }
+
+        formatDate(timestamp) {
+            // Handle SQL Date format (YYYY-MM-DD HH:MM:SS) or ISO
+            let date;
+            if (typeof timestamp === 'string' && timestamp.indexOf(' ') > 0) {
+                // Replace space with T for easier parsing in some browsers, 
+                // though modern browsers handle SQL format often.
+                date = new Date(timestamp.replace(' ', 'T'));
+            } else {
+                date = new Date(timestamp);
+            }
+
+            if (isNaN(date.getTime())) return 'Today'; // Fallback
+
+            return date.toLocaleDateString(undefined, {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        escapeHtml(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
     }
 

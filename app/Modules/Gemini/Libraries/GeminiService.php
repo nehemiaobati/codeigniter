@@ -127,13 +127,15 @@ class GeminiService
         $this->userModel->deductBalance($userId, number_format($costData['costKSH'], 4, '.', ''));
 
         // Memory updates
+        $memoryResult = [];
         if (!empty($options['assistant_mode'] ?? true) && isset($contextData['memoryService'])) {
-            $contextData['memoryService']->updateMemory(
+            $newId = $contextData['memoryService']->updateMemory(
                 $prompt,
                 $apiResponse['result'],
                 $apiResponse['raw'] ?? '',
                 $contextData['usedInteractionIds'] ?? []
             );
+            $memoryResult = ['id' => $newId, 'timestamp' => date('Y-m-d H:i:s')];
         }
 
         $this->db->transComplete();
@@ -142,6 +144,9 @@ class GeminiService
             'result' => $apiResponse['result'],
             'costKSH' => $costData['costKSH'],
             'audioData' => $audioResult['audioData'] ?? null,
+            'used_interaction_ids' => $contextData['usedInteractionIds'] ?? [],
+            'new_interaction_id' => $memoryResult['id'] ?? null,
+            'timestamp' => $memoryResult['timestamp'] ?? null,
             'success' => true
         ];
     }
@@ -557,13 +562,15 @@ class GeminiService
         }
 
         // Update Memory
+        $memoryResult = [];
         if (isset($contextData['memoryService'])) {
-            $contextData['memoryService']->updateMemory(
+            $newId = $contextData['memoryService']->updateMemory(
                 $inputText,
                 $fullText,
                 $rawChunks,
                 $contextData['usedInteractionIds'] ?? []
             );
+            $memoryResult = ['id' => $newId, 'timestamp' => date('Y-m-d H:i:s')];
         }
 
         $this->db->transComplete();
@@ -575,7 +582,10 @@ class GeminiService
 
         return [
             'costKSH' => $costData['costKSH'],
-            'audioData' => $audioData
+            'audioData' => $audioData,
+            'used_interaction_ids' => $contextData['usedInteractionIds'] ?? [],
+            'new_interaction_id' => $memoryResult['id'] ?? null,
+            'timestamp' => $memoryResult['timestamp'] ?? null,
         ];
     }
     /**
