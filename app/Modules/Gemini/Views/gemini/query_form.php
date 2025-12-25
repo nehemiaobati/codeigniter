@@ -363,6 +363,23 @@
     .memory-item:hover .delete-memory-btn {
         opacity: 1;
     }
+
+    /* Thinking Block Styles */
+    .thinking-block {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+
+    .thinking-block[open] {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .thinking-content {
+        white-space: pre-wrap;
+        font-family: monospace;
+        font-size: 0.85rem;
+    }
 </style>
 <?= $this->endSection() ?>
 
@@ -980,7 +997,21 @@
             const body = document.getElementById('ai-response-body');
             if (!raw || !body) return;
 
-            let content = (format === 'markdown') ? raw.value : (format === 'html' ? body.innerHTML : body.innerText);
+            let content;
+            if (format === 'markdown') {
+                content = raw.value;
+            } else if (format === 'html') {
+                content = body.innerHTML;
+            } else { // text
+                // Temporarily expand thinking block to ensure innerText captures it
+                const thinkingBlock = body.querySelector('.thinking-block');
+                const wasOpen = thinkingBlock ? thinkingBlock.hasAttribute('open') : true;
+                if (thinkingBlock && !wasOpen) thinkingBlock.setAttribute('open', '');
+
+                content = body.innerText;
+
+                if (thinkingBlock && !wasOpen) thinkingBlock.removeAttribute('open');
+            }
 
             if (!content.trim()) return this.showToast('Nothing to copy.');
 
@@ -1260,11 +1291,33 @@
                 if (line.startsWith('data: ')) {
                     try {
                         const d = JSON.parse(line.substring(6));
-                        if (d.text) {
+
+                        // Handle Content
+                        if (d.thought) {
+                            this._ensureThinkingBlock(els.body);
+                            this._appendToThinkingBlock(els.body, d.thought);
+
+                            // Initialize raw value with header if empty
+                            if (!els.raw.value.includes('=== THINKING PROCESS ===')) {
+                                els.raw.value = '=== THINKING PROCESS ===\n\n' + els.raw.value;
+                            }
+                            els.raw.value += d.thought;
+
+                        } else if (d.text) {
                             accum += d.text;
-                            els.body.innerHTML = marked.parse(accum);
-                            els.raw.value += d.text;
+
+                            // Add separation and Answer header if transitioning from thoughts to text
+                            if (els.raw.value.includes('=== THINKING PROCESS ===') && !els.raw.value.includes('=== ANSWER ===')) {
+                                els.raw.value += '\n\n=== ANSWER ===\n\n';
+                            }
+
+                            this._preserveThinkingBlockWhileUpdating(els.body, () => {
+                                els.body.innerHTML = marked.parse(accum);
+                                els.raw.value += d.text;
+                            });
                         }
+
+                        // Handle Metadata
                         if (d.error) this.app.ui.setError(d.error);
                         if (d.cost) document.getElementById('flash-messages-container').innerHTML = `<div class="alert alert-success alert-dismissible fade show">KSH ${parseFloat(d.cost).toFixed(2)} deducted.<button class="btn-close" data-bs-dismiss="alert"></button></div>`;
                         if (d.audio_url) this.app.ui.renderAudio(d.audio_url);
@@ -1278,14 +1331,128 @@
                                 user_input: d.user_input
                             }, this.app.streamer.currentFullText ?? '');
                         }
-
                         if (d.used_interaction_ids) this.app.history.highlightContext(d.used_interaction_ids);
                     } catch (e) {
                         /* Ignore partial JSON */
+                        console.error("Parse error in stream chunk:", e);
                     }
                 }
             });
             return accum;
+        }
+
+        /**
+         * Ensure thinking block exists in the body element
+         * @private
+         */
+        _ensureThinkingBlock(bodyEl) {
+            if (bodyEl.querySelector('.thinking-block')) return;
+
+            const thinkingBlock = document.createElement('details');
+            thinkingBlock.className = 'thinking-block mb-3';
+
+            const summary = document.createElement('summary');
+            summary.textContent = 'Thinking Process';
+            summary.className = 'cursor-pointer text-muted fw-bold small';
+
+            const content = document.createElement('div');
+            content.className = 'thinking-content fst-italic text-muted p-2 border-start mt-1 small';
+
+            thinkingBlock.appendChild(summary);
+            thinkingBlock.appendChild(content);
+
+            bodyEl.insertBefore(thinkingBlock, bodyEl.firstChild);
+        }
+
+        /**
+         * Append text to the thinking block content
+         * @private
+         */
+        _appendToThinkingBlock(bodyEl, thoughtText) {
+            const contentDiv = bodyEl.querySelector('.thinking-block .thinking-content');
+            if (contentDiv) contentDiv.textContent += thoughtText;
+        }
+
+        /**
+         * Preserve thinking block while updating body content
+         * @private
+         */
+        _preserveThinkingBlockWhileUpdating(bodyEl, updateFn) {
+            const thinkingBlock = bodyEl.querySelector('.thinking-block');
+            updateFn();
+            if (thinkingBlock) {
+                bodyEl.insertBefore(thinkingBlock, bodyEl.firstChild);
+            }
+        }
+
+        appendChunk(text) {
+            // Ensure result area
+            if (!this.resultEl) {
+                this.createResultContainer();
+            }
+
+            // If first chunk, clear any placeholders
+            if (this.isFirstChunk) {
+                this.resultEl.innerHTML = '';
+                this.isFirstChunk = false;
+            }
+
+            // Append text to buffer and update md
+            this.streamBuffer += text;
+
+            // Get existing thinking block if any
+            const thinkingBlock = this.resultEl.querySelector('.thinking-block');
+
+            this.resultEl.innerHTML = marked.parse(this.streamBuffer);
+            this.rawEl.value = this.streamBuffer; // Update raw output
+
+            if (thinkingBlock) {
+                this.resultEl.prepend(thinkingBlock);
+            }
+
+            // Scroll to bottom
+            const wrapper = document.getElementById('response-area-wrapper');
+            if (wrapper) wrapper.scrollTop = wrapper.scrollHeight;
+        }
+
+        appendThinking(text) {
+            if (!this.resultEl) {
+                this.createResultContainer();
+            }
+            if (this.isFirstChunk) {
+                this.resultEl.innerHTML = '';
+                this.isFirstChunk = false;
+            }
+
+            let thinkingBlock = this.resultEl.querySelector('.thinking-block');
+            if (!thinkingBlock) {
+                // Create structure: <details><summary>...</summary><div>...</div></details>
+                thinkingBlock = document.createElement('details');
+                thinkingBlock.className = 'thinking-block mb-3';
+
+                const summary = document.createElement('summary');
+                summary.textContent = 'Thinking Process';
+                summary.className = 'cursor-pointer text-muted fw-bold small';
+                // summary.style.listStyle = 'none'; // Optional to hide default triangle
+
+                const content = document.createElement('div');
+                content.className = 'thinking-content fst-italic text-muted p-2 border-start mt-1 small';
+
+                thinkingBlock.appendChild(summary);
+                thinkingBlock.appendChild(content);
+
+                this.resultEl.prepend(thinkingBlock);
+            }
+
+            const contentDiv = thinkingBlock.querySelector('.thinking-content');
+            // Just append text node effectively or innerHTML safe
+            // Text is likely to come in small tokens, not markdown formatted usually for thought blocks?
+            // Gemini docs say it's text. Let's just append text.
+            contentDiv.textContent += text;
+
+            // We don't auto-scroll for thinking, maybe? Or yes?
+            const wrapper = document.getElementById('response-area-wrapper');
+            if (wrapper) wrapper.scrollTop = wrapper.scrollHeight;
         }
     }
 

@@ -142,6 +142,7 @@ class GeminiService
 
         return [
             'result' => $apiResponse['result'],
+            'thoughts' => $apiResponse['thoughts'] ?? '',
             'costKSH' => $costData['costKSH'],
             'audioData' => $audioResult['audioData'] ?? null,
             'used_interaction_ids' => $contextData['usedInteractionIds'] ?? [],
@@ -220,12 +221,18 @@ class GeminiService
                 }
 
                 $text = '';
+                $thoughts = '';
                 foreach ($data['candidates'][0]['content']['parts'] ?? [] as $part) {
-                    $text .= $part['text'] ?? '';
+                    if (isset($part['thought']) && $part['thought'] === true) {
+                        $thoughts .= $part['text'] ?? '';
+                    } else {
+                        $text .= $part['text'] ?? '';
+                    }
                 }
 
                 return [
                     'result' => $text,
+                    'thoughts' => $thoughts,
                     'usage' => $data['usageMetadata'] ?? null,
                     'raw' => $data
                 ];
@@ -266,6 +273,10 @@ class GeminiService
                 CURLOPT_WRITEFUNCTION => function ($ch, $chunk) use (&$buffer, &$fullText, &$usage, &$rawChunks, $chunkCallback) {
                     $buffer .= $chunk;
                     $parsed = $this->_processStreamBuffer($buffer);
+                    foreach ($parsed['thought_chunks'] ?? [] as $thoughtConfig) {
+                        // Send thought chunks as a special array structure to distinguish from text
+                        $chunkCallback(['thought' => $thoughtConfig]);
+                    }
                     foreach ($parsed['chunks'] as $text) {
                         $fullText .= $text;
                         $chunkCallback($text);
@@ -291,7 +302,7 @@ class GeminiService
 
     private function _processStreamBuffer(string &$buffer): array
     {
-        $result = ['chunks' => [], 'usage' => null, 'raw_chunks' => []];
+        $result = ['chunks' => [], 'thought_chunks' => [], 'usage' => null, 'raw_chunks' => []];
 
         // 1. Clean framing characters
         $buffer = ltrim($buffer, ", \n\r\t[");
@@ -317,8 +328,14 @@ class GeminiService
                     $objectFound = true;
 
                     // Extract Data
-                    if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
-                        $result['chunks'][] = $data['candidates'][0]['content']['parts'][0]['text'];
+                    if (isset($data['candidates'][0]['content']['parts'][0])) {
+                        $part = $data['candidates'][0]['content']['parts'][0];
+
+                        if (isset($part['thought']) && $part['thought'] === true) {
+                            $result['thought_chunks'][] = $part['text'];
+                        } else {
+                            $result['chunks'][] = $part['text'];
+                        }
                     }
                     if (isset($data['usageMetadata'])) {
                         $result['usage'] = $data['usageMetadata'];
