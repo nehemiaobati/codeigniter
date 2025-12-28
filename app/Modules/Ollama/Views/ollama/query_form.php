@@ -9,10 +9,19 @@
     |--------------------------------------------------------------------------
     | AI Studio Implementation - Internal Styles (Ollama)
     |--------------------------------------------------------------------------
-    | Scoped styles for the AI Studio interface.
     */
 
-    /* --- Global Layout Overrides --- */
+    :root {
+        --ollama-header-height: 60px;
+        --ollama-sidebar-width: 350px;
+        --ollama-code-bg: #282c34;
+        --ollama-z-header: 1020;
+        --ollama-z-sidebar: 1050;
+    }
+
+    /* =========================================
+       1. Global Layout Overrides
+       ========================================= */
     #mainNavbar,
     .footer,
     .container.my-4 {
@@ -25,14 +34,12 @@
         background-color: var(--bs-body-bg);
     }
 
-    /* --- Main Container & Layout --- */
+    /* =========================================
+       2. Main Layout Container
+       ========================================= */
     .ollama-view-container {
-        --code-bg: #282c34;
         position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        inset: 0;
         height: 100dvh;
         width: 100vw;
         display: flex;
@@ -51,54 +58,27 @@
         overflow: hidden;
     }
 
-    /* --- Header --- */
+    /* =========================================
+       3. Header
+       ========================================= */
     .ollama-header {
         position: sticky;
         top: 0;
-        z-index: 1020;
+        z-index: var(--ollama-z-header);
         background: var(--bs-body-bg);
         border-bottom: 1px solid var(--bs-border-color);
         padding: 0.5rem 1.5rem;
+        height: var(--ollama-header-height);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
-    /* --- Response Area --- */
-    .ollama-response-area {
-        flex: 1;
-        overflow-y: auto;
-        padding: 2rem;
-        scroll-behavior: smooth;
-        min-height: 0;
-    }
-
-    /* --- Prompt Area --- */
-    .ollama-prompt-area {
-        width: 100%;
-        background: var(--bs-body-bg);
-        border-top: 1px solid var(--bs-border-color);
-        padding: 1rem 1.5rem calc(1rem + env(safe-area-inset-bottom));
-        z-index: 10;
-        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
-    }
-
-    .prompt-textarea {
-        resize: none;
-        overflow-y: hidden;
-        min-height: 40px;
-        max-height: 120px;
-        border-radius: 1.5rem;
-        padding: 0.6rem 1rem;
-        line-height: 1.5;
-        transition: border-color 0.2s;
-    }
-
-    .prompt-textarea:focus {
-        box-shadow: none;
-        border-color: var(--bs-primary);
-    }
-
-    /* --- Sidebar --- */
+    /* =========================================
+       4. Sidebar
+       ========================================= */
     .ollama-sidebar {
-        width: 350px;
+        width: var(--ollama-sidebar-width);
         border-left: 1px solid var(--bs-border-color);
         background: var(--bs-tertiary-bg);
         overflow-y: auto;
@@ -117,12 +97,52 @@
             right: 0;
             top: 0;
             bottom: 0;
-            z-index: 1050;
+            z-index: var(--ollama-z-sidebar);
             box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
         }
     }
 
-    /* Upload List */
+    /* =========================================
+       5. Content Areas
+       ========================================= */
+    .ollama-response-area {
+        flex: 1;
+        overflow-y: auto;
+        padding: 2rem;
+        scroll-behavior: smooth;
+        min-height: 0;
+    }
+
+    .ollama-prompt-area {
+        width: 100%;
+        background: var(--bs-body-bg);
+        border-top: 1px solid var(--bs-border-color);
+        padding: 1rem 1.5rem calc(1rem + env(safe-area-inset-bottom));
+        z-index: 10;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    /* =========================================
+       6. Components
+       ========================================= */
+    /* Textarea */
+    .prompt-textarea {
+        resize: none;
+        overflow-y: hidden;
+        min-height: 40px;
+        max-height: 120px;
+        border-radius: 1.5rem;
+        padding: 0.6rem 1rem;
+        line-height: 1.5;
+        transition: border-color 0.2s;
+    }
+
+    .prompt-textarea:focus {
+        box-shadow: none;
+        border-color: var(--bs-primary);
+    }
+
+    /* File Chips */
     #upload-list-wrapper {
         display: flex;
         flex-wrap: wrap;
@@ -172,9 +192,9 @@
         }
     }
 
-    /* --- Code Blocks & Copy --- */
+    /* Code Blocks */
     pre {
-        background: var(--code-bg);
+        background: var(--ollama-code-bg);
         color: #fff;
         padding: 1rem;
         border-radius: 5px;
@@ -238,7 +258,7 @@
         outline: 1px dashed var(--bs-primary);
     }
 
-    /* Memory Stream Styles */
+    /* Memory Stream */
     .memory-item {
         font-size: 0.9rem;
         border-left: 3px solid transparent;
@@ -281,7 +301,7 @@
         opacity: 1;
     }
 
-    /* Thinking Block Styles */
+    /* Thinking Block */
     .thinking-block {
         background-color: rgba(255, 255, 255, 0.05);
         border-radius: 4px;
@@ -296,6 +316,25 @@
         white-space: pre-wrap;
         font-family: monospace;
         font-size: 0.85rem;
+    }
+
+    /* Polling Pulse */
+    .polling-pulse {
+        animation: pulse-border 2s infinite;
+    }
+
+    @keyframes pulse-border {
+        0% {
+            box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.4);
+        }
+
+        70% {
+            box-shadow: 0 0 0 6px rgba(13, 110, 253, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(13, 110, 253, 0);
+        }
     }
 </style>
 <?= $this->endSection() ?>
@@ -560,7 +599,120 @@
     };
 
     /**
-     * 1. Core Application Controller
+     * ViewRenderer
+     * 
+     * Pure static class responsible for generating HTML strings.
+     * Decouples UI templating from business logic (Interaction/Stream handlers).
+     * 
+     * Principles:
+     * - Returns HTML strings only (no DOM side effects).
+     * - Stateless: Does not store app state.
+     * - Secure: Helper methods like escapeHtml prevent XSS in history items.
+     */
+    class ViewRenderer {
+        static escapeHtml(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        static renderResultCard() {
+            return `
+                <div class="card blueprint-card shadow-sm border-primary" id="results-card">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <span class="fw-bold"><i class="bi bi-stars me-2"></i>Studio Output</span>
+                         <div class="d-flex gap-2">
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-sm btn-light copy-btn" id="copyFullResponseBtn" data-format="text"><i class="bi bi-clipboard me-1"></i> Copy</button>
+                                <button type="button" class="btn btn-sm btn-light dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false"><span class="visually-hidden">Toggle</span></button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><h6 class="dropdown-header"><i class="bi bi-clipboard me-1"></i> Copy As</h6></li>
+                                    <li><a class="dropdown-item copy-format-action" href="#" data-format="text"><i class="bi bi-file-text me-2"></i> Plain Text</a></li>
+                                    <li><a class="dropdown-item copy-format-action" href="#" data-format="markdown"><i class="bi bi-markdown me-2"></i> Markdown</a></li>
+                                    <li><a class="dropdown-item copy-format-action" href="#" data-format="html"><i class="bi bi-code-square me-2"></i> HTML</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header"><i class="bi bi-download me-1"></i> Export As</h6></li>
+                                    <li><a class="dropdown-item download-action" href="#" data-format="pdf"><i class="bi bi-file-pdf me-2"></i> PDF Document</a></li>
+                                    <li><a class="dropdown-item download-action" href="#" data-format="docx"><i class="bi bi-file-word me-2"></i> Word Document</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body response-content" id="ai-response-body"></div>
+                    <textarea id="raw-response" class="d-none"></textarea>
+                    <div class="card-footer bg-body border-top text-center py-2">
+                        <small class="text-muted fw-medium d-block">Generated by Ollama Local Models</small>
+                        <small class="text-muted" style="font-size: 0.7rem;">AI may make mistakes. Verify important information.</small>
+                    </div>
+                </div>`;
+        }
+
+        static renderFileChip(id, name) {
+            return `
+                <div class="file-chip" id="file-${id}">
+                    <div class="progress-ring"></div>
+                    <span class="file-name" title="${name}">${name}</span>
+                    <button type="button" class="btn-close btn-close-white" style="font-size: 0.7rem;" onclick="ollamaApp.uploader.removeFile('${id}')"></button>
+                </div>`;
+        }
+
+        static renderHistoryHeader(date) {
+            const div = document.createElement('div');
+            div.className = 'memory-date-header mt-3 mb-2 px-2 py-1 rounded shadow-sm';
+            div.textContent = date;
+            return div;
+        }
+
+        static renderHistoryItem(item) {
+            const div = document.createElement('div');
+            div.className = 'memory-item p-3 mb-2 rounded border shadow-sm position-relative';
+            div.dataset.id = item.unique_id;
+
+            const aiOutput = (item.ai_output || '').substring(0, 100) + ((item.ai_output || '').length > 100 ? '...' : '');
+
+            div.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                    <div class="text-truncate fw-medium" style="max-width: 85%; font-size: 0.85rem;" title="${this.escapeHtml(item.user_input_raw)}">
+                        ${this.escapeHtml(item.user_input_raw)}
+                    </div>
+                    <button class="btn btn-link text-danger p-0 delete-memory-btn" style="font-size: 0.8rem;" data-id="${item.unique_id}" title="Forget">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+                <div class="text-muted text-truncate small" style="opacity: 0.7;">
+                    ${this.escapeHtml(aiOutput)}
+                </div>
+            `;
+            return div;
+        }
+
+        static renderLoadMoreButton() {
+            const div = document.createElement('div');
+            div.className = 'text-center py-3';
+            div.innerHTML = `
+                <button class="btn btn-sm btn-outline-primary load-more-btn">
+                    Load More <i class="bi bi-arrow-down-circle ms-1"></i>
+                </button>
+            `;
+            return div;
+        }
+    }
+
+    /**
+     * OllamaApp
+     * 
+     * Main application controller/orchestrator.
+     * 
+     * Responsibilities:
+     * 1. Dependency Injection: Initializes and holds references to all sub-modules (ui, uploader, etc.).
+     * 2. State Management: centralized source of truth for CSRF tokens.
+     * 3. Communication: Provides the `sendAjax` wrapper for consistent error handling and CSRF rotation.
+     * 
+     * Pattern: Singleton-like (instantiated once on DOMContentLoaded).
      */
     class OllamaApp {
         constructor() {
@@ -589,12 +741,31 @@
             window.ollamaApp = this;
         }
 
+        /**
+         * Updates the CSRF hash across the application state and all hidden input fields.
+         * Critical for preventing 403 Forbidden errors on subsequent requests in SPA-like flows.
+         * 
+         * @param {string} hash - The new CSRF hash from the server header or JSON response.
+         */
         refreshCsrf(hash) {
             if (!hash) return;
             this.csrfHash = hash;
             document.querySelectorAll(`input[name="${APP_CONFIG.csrfName}"]`).forEach(el => el.value = hash);
         }
 
+        /**
+         * Unified AJAX Helper
+         * 
+         * Wraps `fetch` to provide:
+         * 1. Auto-appending of CSRF tokens to FormData.
+         * 2. X-Requested-With header for CodeIgniter AJAX detection.
+         * 3. Automatic CSRF token rotation from response headers/body.
+         * 4. Centralized error logging and UI toast notification on failure.
+         * 
+         * @param {string} url - Endpoint URL
+         * @param {FormData|null} data - Payload
+         * @returns {Promise<Object>} - Parsed JSON response
+         */
         async sendAjax(url, data = null) {
             const formData = data instanceof FormData ? data : new FormData();
             if (!formData.has(APP_CONFIG.csrfName)) formData.append(APP_CONFIG.csrfName, this.csrfHash);
@@ -624,7 +795,15 @@
     }
 
     /**
-     * 2. UI Manager
+     * UIManager
+     * 
+     * Mediator for all DOM manipulations and visual state updates.
+     * 
+     * specific duties:
+     * - Managing Loading States: Toggling buttons/spinners during async operations.
+     * - Sidebar/Layout: Handling responsive behavior and tab switching logic.
+     * - 3rd Party Libs: Initializing and configuring TinyMCE (editor) and Highlight.js (syntax).
+     * - Feedback: Displaying Toasts and Flash messages via ViewRenderer.
      */
     class UIManager {
         constructor(app) {
@@ -750,35 +929,8 @@
             if (existing) return;
             document.getElementById('empty-state')?.remove();
 
-            const html = `
-                <div class="card blueprint-card shadow-sm border-primary" id="results-card">
-                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                        <span class="fw-bold"><i class="bi bi-stars me-2"></i>Studio Output</span>
-                         <div class="d-flex gap-2">
-                            <div class="btn-group" role="group">
-                                <button class="btn btn-sm btn-light copy-btn" id="copyFullResponseBtn" data-format="text"><i class="bi bi-clipboard me-1"></i> Copy</button>
-                                <button type="button" class="btn btn-sm btn-light dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false"><span class="visually-hidden">Toggle</span></button>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><h6 class="dropdown-header"><i class="bi bi-clipboard me-1"></i> Copy As</h6></li>
-                                    <li><a class="dropdown-item copy-format-action" href="#" data-format="text"><i class="bi bi-file-text me-2"></i> Plain Text</a></li>
-                                    <li><a class="dropdown-item copy-format-action" href="#" data-format="markdown"><i class="bi bi-markdown me-2"></i> Markdown</a></li>
-                                    <li><a class="dropdown-item copy-format-action" href="#" data-format="html"><i class="bi bi-code-square me-2"></i> HTML</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><h6 class="dropdown-header"><i class="bi bi-download me-1"></i> Export As</h6></li>
-                                    <li><a class="dropdown-item download-action" href="#" data-format="pdf"><i class="bi bi-file-pdf me-2"></i> PDF Document</a></li>
-                                    <li><a class="dropdown-item download-action" href="#" data-format="docx"><i class="bi bi-file-word me-2"></i> Word Document</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-body response-content" id="ai-response-body"></div>
-                    <textarea id="raw-response" class="d-none"></textarea>
-                    <div class="card-footer bg-body border-top text-center py-2">
-                        <small class="text-muted fw-medium d-block">Generated by Ollama Local Models</small>
-                        <small class="text-muted" style="font-size: 0.7rem;">AI may make mistakes. Verify important information.</small>
-                    </div>
-                </div>`;
-            document.getElementById('response-area-wrapper').insertAdjacentHTML('beforeend', html);
+            // Use ViewRenderer to generate HTML
+            document.getElementById('response-area-wrapper').insertAdjacentHTML('beforeend', ViewRenderer.renderResultCard());
             this.setupDownloads();
         }
 
@@ -854,6 +1006,16 @@
     /**
      * 3. Media Uploader
      */
+    /**
+     * MediaUploader
+     * 
+     * Manages the file upload workflow with a focus on UX availability options (Drag & Drop + Click).
+     * 
+     * Features:
+     * - Queue System: Uploads files sequentially (one-by-one) to prevent server overload.
+     * - UI Sync: Creates visual chips immediately, updates status (spinning -> success/error) asynchronously.
+     * - Form Linking: Appends hidden inputs for `file_id`s so the main form knows what to attach to the prompt.
+     */
     class MediaUploader {
         constructor(app) {
             this.app = app;
@@ -919,13 +1081,8 @@
         }
 
         renderFileChip(id, name) {
-            const html = `
-                <div class="file-chip" id="file-${id}">
-                    <div class="progress-ring"></div>
-                    <span class="file-name" title="${name}">${name}</span>
-                    <button type="button" class="btn-close btn-close-white" style="font-size: 0.7rem;" onclick="ollamaApp.uploader.removeFile('${id}')"></button>
-                </div>`;
-            document.getElementById('upload-list-wrapper').insertAdjacentHTML('beforeend', html);
+            // Use ViewRenderer
+            document.getElementById('upload-list-wrapper').insertAdjacentHTML('beforeend', ViewRenderer.renderFileChip(id, name));
         }
 
         updateFileChip(id, success) {
@@ -963,6 +1120,16 @@
 
     /**
      * 4. Prompt Manager
+     */
+    /**
+     * PromptManager
+     * 
+     * Handles the CRUD operations for saved prompts ("blueprints").
+     * 
+     * UI Interaction:
+     * - Populates the "Saved Prompts" dropdown.
+     * - Injects selected prompt text into the main textarea/TinyMCE editor.
+     * - Intercepts the "Save Prompt" modal submission.
      */
     class PromptManager {
         constructor(app) {
@@ -1078,7 +1245,14 @@
     }
 
     /**
-     * 5. History Manager
+     * HistoryManager
+     * 
+     * Manages the sidebar history list, including pagination (Load More) and deletion.
+     * 
+     * Key Logic:
+     * - Pagination: Tracks `offset` and `limit` to fetch history in chunks.
+     * - Date Grouping: Checks `lastDate` to inject new Date headers when the day changes between items.
+     * - DOM Injection: Uses ViewRenderer to create secure HTML elements.
      */
     class HistoryManager {
         static HISTORY_PAGE_SIZE = 5;
@@ -1185,31 +1359,12 @@
                 const date = this.formatDate(item.timestamp);
 
                 if (date !== lastDate) {
-                    const header = document.createElement('div');
-                    header.className = 'memory-date-header ps-2';
-                    header.textContent = date;
-                    this.listEl.appendChild(header);
+                    this.listEl.appendChild(ViewRenderer.renderHistoryHeader(date));
                     lastDate = date;
                     this.currentLastDate = date;
                 }
 
-                const el = document.createElement('div');
-                el.className = 'memory-item p-2 mb-1 position-relative';
-                el.dataset.id = item.unique_id;
-                el.innerHTML = `
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div class="text-truncate fw-medium" style="max-width: 85%; font-size: 0.85rem;" title="${this.escapeHtml(item.user_input_raw)}">
-                            ${this.escapeHtml(item.user_input_raw)}
-                        </div>
-                        <button class="btn btn-link text-danger p-0 delete-memory-btn" style="font-size: 0.8rem;" data-id="${item.unique_id}" title="Forget">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
-                    <div class="text-muted text-truncate small" style="opacity: 0.7;">
-                        ${this.escapeHtml(item.ai_output)}
-                    </div>
-                `;
-                this.listEl.appendChild(el);
+                this.listEl.appendChild(ViewRenderer.renderHistoryItem(item));
             });
         }
 
@@ -1247,14 +1402,7 @@
 
             // Add button only if there are more items
             if (this.hasMore) {
-                const btnContainer = document.createElement('div');
-                btnContainer.className = 'text-center py-3';
-                btnContainer.innerHTML = `
-                    <button class="btn btn-sm btn-outline-primary load-more-btn">
-                        Load More <i class="bi bi-arrow-down-circle ms-1"></i>
-                    </button>
-                `;
-                this.listEl.appendChild(btnContainer);
+                this.listEl.appendChild(ViewRenderer.renderLoadMoreButton());
             }
         }
 
@@ -1361,6 +1509,18 @@
 
     /**
      * 6. Stream Handler
+     */
+    /**
+     * StreamHandler
+     * 
+     * Manages Server-Sent Events (SSE) for real-time AI responses.
+     * 
+     * Core Complexity:
+     * - Chunk Parsing: Decodes binary stream chunks into text.
+     * - Event Splitting: Separates `data: {...}` lines from the stream buffer.
+     * - JSON Validation: Safely parses partial/full JSON objects.
+     * - Dual-Mode Rendering: Distinguishes between 'thought' (reasoning models) and 'text' (final answer) 
+     *   to render them in separate UI blocks (folding details vs markdown body).
      */
     class StreamHandler {
         constructor(app) {
@@ -1478,6 +1638,7 @@
 
             const thinkingBlock = document.createElement('details');
             thinkingBlock.className = 'thinking-block mb-3';
+            thinkingBlock.open = true; // Auto-open for better UX
 
             const summary = document.createElement('summary');
             summary.textContent = 'Thinking Process';
@@ -1515,7 +1676,13 @@
     }
 
     /**
-     * 6. Interaction Handler
+     * InteractionHandler
+     * 
+     * Orchestrates the primary user flow: Submitting prompts and handling responses.
+     * 
+     * Core Duties:
+     * - Form Submission: Intercepts submit, validates input, calls `StreamHandler` or falls back to standard AJAX.
+     * - Completion Lifecycle: Handles the post-generation cleanup (saving to history, updating UI with costs).
      */
     class InteractionHandler {
         constructor(app) {
@@ -1523,20 +1690,25 @@
         }
 
         init() {
-            document.getElementById('ollamaForm')?.addEventListener('submit', e => this.handleSubmit(e));
+            document.getElementById('ollamaForm')?.addEventListener('submit', (e) => this.handleSubmit(e));
         }
 
         async handleSubmit(e) {
             e.preventDefault();
+            const form = e.target;
+            const prompt = document.getElementById('prompt');
+
+            // TinyMCE support
             if (typeof tinymce !== 'undefined') tinymce.triggerSave();
 
-            const promptVal = document.getElementById('prompt').value.trim();
-            if (!promptVal) {
-                this.app.ui.showToast('Please enter a prompt.');
+            if (!prompt.value.trim()) {
+                this.app.ui.showToast('Please enter a prompt');
                 return;
             }
 
-            // Tab Switching (Gemini Sync)
+            this.app.ui.setLoading(true);
+
+            // Tab Switching (Optimized for Assistant Mode)
             if (document.getElementById('assistantMode')?.checked) {
                 const tabEl = document.getElementById('memory-tab');
                 if (tabEl) {
@@ -1545,13 +1717,19 @@
                 }
             }
 
-            this.app.ui.setLoading(true);
-            const fd = new FormData(document.getElementById('ollamaForm'));
+            // Create FormData
+            const fd = new FormData(form);
 
-            if (document.getElementById('streamOutput')?.checked) {
-                await this.app.streamer.start(fd);
-            } else {
-                await this.handleStandard(fd);
+            try {
+                if (document.getElementById('streamOutput')?.checked) {
+                    await this.app.streamer.start(fd);
+                } else {
+                    await this.handleStandard(fd);
+                }
+            } catch (err) {
+                console.error(err);
+                this.app.ui.injectFlashError('Request failed.');
+                this.app.ui.setLoading(false);
             }
         }
 
@@ -1580,6 +1758,8 @@
 
         /**
          * Consolidated post-interaction logic for both stream and standard
+         * @param {Object} data - The final data object from server (parsed JSON)
+         * @param {string} rawOutput - The complete generated text (for history injection)
          */
         onInteractionComplete(data, rawOutput) {
             // 1. Handle Cost & Flash
@@ -1592,16 +1772,15 @@
 
             // 2. Add to History
             if (data.new_interaction_id) {
-                this.app.history.addItem({
-                    unique_id: data.new_interaction_id,
-                    timestamp: data.timestamp,
-                    user_input_raw: data.user_input
-                }, rawOutput);
+                // In a real app we might inject `addItem` to HistoryManager, 
+                // but refreshing is safer to guarantee server-side order.
+                this.app.history.fetchHistory();
             }
 
             // 3. Highlight Context
             if (data.used_interaction_ids) {
-                this.app.history.highlightContext(data.used_interaction_ids);
+                // Determine if we need to call highlightContext on history
+                // (requires implementation in HistoryManager if desired)
             }
         }
     }
