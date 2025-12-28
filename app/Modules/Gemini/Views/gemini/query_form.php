@@ -327,6 +327,7 @@
         border-left: 3px solid transparent;
         transition: all 0.2s;
         cursor: default;
+        background-color: var(--bs-body-bg);
     }
 
     .memory-item:hover {
@@ -335,7 +336,7 @@
 
     .memory-item.active-context {
         border-left-color: var(--bs-warning);
-        background-color: rgba(255, 193, 7, 0.1);
+        background-color: rgba(255, 193, 7, 0.1) !important;
         border-radius: 4px;
     }
 
@@ -348,8 +349,7 @@
         margin-bottom: 0.5rem;
         position: sticky;
         top: 0;
-        background: var(--bs-tertiary-bg);
-        /* Match sidebar bg */
+        background: var(--bs-body-bg);
         z-index: 5;
         padding-top: 4px;
         padding-bottom: 4px;
@@ -1819,7 +1819,7 @@
 
                 if (date !== lastDate) {
                     const header = document.createElement('div');
-                    header.className = 'memory-date-header ps-2';
+                    header.className = 'memory-date-header mt-3 mb-2 px-2 py-1 rounded shadow-sm';
                     header.textContent = date;
                     this.listEl.appendChild(header);
                     lastDate = date;
@@ -1827,7 +1827,7 @@
                 }
 
                 const el = document.createElement('div');
-                el.className = 'memory-item p-2 mb-1 position-relative';
+                el.className = 'memory-item p-3 mb-2 rounded border shadow-sm position-relative';
                 el.dataset.id = item.unique_id;
                 el.innerHTML = `
                     <div class="d-flex justify-content-between align-items-start">
@@ -1923,13 +1923,13 @@
             if (!header || header.textContent !== dateStr) {
                 // If the top header isn't for this date, insert new header
                 const newHeader = document.createElement('div');
-                newHeader.className = 'memory-date-header ps-2';
+                newHeader.className = 'memory-date-header mt-3 mb-2 px-2 py-1 rounded shadow-sm';
                 newHeader.textContent = dateStr;
                 this.listEl.insertBefore(newHeader, this.listEl.firstChild);
             }
 
             const el = document.createElement('div');
-            el.className = 'memory-item p-2 mb-1 position-relative';
+            el.className = 'memory-item p-3 mb-2 rounded border shadow-sm position-relative';
             el.dataset.id = item.id;
             el.innerHTML = `
                 <div class="d-flex justify-content-between align-items-start">

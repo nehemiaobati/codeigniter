@@ -237,6 +237,66 @@
         background: var(--bs-primary-bg-subtle);
         outline: 1px dashed var(--bs-primary);
     }
+
+    /* Memory Stream Styles */
+    .memory-item {
+        font-size: 0.9rem;
+        border-left: 3px solid transparent;
+        transition: all 0.2s;
+        cursor: default;
+        background-color: var(--bs-body-bg);
+    }
+
+    .memory-item:hover {
+        background-color: var(--bs-tertiary-bg);
+    }
+
+    .memory-item.active-context {
+        border-left-color: var(--bs-warning);
+        background-color: rgba(255, 193, 7, 0.1) !important;
+        border-radius: 4px;
+    }
+
+    .memory-date-header {
+        font-size: 0.75rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        color: var(--bs-secondary);
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+        position: sticky;
+        top: 0;
+        background: var(--bs-body-bg);
+        z-index: 5;
+        padding-top: 4px;
+        padding-bottom: 4px;
+    }
+
+    .delete-memory-btn {
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+
+    .memory-item:hover .delete-memory-btn {
+        opacity: 1;
+    }
+
+    /* Thinking Block Styles */
+    .thinking-block {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+
+    .thinking-block[open] {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .thinking-content {
+        white-space: pre-wrap;
+        font-family: monospace;
+        font-size: 0.85rem;
+    }
 </style>
 <?= $this->endSection() ?>
 
@@ -344,55 +404,93 @@
 
     <!-- Right Sidebar (Settings) -->
     <div class="ollama-sidebar collapse collapse-horizontal show" id="ollamaSidebar">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h5 class="fw-bold m-0"><i class="bi bi-sliders"></i> Configuration</h5>
-            <button class="btn-close d-lg-none" data-bs-toggle="collapse" data-bs-target="#ollamaSidebar"></button>
+        <!-- Header with Tabs -->
+        <div class="d-flex align-items-center mb-3">
+            <ul class="nav nav-pills nav-fill flex-grow-1 p-1 bg-body rounded" id="sidebarTabs" role="tablist" style="font-size: 0.9rem;">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active py-1" id="config-tab" data-bs-toggle="tab" data-bs-target="#config-pane" type="button" role="tab"><i class="bi bi-sliders me-1"></i> Config</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link py-1" id="memory-tab" data-bs-toggle="tab" data-bs-target="#memory-pane" type="button" role="tab"><i class="bi bi-activity me-1"></i> History</button>
+                </li>
+            </ul>
+            <button class="btn-close ms-2 d-lg-none" data-bs-toggle="collapse" data-bs-target="#ollamaSidebar"></button>
         </div>
 
-        <!-- Model Selection -->
-        <div class="mb-4">
-            <label class="form-label small fw-bold text-uppercase text-muted">Model</label>
-            <select class="form-select" id="modelSelector">
-                <?php foreach ($availableModels as $model): ?>
-                    <option value="<?= esc($model) ?>"><?= esc($model) ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
+        <div class="tab-content h-100 overflow-hidden d-flex flex-column">
 
-        <div class="form-check form-switch mb-3">
-            <input class="form-check-input setting-toggle" type="checkbox" id="assistantMode" data-key="assistant_mode_enabled" <?= $assistant_mode_enabled ? 'checked' : '' ?>>
-            <label class="form-check-label fw-medium" for="assistantMode">Conversational Memory</label>
-        </div>
-        <div class="form-check form-switch mb-4">
-            <input class="form-check-input setting-toggle" type="checkbox" id="streamOutput" data-key="stream_output_enabled" <?= (isset($stream_output_enabled) && $stream_output_enabled) ? 'checked' : '' ?>>
-            <label class="form-check-label fw-medium" for="streamOutput">Stream Responses</label>
-        </div>
-        <hr>
+            <!-- Configuration Pane -->
+            <div class="tab-pane fade show active h-100 overflow-auto custom-scrollbar" id="config-pane" role="tabpanel">
 
-        <label class="form-label small fw-bold text-uppercase text-muted">Saved Prompts</label>
-        <div id="saved-prompts-wrapper">
-            <div class="input-group mb-3 <?= empty($prompts) ? 'd-none' : '' ?>" id="savedPromptsContainer">
-                <select class="form-select form-select-sm" id="savedPrompts">
-                    <option value="" disabled selected>Select...</option>
-                    <?php if (!empty($prompts)): ?>
-                        <?php foreach ($prompts as $p): ?><option value="<?= esc($p->prompt_text, 'attr') ?>" data-id="<?= $p->id ?>"><?= esc($p->title) ?></option><?php endforeach; ?>
-                    <?php endif; ?>
-                </select>
-                <button class="btn btn-outline-secondary btn-sm" type="button" id="usePromptBtn">Load</button>
-                <button class="btn btn-outline-danger btn-sm" type="button" id="deletePromptBtn" disabled><i class="bi bi-trash"></i></button>
+                <!-- Model Selection -->
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-uppercase text-muted">Model</label>
+                    <select class="form-select" id="modelSelector">
+                        <?php foreach ($availableModels as $model): ?>
+                            <option value="<?= esc($model) ?>"><?= esc($model) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <!-- Toggles -->
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input setting-toggle" type="checkbox" id="assistantMode" data-key="assistant_mode_enabled" <?= $assistant_mode_enabled ? 'checked' : '' ?>>
+                    <label class="form-check-label fw-medium" for="assistantMode">Conversational Memory</label>
+                </div>
+                <div class="form-check form-switch mb-4">
+                    <input class="form-check-input setting-toggle" type="checkbox" id="streamOutput" data-key="stream_output_enabled" <?= (isset($stream_output_enabled) && $stream_output_enabled) ? 'checked' : '' ?>>
+                    <label class="form-check-label fw-medium" for="streamOutput">Stream Responses</label>
+                </div>
+
+                <hr>
+
+                <!-- Saved Prompts -->
+                <label class="form-label small fw-bold text-uppercase text-muted">Saved Prompts</label>
+                <div id="saved-prompts-wrapper">
+                    <div class="input-group mb-3 <?= empty($prompts) ? 'd-none' : '' ?>" id="savedPromptsContainer">
+                        <select class="form-select form-select-sm" id="savedPrompts">
+                            <option value="" disabled selected>Select...</option>
+                            <?php if (!empty($prompts)): ?>
+                                <?php foreach ($prompts as $p): ?>
+                                    <option value="<?= esc($p->prompt_text, 'attr') ?>" data-id="<?= $p->id ?>"><?= esc($p->title) ?></option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                        <button class="btn btn-outline-secondary btn-sm" type="button" id="usePromptBtn">Load</button>
+                        <button class="btn btn-outline-danger btn-sm" type="button" id="deletePromptBtn" disabled><i class="bi bi-trash"></i></button>
+                    </div>
+                    <div id="no-prompts-alert" class="alert alert-light border mb-3 small text-muted <?= !empty($prompts) ? 'd-none' : '' ?>">
+                        No saved prompts yet.
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Danger Zone -->
+                <form action="<?= url_to('ollama.memory.clear') ?>" method="post" onsubmit="return confirm('Clear all history?');">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="btn btn-outline-danger w-100 btn-sm"><i class="bi bi-trash me-2"></i> Clear History</button>
+                </form>
+
+                <div class="mt-4 pt-4 text-center">
+                    <small class="text-muted">AFRIKENKID AI Studio v2</small>
+                </div>
             </div>
-            <div id="no-prompts-alert" class="alert alert-light border mb-3 small text-muted <?= !empty($prompts) ? 'd-none' : '' ?>">
-                No saved prompts yet.
+
+            <!-- Memory Stream Pane -->
+            <div class="tab-pane fade h-100 overflow-auto custom-scrollbar" id="memory-pane" role="tabpanel">
+                <div id="memory-loading" class="text-center py-4 d-none">
+                    <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
+                </div>
+                <div id="history-list" class="d-flex flex-column pb-5">
+                    <!-- History items will be injected here -->
+                    <div class="text-center text-muted small mt-5">
+                        <i class="bi bi-clock-history fs-4 mb-2 d-block"></i>
+                        Select the History tab to load interactions.
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <hr>
-        <form action="<?= url_to('ollama.memory.clear') ?>" method="post" onsubmit="return confirm('Clear all history?');">
-            <?= csrf_field() ?><button type="submit" class="btn btn-outline-danger w-100 btn-sm"><i class="bi bi-trash me-2"></i> Clear History</button>
-        </form>
-
-        <div class="mt-auto pt-4 text-center">
-            <small class="text-muted">AFRIKENKID AI Studio v2</small>
         </div>
     </div>
 </div>
@@ -456,6 +554,8 @@
             stream: '<?= url_to('ollama.stream') ?>',
             generate: '<?= url_to('ollama.generate') ?>',
             download: '<?= url_to('ollama.download_document') ?>',
+            history: '<?= url_to('ollama.history') ?>',
+            deleteHistory: '<?= url_to('ollama.history.delete') ?>',
         }
     };
 
@@ -469,6 +569,7 @@
             this.ui = new UIManager(this);
             this.uploader = new MediaUploader(this);
             this.prompts = new PromptManager(this);
+            this.history = new HistoryManager(this);
             this.streamer = new StreamHandler(this);
             this.interaction = new InteractionHandler(this);
         }
@@ -482,6 +583,7 @@
             this.ui.init();
             this.uploader.init();
             this.prompts.init();
+            this.history.init();
             this.interaction.init();
 
             window.ollamaApp = this;
@@ -976,7 +1078,289 @@
     }
 
     /**
-     * 5. Stream Handler
+     * 5. History Manager
+     */
+    class HistoryManager {
+        static HISTORY_PAGE_SIZE = 5;
+
+        constructor(app) {
+            this.app = app;
+            this.listEl = document.getElementById('history-list');
+            this.loadingEl = document.getElementById('memory-loading');
+            this.isLoaded = false;
+            this.offset = 0;
+            this.limit = HistoryManager.HISTORY_PAGE_SIZE;
+            this.hasMore = true;
+            this.currentLastDate = '';
+        }
+
+        init() {
+            // Load history when tab is shown
+            const tabBtn = document.getElementById('memory-tab');
+            if (tabBtn) {
+                tabBtn.addEventListener('shown.bs.tab', () => {
+                    if (!this.isLoaded) this.fetchHistory();
+                });
+            }
+
+            // Bind click events for deletion and load more
+            this.listEl.addEventListener('click', (e) => {
+                const deleteBtn = e.target.closest('.delete-memory-btn');
+                if (deleteBtn) {
+                    e.stopPropagation();
+                    this.deleteItem(deleteBtn.dataset.id);
+                    return;
+                }
+
+                const loadMoreBtn = e.target.closest('.load-more-btn');
+                if (loadMoreBtn) {
+                    e.preventDefault();
+                    this.loadMore();
+                }
+            });
+        }
+
+        async fetchHistory(append = false) {
+            if (!append) {
+                this.loadingEl.classList.remove('d-none');
+                this.listEl.classList.add('d-none');
+            }
+
+            // Show loading state on Load More button if appending
+            const loadMoreBtn = this.listEl.querySelector('.load-more-btn');
+            if (append && loadMoreBtn) {
+                loadMoreBtn.disabled = true;
+                loadMoreBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
+            }
+
+            try {
+                const fd = new FormData();
+                fd.append('limit', this.limit);
+                fd.append('offset', this.offset);
+                const d = await this.app.sendAjax(APP_CONFIG.endpoints.history, fd);
+
+                if (d.status === 'success') {
+                    this.renderList(d.history, append);
+                    this.isLoaded = true;
+
+                    // Update pagination state
+                    this.offset += d.history.length;
+                    this.hasMore = d.history.length === this.limit;
+
+                    // Update or remove Load More button
+                    this.updateLoadMoreButton();
+                }
+            } catch (e) {
+                if (!append) {
+                    this.listEl.innerHTML = '<div class="text-center text-danger mt-4"><small>Failed to load history.</small></div>';
+                }
+            } finally {
+                if (!append) {
+                    this.loadingEl.classList.add('d-none');
+                    this.listEl.classList.remove('d-none');
+                }
+            }
+        }
+
+        renderList(items, append = false) {
+            if (!items || items.length === 0) {
+                if (!append) {
+                    this.listEl.innerHTML = '<div class="text-center text-muted mt-5 small">No interaction history yet.</div>';
+                }
+                return;
+            }
+
+            if (!append) {
+                this.listEl.innerHTML = '';
+                this.currentLastDate = '';
+            } else {
+                // Remove existing Load More button before appending
+                const existingBtn = this.listEl.querySelector('.load-more-btn');
+                if (existingBtn) existingBtn.remove();
+            }
+
+            let lastDate = this.currentLastDate;
+
+            items.forEach(item => {
+                const date = this.formatDate(item.timestamp);
+
+                if (date !== lastDate) {
+                    const header = document.createElement('div');
+                    header.className = 'memory-date-header ps-2';
+                    header.textContent = date;
+                    this.listEl.appendChild(header);
+                    lastDate = date;
+                    this.currentLastDate = date;
+                }
+
+                const el = document.createElement('div');
+                el.className = 'memory-item p-2 mb-1 position-relative';
+                el.dataset.id = item.unique_id;
+                el.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="text-truncate fw-medium" style="max-width: 85%; font-size: 0.85rem;" title="${this.escapeHtml(item.user_input_raw)}">
+                            ${this.escapeHtml(item.user_input_raw)}
+                        </div>
+                        <button class="btn btn-link text-danger p-0 delete-memory-btn" style="font-size: 0.8rem;" data-id="${item.unique_id}" title="Forget">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                    <div class="text-muted text-truncate small" style="opacity: 0.7;">
+                        ${this.escapeHtml(item.ai_output)}
+                    </div>
+                `;
+                this.listEl.appendChild(el);
+            });
+        }
+
+        async deleteItem(id) {
+            if (!confirm('Forget this interaction?')) return;
+
+            const itemEl = this.listEl.querySelector(`.memory-item[data-id="${id}"]`);
+            if (itemEl) itemEl.style.opacity = '0.5';
+
+            const fd = new FormData();
+            fd.append('unique_id', id);
+
+            try {
+                const d = await this.app.sendAjax(APP_CONFIG.endpoints.deleteHistory, fd);
+                if (d.status === 'success') {
+                    if (itemEl) itemEl.remove();
+                } else {
+                    if (itemEl) itemEl.style.opacity = '1';
+                    this.app.ui.showToast('Failed to delete.');
+                }
+            } catch (e) {
+                if (itemEl) itemEl.style.opacity = '1';
+                this.app.ui.showToast('Error deleting item.');
+            }
+        }
+
+        async loadMore() {
+            await this.fetchHistory(true);
+        }
+
+        updateLoadMoreButton() {
+            // Remove existing button if present
+            const existingBtn = this.listEl.querySelector('.load-more-btn');
+            if (existingBtn) existingBtn.remove();
+
+            // Add button only if there are more items
+            if (this.hasMore) {
+                const btnContainer = document.createElement('div');
+                btnContainer.className = 'text-center py-3';
+                btnContainer.innerHTML = `
+                    <button class="btn btn-sm btn-outline-primary load-more-btn">
+                        Load More <i class="bi bi-arrow-down-circle ms-1"></i>
+                    </button>
+                `;
+                this.listEl.appendChild(btnContainer);
+            }
+        }
+
+        formatDate(timestamp) {
+            let date;
+            if (typeof timestamp === 'string' && timestamp.indexOf(' ') > 0) {
+                date = new Date(timestamp.replace(' ', 'T'));
+            } else {
+                date = new Date(timestamp);
+            }
+
+            if (isNaN(date.getTime())) return 'Today';
+
+            return date.toLocaleDateString(undefined, {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        escapeHtml(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        addItem(item, aiOutputRaw) {
+            // Remove empty state if present
+            if (this.listEl.querySelector('.text-center.text-muted')) {
+                this.listEl.innerHTML = '';
+            }
+
+            const dateStr = this.formatDate(item.timestamp);
+            let header = Array.from(this.listEl.querySelectorAll('.memory-date-header')).find(h => h.textContent.trim() === dateStr);
+
+            if (!header) {
+                header = document.createElement('div');
+                header.className = 'memory-date-header mt-3 mb-2 px-2 py-1 rounded shadow-sm';
+                header.textContent = dateStr;
+                this.listEl.prepend(header);
+            }
+
+            const el = document.createElement('div');
+            el.className = 'memory-item p-3 mb-2 rounded border shadow-sm position-relative';
+            el.dataset.id = item.unique_id;
+
+            const aiOutput = (aiOutputRaw || '').substring(0, 100) + ((aiOutputRaw || '').length > 100 ? '...' : '');
+
+            el.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                    <div class="text-truncate fw-medium" style="max-width: 85%; font-size: 0.85rem;" title="${this.escapeHtml(item.user_input_raw)}">
+                        ${this.escapeHtml(item.user_input_raw)}
+                    </div>
+                    <button class="btn btn-link text-danger p-0 delete-memory-btn" style="font-size: 0.8rem;" data-id="${item.unique_id}" title="Forget">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+                <div class="text-muted text-truncate small" style="opacity: 0.7;">
+                    ${this.escapeHtml(aiOutput)}
+                </div>
+            `;
+
+            // Insert after header
+            header.after(el);
+
+            // Re-bind delete buttons
+            el.querySelector('.delete-memory-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.deleteItem(item.unique_id);
+            });
+        }
+
+        highlightContext(ids) {
+            if (!Array.isArray(ids)) return;
+
+            // Clear previous highlight
+            this.listEl.querySelectorAll('.active-context').forEach(el => el.classList.remove('active-context'));
+
+            let firstMatch = null;
+            ids.forEach(id => {
+                const el = this.listEl.querySelector(`.memory-item[data-id="${id}"]`);
+                if (el) {
+                    el.classList.add('active-context');
+                    if (!firstMatch) firstMatch = el;
+                }
+            });
+
+            if (firstMatch && document.getElementById('assistantMode')?.checked) {
+                const tabEl = document.getElementById('memory-tab');
+                const tab = bootstrap.Tab.getInstance(tabEl) || new bootstrap.Tab(tabEl);
+                tab.show();
+
+                setTimeout(() => firstMatch.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                }), 300);
+            }
+        }
+    }
+
+    /**
+     * 6. Stream Handler
      */
     class StreamHandler {
         constructor(app) {
@@ -991,7 +1375,6 @@
             raw.value = '';
 
             try {
-                // Manually handle fetch for streaming
                 if (!fd.has(APP_CONFIG.csrfName)) fd.append(APP_CONFIG.csrfName, this.app.csrfHash);
 
                 const response = await fetch(APP_CONFIG.endpoints.stream, {
@@ -1005,6 +1388,7 @@
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let buffer = '';
+                let textAccumulator = '';
 
                 while (true) {
                     const {
@@ -1021,24 +1405,56 @@
 
                     for (const line of lines) {
                         if (line.startsWith("data: ")) {
-                            const data = JSON.parse(line.substring(6));
+                            try {
+                                const data = JSON.parse(line.substring(6));
 
-                            if (data.error) {
-                                this.app.ui.injectFlashError(data.error);
+                                if (data.error) {
+                                    this.app.ui.injectFlashError(data.error);
+                                    if (data.csrf_token) this.app.refreshCsrf(data.csrf_token);
+                                    return;
+                                }
                                 if (data.csrf_token) this.app.refreshCsrf(data.csrf_token);
-                                return;
-                            }
-                            if (data.csrf_token) this.app.refreshCsrf(data.csrf_token);
 
-                            if (data.text) {
-                                const newText = (raw.value + data.text);
-                                raw.value = newText;
-                                body.innerHTML = marked.parse(newText);
+                                if (data.thought) {
+                                    this._ensureThinkingBlock(body);
+                                    this._appendToThinkingBlock(body, data.thought);
+
+                                    if (!raw.value.includes('=== THINKING PROCESS ===')) {
+                                        raw.value = '=== THINKING PROCESS ===\n\n' + raw.value;
+                                    }
+                                    raw.value += data.thought;
+
+                                } else if (data.text) {
+                                    textAccumulator += data.text;
+
+                                    if (raw.value.includes('=== THINKING PROCESS ===') && !raw.value.includes('=== ANSWER ===')) {
+                                        raw.value += '\n\n=== ANSWER ===\n\n';
+                                    }
+
+                                    this._preserveThinkingBlockWhileUpdating(body, () => {
+                                        body.innerHTML = marked.parse(textAccumulator);
+                                        raw.value += data.text;
+                                    });
+                                }
+
+                                // Dynamic History Update handled via interactionComplete in StreamHandler end or on data close
+                                if (data.cost || data.new_interaction_id) {
+                                    this.app.interaction.onInteractionComplete(data, raw.value);
+                                }
+
                                 this.app.ui.setupAutoScroll();
+                            } catch (parseError) {
+                                console.error("Stream parse error:", parseError, line);
                             }
                         }
                         if (line.startsWith("event: close")) {
-                            // Stream finished
+                            // Process remaining buffer if it looks like JSON data
+                            if (buffer.startsWith("data: ")) {
+                                try {
+                                    const finalData = JSON.parse(buffer.substring(6));
+                                    this.app.interaction.onInteractionComplete(finalData, raw.value);
+                                } catch (e) {}
+                            }
                             this.app.ui.setLoading(false);
                             this.app.ui.setupCodeHighlighting();
                         }
@@ -1050,6 +1466,50 @@
             } finally {
                 this.app.ui.setLoading(false);
                 this.app.ui.setupCodeHighlighting();
+            }
+        }
+
+        /**
+         * Ensure thinking block exists in the body element
+         * @private
+         */
+        _ensureThinkingBlock(bodyEl) {
+            if (bodyEl.querySelector('.thinking-block')) return;
+
+            const thinkingBlock = document.createElement('details');
+            thinkingBlock.className = 'thinking-block mb-3';
+
+            const summary = document.createElement('summary');
+            summary.textContent = 'Thinking Process';
+            summary.className = 'cursor-pointer text-muted fw-bold small';
+
+            const content = document.createElement('div');
+            content.className = 'thinking-content fst-italic text-muted p-2 border-start mt-1 small';
+
+            thinkingBlock.appendChild(summary);
+            thinkingBlock.appendChild(content);
+
+            bodyEl.insertBefore(thinkingBlock, bodyEl.firstChild);
+        }
+
+        /**
+         * Append text to the thinking block content
+         * @private
+         */
+        _appendToThinkingBlock(bodyEl, thoughtText) {
+            const contentDiv = bodyEl.querySelector('.thinking-block .thinking-content');
+            if (contentDiv) contentDiv.textContent += thoughtText;
+        }
+
+        /**
+         * Preserve thinking block while updating body content
+         * @private
+         */
+        _preserveThinkingBlockWhileUpdating(bodyEl, updateFn) {
+            const thinkingBlock = bodyEl.querySelector('.thinking-block');
+            updateFn();
+            if (thinkingBlock) {
+                bodyEl.insertBefore(thinkingBlock, bodyEl.firstChild);
             }
         }
     }
@@ -1076,6 +1536,15 @@
                 return;
             }
 
+            // Tab Switching (Gemini Sync)
+            if (document.getElementById('assistantMode')?.checked) {
+                const tabEl = document.getElementById('memory-tab');
+                if (tabEl) {
+                    const tab = bootstrap.Tab.getInstance(tabEl) || new bootstrap.Tab(tabEl);
+                    tab.show();
+                }
+            }
+
             this.app.ui.setLoading(true);
             const fd = new FormData(document.getElementById('ollamaForm'));
 
@@ -1095,14 +1564,44 @@
                     document.getElementById('raw-response').value = d.raw_result;
                     this.app.ui.setupCodeHighlighting();
                     this.app.ui.setupAutoScroll();
-                    if (d.flash_html) document.getElementById('flash-messages-container').innerHTML = d.flash_html;
+
+                    this.onInteractionComplete(d, d.raw_result);
+
                 } else {
                     this.app.ui.injectFlashError(d.message || 'Generation failed.');
                 }
             } catch (e) {
+                console.error(e);
                 this.app.ui.injectFlashError('An error occurred during generation.');
             } finally {
                 this.app.ui.setLoading(false);
+            }
+        }
+
+        /**
+         * Consolidated post-interaction logic for both stream and standard
+         */
+        onInteractionComplete(data, rawOutput) {
+            // 1. Handle Cost & Flash
+            if (data.cost) {
+                const costMsg = `<div class="alert alert-success alert-dismissible fade show">KSH ${parseFloat(data.cost).toFixed(2)} deducted.<button class="btn-close" data-bs-dismiss="alert"></button></div>`;
+                document.getElementById('flash-messages-container').innerHTML = costMsg;
+            } else if (data.flash_html) {
+                document.getElementById('flash-messages-container').innerHTML = data.flash_html;
+            }
+
+            // 2. Add to History
+            if (data.new_interaction_id) {
+                this.app.history.addItem({
+                    unique_id: data.new_interaction_id,
+                    timestamp: data.timestamp,
+                    user_input_raw: data.user_input
+                }, rawOutput);
+            }
+
+            // 3. Highlight Context
+            if (data.used_interaction_ids) {
+                this.app.history.highlightContext(data.used_interaction_ids);
             }
         }
     }
