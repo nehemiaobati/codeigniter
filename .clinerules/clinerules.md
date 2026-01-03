@@ -95,7 +95,7 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
 - **CSRF Protection:**
   - MUST be enabled globally.
   - All HTML `POST` forms MUST include `csrf_field()`.
-  - **Backend Responsibility:** The Backend MUST include a fresh CSRF token in every JSON response (success or error) to allow the frontend to refresh its token (e.g., `['token' => csrf_hash()]`).
+  - **Backend Responsibility:** The Backend MUST include a fresh CSRF token in every JSON response (success or error or edge cases) to allow the frontend to refresh its token (e.g., `['token' => csrf_hash()]`).
   - **Streaming:** For SSE, the fresh CSRF token MUST be sent in the initial data packet (or early in the stream) to ensure the client can recover if the stream is interrupted.
   - **Frontend Handling:** All AJAX/Fetch/EventSource requests MUST listen for and update the CSRF token from the response payload to prevent "disallowed action" errors on subsequent requests.
   - **Strict Native Usage:** Manual cookie override logic is FORBIDDEN. Passing the native token via payload (`csrf_hash()`) is the ONLY permitted synchronization method.
