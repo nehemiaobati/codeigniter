@@ -85,12 +85,19 @@ class GeminiService
         $this->userSettingsModel = $userSettingsModel ?? new UserSettingsModel();
     }
 
-    public function processInteraction(int $userId, string $prompt, array $fileParts, array $options): array
+    public function processInteraction(int $userId, string $prompt, array $uploadedFileIds, array $options): array
     {
-        // 1. Context & Setup
-        $allParts = $fileParts;
-        if (!empty($options['assistant_mode'] ?? true)) {
-            // Use centralized prompt construction from MemoryService
+        // 1. Prepare Files Internally
+        $filesResult = $this->prepareUploadedFiles($uploadedFileIds, $userId);
+        if (isset($filesResult['error'])) {
+            return ['error' => $filesResult['error']];
+        }
+        $allParts = $filesResult['parts'];
+
+        // 2. Context Setup
+        $contextData = ['memoryService' => null, 'usedInteractionIds' => []];
+
+        if ($options['assistant_mode'] ?? true) {
             $memoryService = service('memory', $userId);
             $contextData = $memoryService->buildContextualPrompt($prompt);
 
@@ -99,35 +106,39 @@ class GeminiService
             }
         } else {
             array_unshift($allParts, ['text' => $prompt]);
-            $contextData = ['memoryService' => null, 'usedInteractionIds' => []];
         }
 
-        if (empty($allParts)) return ['error' => 'No content provided.'];
+        if (empty($allParts)) {
+            return ['error' => 'No content provided.'];
+        }
 
-        // 2. Cost Estimation
+        // 3. Cost Estimation & Balance Check
         $estimate = $this->estimateCost($allParts);
         $user = $this->userModel->find($userId);
+
         if ($estimate['status'] && $user->balance < $estimate['costKSH']) {
             return ['error' => "Insufficient balance. Need KSH " . number_format($estimate['costKSH'], 2)];
         }
 
-        // 3. Execution
+        // 4. Execution
         $apiResponse = $this->generateContent($allParts);
-        if (isset($apiResponse['error'])) return ['error' => $apiResponse['error']];
+        if (isset($apiResponse['error'])) {
+            return ['error' => $apiResponse['error']];
+        }
 
-        // 4. TTS (Optional)
+        // 5. TTS (Optional)
         $audioResult = null;
         if (($options['voice_mode'] ?? false) && !empty($apiResponse['result'])) {
             $audioResult = $this->generateSpeech($apiResponse['result']);
         }
 
-        // 5. Transaction
+        // 6. Transaction & Persistence
         $this->db->transStart();
 
         $costData = $this->calculateCost($apiResponse['usage'] ?? [], $audioResult['usage'] ?? null);
         $this->userModel->deductBalance($userId, number_format($costData['costKSH'], 4, '.', ''), true);
 
-        // Memory updates
+        // Memory Persistence
         $memoryResult = [];
         if (!empty($options['assistant_mode'] ?? true) && isset($contextData['memoryService'])) {
             $newId = $contextData['memoryService']->updateMemory(
@@ -247,6 +258,55 @@ class GeminiService
         }
         log_message('error', "[GeminiService] Request failed after all retries for model: {$model}");
         return ['error' => 'Request failed after retries.'];
+    }
+
+    /**
+     * Prepares all context, files, and checks balance for a streaming interaction.
+     * Segregates all "pre-flight" checks to keep the controller clean.
+     *
+     * @return array Result containing 'parts', 'contextData', or 'error'
+     */
+    public function prepareStreamContext(int $userId, string $prompt, array $uploadedFileIds, array $options): array
+    {
+        // 1. Prepare Files
+        $filesResult = $this->prepareUploadedFiles($uploadedFileIds, $userId);
+        if (isset($filesResult['error'])) {
+            return ['error' => $filesResult['error']];
+        }
+        $allParts = $filesResult['parts'];
+
+        // 2. Context Setup
+        $contextData = ['memoryService' => null, 'usedInteractionIds' => []];
+
+        if ($options['assistant_mode'] ?? true) {
+            $memoryService = service('memory', $userId);
+            $contextData = $memoryService->buildContextualPrompt($prompt);
+
+            if ($contextData['finalPrompt']) {
+                array_unshift($allParts, ['text' => $contextData['finalPrompt']]);
+            }
+        } else {
+            array_unshift($allParts, ['text' => $prompt]);
+        }
+
+        if (empty($allParts)) {
+            $this->cleanupTempFiles($uploadedFileIds, $userId);
+            return ['error' => 'No content provided.'];
+        }
+
+        // 3. Cost & Balance Check
+        $estimate = $this->estimateCost($allParts);
+        $user = $this->userModel->find($userId);
+
+        if ($estimate['status'] && $user->balance < $estimate['costKSH']) {
+            $this->cleanupTempFiles($uploadedFileIds, $userId);
+            return ['error' => "Insufficient balance. Estimated: KSH " . number_format($estimate['costKSH'], 2)];
+        }
+
+        return [
+            'parts' => $allParts,
+            'contextData' => $contextData
+        ];
     }
 
     public function generateStream(array $parts, callable $chunkCallback, callable $completeCallback): void
