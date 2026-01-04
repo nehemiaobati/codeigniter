@@ -85,6 +85,7 @@ The following commands are **NOT** native to CodeIgniter 4 and must be implement
 
 - **Location**: `app/Modules/[Name]/Libraries/` or `app/Libraries/`.
 - **Role**: The **only** place where business logic lives.
+- **Requirement**: Must be reusable and registered in `app/Config/Services.php` (if shared).
 - **Responsibilities**:
   - Handle Transactions (`db->transStart()`).
   - Manage File Uploads/Processing.
@@ -95,16 +96,47 @@ The following commands are **NOT** native to CodeIgniter 4 and must be implement
 ### 2.3 Models (The Librarian)
 
 - **Role**: Fetching and Storing raw data.
+- **Principle**: "Objects for Data, Arrays for Config." Passing raw arrays for business objects is **FORBIDDEN**.
 - **Configuration**:
   - `protected $returnType = \App\Entities\User::class;` (Always use Entities).
   - `protected $allowedFields = [...]` (Strict definition).
-- **Forbidden**: Business logic methods (e.g., `calculateData()`).
+- **Forbidden**:
+  - Business logic methods.
+  - Being called directly by a **View**.
 
 ### 2.4 Views (The Canvas)
 
 - **Role**: Display data.
 - **Security**: MUST use `esc($var)` for dynamic output.
 - **Logic**: Loops (`foreach`) and simple conditionals (`if`) only. No complex processing.
+
+### 2.5 Database (The Vault)
+
+- **Role**: Persistent storage.
+- **Mandatory**:
+  - **Schema**: managed strictly via **Migrations**.
+  - **Data**: Initial/Test data managed via **Seeds**.
+- **Forbidden**: Manual schema changes (SQL/GUI) outside of migrations.
+
+### 2.6 Helpers (`app/Helpers/`)
+
+- **Role**: Small, stateless, reusable procedural functions.
+- **One-Time Setup**: New helpers MUST be registered in `app/Config/Autoload.php`.
+- **Forbidden**:
+  - Business logic (Use Services).
+  - Database queries (Use Models/Services).
+  - Stateful operations.
+
+### 2.7 Configuration (`app/Config/`)
+
+- **Sensitive**: API Keys/Secrets MUST live in `.env`.
+- **Custom**: Feature-specific config MUST use `App\Config\Custom` namespace (e.g., `app/Config/Custom/BlogConfig.php`).
+
+### 2.8 Performance Rules (& Pagination)
+
+- **Pagination**: Use `paginate()` for lists. `findAll()` on potentially large tables is **FORBIDDEN**.
+- **Optimization**: Deployment script MUST run `php spark optimize`.
+- **Auto-Routing**: `$autoRoute = false` is Mandatory.
 
 ---
 
@@ -113,7 +145,10 @@ The following commands are **NOT** native to CodeIgniter 4 and must be implement
 ### 3.1 Routing & URLs
 
 - **Named Routes**: All routes MUST be named (`['as' => 'name']`).
-- **Usage**: `url_to('name')` is mandatory. Hardcoded paths (`/user/profile`) are **FORBIDDEN**.
+- **Grouping**: Use `$routes->group()` to organize by feature or access level (e.g., `['filter' => 'auth']`).
+- **Callbacks**: Group callbacks MUST be `static function`.
+- **Target**: Routes MUST point to `Controller::method`. Logic Closures (`function() {...}`) in routes are **FORBIDDEN**.
+- **Usage**: `url_to('name')` is mandatory. Hardcoded paths are **FORBIDDEN**.
 
 ### 3.2 Form Handling (PRG Pattern)
 
@@ -161,10 +196,18 @@ For consistency and security when handling ephemeral data:
 
 ## 4. Security Mandates
 
-1.  **CSRF**: Enabled globally. Forms use `csrf_field()`. JS uses response tokens.
+1.  **CSRF**: Enabled globally.
+    - **Forms**: Must use `csrf_field()`.
+    - **Backend Responsibility**: Every JSON response (Success/Error/Edge Case) MUST include a fresh token (`['token' => csrf_hash()]`).
+    - **Frontend**: JS MUST update its token from the response payload. Manual cookie logic is **FORBIDDEN**.
 2.  **Validation**: Strict input validation rules in Controller.
-3.  **Escaping**: Double-check `esc()` in Views. Unescaped output requires explicit approval comments.
-4.  **Transactions**: Any method modifying the DB MUST use transactions.
+3.  **reCAPTCHA**:
+    - **Views**: Get key via `service('recaptchaService')->getSiteKey()`.
+    - **Controllers**: Verify via `service('recaptchaService')->verify($response)`.
+    - **Config**: Keys MUST be in `.env`. Custom config files are **FORBIDDEN**.
+4.  **Validation**: Strict input validation rules in Controller.
+5.  **Escaping**: Double-check `esc()` in Views. Unescaped output requires explicit approval comments.
+6.  **Transactions**: Any method modifying the DB MUST use transactions.
     ```php
     $this->db->transStart();
     // operations
@@ -176,14 +219,17 @@ For consistency and security when handling ephemeral data:
 
 ## 5. Development & Observability
 
-### 5.1 Logging
+### 5.1 Logging & Observability
 
-- **Path**: `writable/logs/`.
+- **Principle**: In Development, errors MUST be visible and loud. In Production, errors MUST be silent to the user but strictly recorded.
+- **Source of Truth**: `writable/logs/` is the first step in ANY investigation.
+- **Usage**: `log_message($level, $message, $context)`.
+- **Context**: Logs MUST include context arrays (variables, IDs, error traces), not just strings.
 - **Levels**:
-  - `critical`: DB Down, Payment Gateway Fail (Needs immediate attention).
-  - `error`: Logic failure, Validation failure (Needs investigation).
-  - `info`: Important business steps (e.g., "User X upgraded plan").
-- **Context**: Always pass array context: `log_message('error', 'Failed', ['id' => $id]);`.
+  - `critical`: System unusable (DB down). Triggers immediate alert.
+  - `error`: Runtime failure (Transaction rollback, Upload failed).
+  - `info`: Key business events (User login, Report generated).
+- **User Feedback**: Use `session()->setFlashdata()` to communicate outcomes (Success/Error/Warning) to the user.
 
 ### 5.2 Testing
 
@@ -212,6 +258,12 @@ For consistency and security when handling ephemeral data:
   - **Container**: Wrap content in `<div class="container my-5">`.
   - **Header**: Use `<div class="blueprint-header">`.
   - **Card**: Use `<div class="card blueprint-card">`.
+- **Theme Awareness**: Hardcoding colors is **FORBIDDEN**.
+  1.  Use Theme-aware Bootstrap utilities first (e.g., `bg-body-tertiary`).
+  2.  Use project CSS variables second (e.g., `var(--card-bg)`).
+- **SEO**:
+  - **Meta**: Controller MUST pass `pageTitle` and `metaDescription`.
+  - **Canonical**: Controller MUST pass `canonicalUrl`.
 
 ```
 

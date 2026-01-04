@@ -61,6 +61,12 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
 - Every route MUST be assigned a unique name (e.g., `['as' => 'users.profile']`).
 - ALL URLs (HTML links, Redirects, AJAX endpoints, Fetch calls) MUST be generated using `url_to('route.name')`. CI4 Hardcoded URLs (e.g., /users/get) are strictly **FORBIDDEN**.
 
+#### **2.1.1. Forbidden Routing Patterns (Legacy)**
+
+- **Auto-Routing**: `$routes->setAutoRoute(true)` is **FORBIDDEN**. It bypasses security filters and obscures architecture.
+- **Closure Logic**: Putting logic inside route closures (`$routes->get(..., function() { ... })`) is **FORBIDDEN**. Move logic to Controllers.
+- **Unnamed Routes**: Routes without `['as' => 'name']` are **FORBIDDEN**.
+
 #### **2.2. The 3 Steps of a Form Submission (Post/Redirect/Get)**
 
 - **Step 1 (POST):** The controller method processes form data. It **MUST NOT** return a `view()`.
