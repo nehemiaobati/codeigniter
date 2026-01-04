@@ -68,10 +68,12 @@ class OllamaService
      */
     public function processInteraction(int $userId, string $prompt, array $uploadedFileIds, string $model, array $options = []): array
     {
-        // 1. Prepare Files
+        // 1. File Preparation
+        // Standardizes uploaded media into Base64 for Ollama API consumption.
         $images = $this->prepareUploadedFiles($uploadedFileIds, $userId);
 
-        // 2. Balance Check
+        // 2. Pre-Flight Balance Check
+        // Enforces payment requirement before any heavy processing or context building.
         $cost = 1.00; // Fixed cost for now
         $user = $this->userModel->find($userId);
         if (!$user || $user->balance < $cost) {
@@ -79,16 +81,17 @@ class OllamaService
             return ['status' => 'error', 'message' => 'Insufficient balance.'];
         }
 
-        // 3. Execution (Assistant vs Standard)
+        // 3. Contextual Execution
+        // Determining if we need memory-enhanced chat (Assistant) or raw stateless chat.
         $isAssistantMode = $options['assistant_mode'] ?? true;
         $response = [];
 
         if ($isAssistantMode) {
-            // Delegate to MemoryService (note: instantiating here to allow decoupled service usage)
+            // Invokes MemoryService to retrieve relevant past interactions and build a prompt with history.
             $memoryService = new \App\Modules\Ollama\Libraries\OllamaMemoryService($userId, null, null, null, $this);
             $response = $memoryService->processChat($prompt, $model, $images);
         } else {
-            // Standard Stateless Chat
+            // Direct pass-through to Ollama API without memory overhead.
             $messages = [['role' => 'user', 'content' => $prompt]];
             if (!empty($images)) {
                 $messages[0]['images'] = $images;
@@ -96,8 +99,8 @@ class OllamaService
             $response = $this->generateChat($model, $messages);
         }
 
-        // 4. Handle Errors & Cleanup
-        // Always cleanup temp files after usage (files read into memory/base64)
+        // 4. Cleanup & Error Handling
+        // Immediate removal of temp files to maintain stateless server design.
         $this->cleanupTempFiles($uploadedFileIds, $userId);
 
         if (isset($response['status']) && $response['status'] === 'error') {

@@ -104,7 +104,8 @@ class UserModel extends Model
     }
 
     /**
-     * Adds a specified amount to a user's balance using precise calculation.
+     * Adds a specified amount to a user's balance using BCMath for arbitrary precision.
+     * Prevents floating point errors when handling currency.
      *
      * @param int    $userId The ID of the user.
      * @param string $amount The amount to add, as a string.

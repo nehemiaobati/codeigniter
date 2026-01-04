@@ -232,9 +232,9 @@ class GeminiController extends BaseController
         $inputText = (string) $this->request->getPost('prompt');
         $uploadedFileIds = (array) $this->request->getPost('uploaded_media');
 
-        // 2. Delegate full processing to Service
-        // The service now handles file preparation, cost estimation, balance check, and execution in one go
-        // to reduce controller coupling/knowledge of these steps.
+        // 2. Delegate to Service
+        // Transfers detailed request processing to the Service layer to maintain a 'Skinny Controller'.
+        // Service handles file encoding, context retrieval (RAG), cost calculation, and API interaction.
         $userSetting = $this->geminiService->getUserSettings($userId);
         $options = [
             'assistant_mode' => $userSetting ? $userSetting->assistant_mode_enabled : true,
@@ -244,7 +244,8 @@ class GeminiController extends BaseController
         // We moved the file prep and cost check INSIDE processInteraction to make the controller thinner
         $result = $this->geminiService->processInteraction($userId, $inputText, $uploadedFileIds, $options);
 
-        // Always cleanup temp files (idempotent operation)
+        // Cleanup Check
+        // Ensures temporary files are removed regardless of success/failure to prevent disk clutter.
         $this->geminiService->cleanupTempFiles($uploadedFileIds, $userId);
 
         if (isset($result['error'])) {

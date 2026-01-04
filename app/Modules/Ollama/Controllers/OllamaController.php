@@ -148,11 +148,13 @@ class OllamaController extends BaseController
             'assistant_mode' => $userSetting ? $userSetting->assistant_mode_enabled : true,
         ];
 
-        // 2. Process via Service (Unified with Gemini Pattern)
-        // Service handles file prep, cost checking, and execution
+        // 2. Service Delegation
+        // Offloads entire logic chain (Files -> Balance -> Context -> API) to Service.
+        // Controller remains unaware of specific implementation details (Model prioritization, etc).
         $result = $this->ollamaService->processInteraction($userId, $inputText, $uploadedFileIds, $selectedModel, $options);
 
-        // Cleanup moved inside processInteraction for error cases, but idempotent cleanup here is safe/good practice
+        // Cleanup Assurance
+        // Idempotent cleanup to guarantee no orphaned files remain on disk.
         $this->ollamaService->cleanupTempFiles($uploadedFileIds, $userId);
 
         if (isset($result['status']) && $result['status'] === 'error') {

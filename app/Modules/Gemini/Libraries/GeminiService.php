@@ -120,19 +120,23 @@ class GeminiService
             return ['error' => "Insufficient balance. Need KSH " . number_format($estimate['costKSH'], 2)];
         }
 
-        // 4. Execution
+        // 4. API Execution
+        // Calls Gemini API. Returns generated text or error.
         $apiResponse = $this->generateContent($allParts);
         if (isset($apiResponse['error'])) {
             return ['error' => $apiResponse['error']];
         }
 
-        // 5. TTS (Optional)
+        // 5. Post-Processing (TTS)
+        // Generates audio buffer if voice mode is enabled and content exists.
         $audioResult = null;
         if (($options['voice_mode'] ?? false) && !empty($apiResponse['result'])) {
             $audioResult = $this->generateSpeech($apiResponse['result']);
         }
 
-        // 6. Transaction & Persistence
+        // 6. Transactional Persistence
+        // Atomic block: Deducts actual cost and saves conversation memory.
+        // Failure here rolls back the balance deduction.
         $this->db->transStart();
 
         $costData = $this->calculateCost($apiResponse['usage'] ?? [], $audioResult['usage'] ?? null);
