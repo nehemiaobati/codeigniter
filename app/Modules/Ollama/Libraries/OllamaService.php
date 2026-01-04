@@ -111,7 +111,7 @@ class OllamaService
         // MemoryService::processChat -> calls _saveInteraction to save history.
 
         $this->db->transStart();
-        $this->userModel->deductBalance($userId, (string)$cost);
+        $this->userModel->deductBalance($userId, (string)$cost, true);
         $this->db->transComplete();
 
         // 6. Return Result
@@ -463,7 +463,7 @@ class OllamaService
     {
         $cost = 1.00; // Fixed cost for now
         $this->db->transStart();
-        $this->userModel->deductBalance($userId, (string)$cost);
+        $this->userModel->deductBalance($userId, (string)$cost, true);
 
         // Update Memory
         $memoryResult = [];
@@ -517,7 +517,9 @@ class OllamaService
             $filePath = $userTempPath . basename($fileId);
             if (file_exists($filePath)) {
                 $images[] = base64_encode(file_get_contents($filePath));
-                @unlink($filePath);
+                if (!unlink($filePath)) {
+                    log_message('error', "[OllamaService] Failed to delete temporary file during preparation: {$filePath}");
+                }
             }
         }
         return $images;
@@ -531,7 +533,12 @@ class OllamaService
     {
         $userTempPath = WRITEPATH . 'uploads/ollama_temp/' . $userId . '/';
         foreach ($fileIds as $fileId) {
-            @unlink($userTempPath . basename($fileId));
+            $filePath = $userTempPath . basename($fileId);
+            if (file_exists($filePath)) {
+                if (!unlink($filePath)) {
+                    log_message('error', "[OllamaService] Failed to delete temporary file in cleanup: {$filePath}");
+                }
+            }
         }
     }
 

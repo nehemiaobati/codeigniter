@@ -125,7 +125,7 @@ class GeminiService
         $this->db->transStart();
 
         $costData = $this->calculateCost($apiResponse['usage'] ?? [], $audioResult['usage'] ?? null);
-        $this->userModel->deductBalance($userId, number_format($costData['costKSH'], 4, '.', ''));
+        $this->userModel->deductBalance($userId, number_format($costData['costKSH'], 4, '.', ''), true);
 
         // Memory updates
         $memoryResult = [];
@@ -576,7 +576,7 @@ class GeminiService
         if ($usageMetadata) {
             $costData = $this->calculateCost($usageMetadata, $audioUsage);
             $deduction = number_format($costData['costKSH'], 4, '.', '');
-            $this->userModel->deductBalance($userId, $deduction);
+            $this->userModel->deductBalance($userId, $deduction, true);
         }
 
         // Update Memory
@@ -674,7 +674,12 @@ class GeminiService
     public function cleanupTempFiles(array $fileIds, int $userId): void
     {
         foreach ($fileIds as $fileId) {
-            @unlink(WRITEPATH . 'uploads/gemini_temp/' . $userId . '/' . basename($fileId));
+            $filePath = WRITEPATH . 'uploads/gemini_temp/' . $userId . '/' . basename($fileId);
+            if (file_exists($filePath)) {
+                if (!unlink($filePath)) {
+                    log_message('error', "[GeminiService] Failed to delete temporary file: {$filePath}");
+                }
+            }
         }
     }
 
