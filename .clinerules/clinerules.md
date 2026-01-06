@@ -80,6 +80,7 @@ The following commands are **NOT** native to CodeIgniter 4 and must be implement
   - Business Logic or Calculations.
   - HTML generation (use Views).
 - **Key Pattern**: "Skinny Controller". If it has `if` statements for business rules, move them to the Service.
+- **SEO Mandatory**: Every method rendering a view MUST prepare the standard SEO `$data` array.
 
 ### 2.2 Services (The Engine Room)
 
@@ -262,8 +263,11 @@ For consistency and security when handling ephemeral data:
   1.  Use Theme-aware Bootstrap utilities first (e.g., `bg-body-tertiary`).
   2.  Use project CSS variables second (e.g., `var(--card-bg)`).
 - **SEO**:
-  - **Meta**: Controller MUST pass `pageTitle` and `metaDescription`.
-  - **Canonical**: Controller MUST pass `canonicalUrl`.
+  - **Meta Data**: Controller MUST pass `pageTitle`, `metaDescription`, `canonicalUrl`, and `robotsTag`.
+  - **Images**: Pass `metaImage` for specific content (e.g., blog posts, portraits); defaults to a standard brand image in the layout.
+  - **Indexing Strategy**:
+    - **Public Pages**: Use `index, follow` (Marketing, informative, and public tool pages).
+    - **Private/Auth Pages**: Use `noindex, follow` (Auth forms, User dashboards, Admin panels).
 
 ```
 
