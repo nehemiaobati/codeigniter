@@ -87,7 +87,7 @@ class MediaController extends BaseController
             $result = $this->mediaService->generateMedia($userId, $input, $modelId);
 
             // Append CSRF token to response for frontend refresh
-            $result['token'] = csrf_hash();
+            $result['csrf_token'] = csrf_hash();
 
             return $this->respond($result);
         } catch (\Exception $e) {
@@ -97,7 +97,7 @@ class MediaController extends BaseController
             return $this->respond([
                 'status' => 'error',
                 'message' => 'An unexpected error occurred during media generation.',
-                'token' => csrf_hash()
+                'csrf_token' => csrf_hash()
             ], 500);
         }
     }
@@ -119,7 +119,7 @@ class MediaController extends BaseController
             $result = $this->mediaService->pollVideoStatus($opId);
 
             // Append CSRF token
-            $result['token'] = csrf_hash();
+            $result['csrf_token'] = csrf_hash();
 
             return $this->respond($result);
         } catch (\Exception $e) {
@@ -128,7 +128,7 @@ class MediaController extends BaseController
             return $this->respond([
                 'status' => 'error',
                 'message' => 'Polling failed due to a server error.',
-                'token' => csrf_hash()
+                'csrf_token' => csrf_hash()
             ], 500);
         }
     }

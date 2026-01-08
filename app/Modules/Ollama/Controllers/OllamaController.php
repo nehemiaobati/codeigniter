@@ -330,7 +330,7 @@ class OllamaController extends BaseController
         return $this->response->setJSON([
             'status' => 'success',
             'history' => $history,
-            'token' => csrf_hash()
+            'csrf_token' => csrf_hash()
         ]);
     }
 
@@ -350,7 +350,7 @@ class OllamaController extends BaseController
 
         $memoryService = new \App\Modules\Ollama\Libraries\OllamaMemoryService($userId);
         if ($memoryService->deleteInteraction($userId, $uniqueId)) {
-            return $this->response->setJSON(['status' => 'success', 'token' => csrf_hash()]);
+            return $this->response->setJSON(['status' => 'success', 'csrf_token' => csrf_hash()]);
         }
         return $this->_respondError('Failed to delete.');
     }
@@ -384,7 +384,7 @@ class OllamaController extends BaseController
     private function _respondSuccess(string $message, array $data = [])
     {
         if ($this->request->isAJAX()) {
-            return $this->response->setJSON(array_merge(['status' => 'success', 'message' => $message, 'token' => csrf_hash()], $data));
+            return $this->response->setJSON(array_merge(['status' => 'success', 'message' => $message, 'csrf_token' => csrf_hash()], $data));
         }
         return redirect()->back()->with('success', $message);
     }
@@ -392,7 +392,7 @@ class OllamaController extends BaseController
     private function _respondError(string $message)
     {
         if ($this->request->isAJAX()) {
-            return $this->response->setJSON(['status' => 'error', 'message' => $message, 'token' => csrf_hash()]);
+            return $this->response->setJSON(['status' => 'error', 'message' => $message, 'csrf_token' => csrf_hash()]);
         }
         return redirect()->back()->withInput()->with('error', $message);
     }
@@ -436,7 +436,7 @@ class OllamaController extends BaseController
                 'new_interaction_id' => $result['new_interaction_id'] ?? null,
                 'timestamp' => $result['timestamp'] ?? null,
                 'user_input' => ($this->request->getPost('prompt') ?? ''),
-                'token' => csrf_hash()
+                'csrf_token' => csrf_hash()
             ];
 
             return $this->response->setJSON($responsePayload);

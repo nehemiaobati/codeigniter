@@ -53,7 +53,7 @@ class GeminiController extends BaseController
             return $this->response->setJSON(array_merge([
                 'status' => 'success',
                 'message' => $message,
-                'token' => csrf_hash()
+                'csrf_token' => csrf_hash()
             ], $data));
         }
         return redirect()->back()->with('success', $message);
@@ -73,7 +73,7 @@ class GeminiController extends BaseController
                 'status' => 'error',
                 'message' => $message,
                 'errors' => $errors,
-                'token' => csrf_hash()
+                'csrf_token' => csrf_hash()
             ]);
         }
         return redirect()->back()->withInput()->with('error', $message);
@@ -483,7 +483,7 @@ class GeminiController extends BaseController
         return $this->response->setJSON([
             'status' => 'success',
             'history' => $history,
-            'token' => csrf_hash()
+            'csrf_token' => csrf_hash()
         ]);
     }
 
@@ -502,7 +502,7 @@ class GeminiController extends BaseController
         }
 
         if (service('memory', $userId)->deleteInteraction($userId, $uniqueId)) {
-            return $this->response->setJSON(['status' => 'success', 'token' => csrf_hash()]);
+            return $this->response->setJSON(['status' => 'success', 'csrf_token' => csrf_hash()]);
         }
         return $this->_respondError('Failed to delete.');
     }
@@ -639,7 +639,7 @@ class GeminiController extends BaseController
                 'new_interaction_id' => $result['new_interaction_id'] ?? null,
                 'timestamp' => $result['timestamp'] ?? null,
                 'user_input' => ($this->request->getPost('prompt') ?? ''),
-                'token' => csrf_hash()
+                'csrf_token' => csrf_hash()
             ];
 
             if ($audioUrl) {
