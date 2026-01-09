@@ -86,6 +86,15 @@ class MediaController extends BaseController
         try {
             $result = $this->mediaService->generateMedia($userId, $input, $modelId);
 
+            // Handle Concurrency Conflict
+            if (isset($result['status']) && $result['status'] === 'conflict') {
+                return $this->respond([
+                    'status' => 'error', // Keep 'error' for frontend handling or use 'conflict'
+                    'message' => $result['message'],
+                    'csrf_token' => csrf_hash()
+                ], 409);
+            }
+
             // Append CSRF token to response for frontend refresh
             $result['csrf_token'] = csrf_hash();
 
@@ -99,6 +108,27 @@ class MediaController extends BaseController
                 'message' => 'An unexpected error occurred during media generation.',
                 'csrf_token' => csrf_hash()
             ], 500);
+        }
+    }
+
+    /**
+     * Retrieves the currently active video generation job for the user.
+     * Used for session persistence / auto-resume.
+     *
+     * @return \CodeIgniter\HTTP\ResponseInterface
+     */
+    public function active()
+    {
+        $userId = (int) session()->get('userId');
+        try {
+            $job = $this->mediaService->getActiveJob($userId);
+            return $this->respond([
+                'status' => 'success',
+                'job' => $job,
+                'csrf_token' => csrf_hash()
+            ]);
+        } catch (\Exception $e) {
+            return $this->failServerError('Failed to fetch active job.');
         }
     }
 

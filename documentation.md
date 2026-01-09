@@ -330,7 +330,7 @@ Standard CodeIgniter 4 lifecycle applies. Routes are defined in `app/Modules/[Mo
 
 **4.3. Service Container & Dependency Injection**
 
-The application uses CodeIgniter's service container to manage class instances. Core services are defined in `app/Config/Services.php`. This allows for easy instantiation and sharing of service objects throughout the application.
+The application uses CodeIgniter's service container to manage class instances. Services are defined in modular `Config/Services.php` files (for feature-specific services) or `app/Config/Services.php` (for core/global services). This allows for automatic discovery, easy instantiation, and sharing of service objects throughout the application.
 
 - **Example:** `$geminiService = service('geminiService');`
 - **Example:** `$ffmpegService = service('ffmpegService');`
@@ -367,6 +367,14 @@ The application uses CodeIgniter's service container to manage class instances. 
 **4.6. Frontend Design (The 'Blueprint' Method)**
 
 The project follows a strict frontend workflow called the "Blueprint Method" to ensure UI consistency. New features include `prompt-card` styling and progress bars for file uploads in the AI Studio.
+
+**4.7. Architectural Topology (Parallel vs. Braided)**
+
+The system enforces a **Parallel Architecture** to prevent "Spaghetti Code".
+
+- **Vertical Layering**: Dependencies flow strictly downwards: `Controller` -> `Domain Service` -> `Sub-Service`.
+- **The "Ping Pong" Rule**: Triangular dependencies (where a Controller talks to both a Parent Service and its Child) are **FORBIDDEN**. Use the **Facade Pattern** where the Parent Service wraps the Child service's methods.
+- **Parallel Domains**: Modules (e.g., Gemini and Payments) run in parallel isolation. They do not cross-depend unless absolutely necessary, ensuring that complex logic in one domain does not break the other.
 
 **5. Tutorial: Building Your First Feature**
 
@@ -527,7 +535,7 @@ This module (`App\Modules\Gemini`) is the core of the platform.
 **6.8. Local AI Service (Ollama)**
 
 - **6.8.1. Configuration & Model Selection**: The module connects to a local Ollama instance (default: `http://localhost:11434`). It dynamically fetches available models (e.g., `llama3`, `mistral`) and presents them in the UI for user selection.
-- **6.8.2. Chat & Assistant Mode**: Supports conversational AI with an "Assistant Mode" that maintains context. The module follows a "Fat Service, Skinny Controller" pattern, with `OllamaService` orchestrating the interaction lifecycle, including credit deduction and memory synchronization.
+- **6.8.2. Chat & Assistant Mode**: Supports conversational AI with an "Assistant Mode" that maintains context. The module follows a "Fat Service, Skinny Controller" pattern, with `OllamaService` orchestrating the interaction lifecycle via modular service registration, including credit deduction and memory synchronization.
 - **6.8.3. Multimodal Input**: Users can upload images for analysis by vision-capable local models (like `llava`), handled via `OllamaPayloadService` which manages base64 encoding.
 
 ---
@@ -710,6 +718,22 @@ This section provides an absolute reference for all environment variables requir
 - **PCM:** Pulse-Code Modulation, a raw audio format returned by Gemini API.
 
 **14.2. Changelog & Release History**
+
+**v1.9.1 - 2026-01-10**
+
+### Added
+
+- **Modular Service Decentralization:**
+  - Migrated feature-specific service registrations from the global `app/Config/Services.php` to modular `Config/Services.php` files in Gemini, Ollama, Crypto, Payments, and Blog modules.
+  - Enabled automatic service discovery for all modules, improving encapsulation and framework scalability.
+
+### Changed
+
+- **Codebase Standards (.clinerules):** Updated architectural standards to prioritize modular service registration over global registration.
+
+### Fixed
+
+- **Ollama Architectural Violations:** Resolved 4 ping-pong dependency issues in `OllamaController` by implementing facade patterns in `OllamaService` and eliminating direct service/model instantiations in the controller.
 
 **v1.9.0 - 2025-12-20**
 

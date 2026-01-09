@@ -1,5 +1,12 @@
 ### **Guiding Principles**
 
+## Meta-Rules: Managing This Handbook
+
+1.  **Universal Applicability**: This document describes a standard for **ANY** CodeIgniter 4 project. It must remain project-agnostic.
+2.  **No Specifics**: Do not verify or enforce rules using specific project file names (e.g., `GeminiController`). Use generic terms (`DomainController`, `BillingService`).
+3.  **Living Document**: When a new architectural pattern is proven effective and generic, update this file.
+4.  **First Source**: Read this file **before** starting any task on a new or existing project to align with the architectural standard.
+
 - **Simple over Easy:** Prioritize objective simplicity (disentangled, single responsibility) over subjective ease (familiarity, shortcuts). "Easy" allows you to move fast today; "Simple" allows you to keep moving fast in the future.
 - **Clarity over Cleverness:** Code must be simple, readable, and self-documenting.
 - **Security is Not Optional:** Every line of code must be written with security as a primary concern.
@@ -51,6 +58,16 @@ The project follows a strict **Model-View-Controller-Service (MVC-S)** architect
 - Sensitive or environment-specific settings MUST be managed via the `.env` file.
 - All custom configuration files MUST be placed in a dedicated directory (e.g., `app/Config/Custom/`).
 - Custom configuration files MUST use the `Config\Custom` namespace.
+
+#### **1.8. Architectural Topology: Parallel vs. Braided**
+
+- **Parallel Structure:** Dependencies must flow vertically (Controller -> Domain Service -> Sub-Services).
+- **The "Ping Pong" Prohibition:** Triangular dependencies are **FORBIDDEN**.
+  - _Definition:_ A Controller talking to a Main Service AND that Main Service's dependency.
+  - _Example:_ `MainController` talking to `SubService` (e.g., `FormattingService`) while `MainService` also uses `SubService`.
+  - _Fix:_ Use the **Facade Pattern**. The Main Service (`MainService`) must wrap the required methods of the Sub-Service (`SubService`) so the Controller has a single point of entry.
+- **Brother-Service Isolation:** Services at the same level (e.g., `ModuleAService` and `ModuleBService`) should generally NOT call each other directly. If orchestration is needed, create a higher-level "Orchestrator Service" or handle it in the Controller.
+- **Goal:** Clean, parallel execution stacks that don't "criss-cross" or braid together, ensuring ease of debugging and future scaling.
 
 ---
 

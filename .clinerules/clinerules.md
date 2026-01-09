@@ -1,5 +1,14 @@
 # CodeIgniter 4 Handbook: The "Simple over Easy" Standard
 
+## Meta-Rules: Managing This Handbook
+
+1.  **Universal Applicability**: This document describes a standard for **ANY** CodeIgniter 4 project. It must remain project-agnostic.
+2.  **No Specifics**: Do not verify or enforce rules using specific project file names (e.g., `GeminiController`). Use generic terms (`DomainController`, `BillingService`).
+3.  **Living Document**: When a new architectural pattern is proven effective and generic, update this file.
+4.  **First Source**: Read this file **before** starting any task on a new or existing project to align with the architectural standard.
+
+---
+
 ## 0. Philosophy: Simple vs. Easy
 
 > _"Conflating [Simple and Easy] is why we’re drowning in complexity."_
@@ -68,6 +77,19 @@ The following commands are **NOT** native to CodeIgniter 4 and must be implement
 
 > **Implementation Source**: See `tooling_setup.md` in this directory for the full source code.
 
+### 1.5 Code Quality & Standards
+
+- **Standards**: All PHP files MUST be PSR-12 compliant and start with `declare(strict_types=1);`.
+- **Documentation**: Every class, property, and method MUST have a complete and accurate PHPDoc block.
+- **Private Helpers**:
+  - **Naming**: MUST be `private` and prefixed with an underscore (e.g., `_buildResponse()`, `_sanitizeInput()`).
+  - **Organization**: MUST be grouped in a dedicated section marked with a comment divider:
+    ```php
+    // --- Helper Methods ---
+    ```
+  - **Ordering**: Helper methods MUST be defined **before** the public methods that use them (reading order: building blocks -> orchestration).
+  - **Responsibility**: Each helper MUST have a single, clear responsibility.
+
 ---
 
 ## 2. Layer Responsibilities (Strict Separation)
@@ -86,7 +108,7 @@ The following commands are **NOT** native to CodeIgniter 4 and must be implement
 
 - **Location**: `app/Modules/[Name]/Libraries/` or `app/Libraries/`.
 - **Role**: The **only** place where business logic lives.
-- **Requirement**: Must be reusable and registered in `app/Config/Services.php` (if shared).
+- **Requirement**: Must be reusable and registered in module-level `Config/Services.php` (preferred) or global `app/Config/Services.php` (if shared).
 - **Responsibilities**:
   - Handle Transactions (`db->transStart()`).
   - Manage File Uploads/Processing.
@@ -139,6 +161,16 @@ The following commands are **NOT** native to CodeIgniter 4 and must be implement
 - **Optimization**: Deployment script MUST run `php spark optimize`.
 - **Auto-Routing**: `$autoRoute = false` is Mandatory.
 
+### 2.9 Architectural Topology: Parallel vs. Braided
+
+- **Parallel Structure**: Dependencies must flow vertically (Controller -> Domain Service -> Sub-Services).
+- **The "Ping Pong" Prohibition**: Triangular dependencies are **FORBIDDEN**.
+  - _Definition_: A Controller talking to a Main Service AND that Main Service's dependency.
+  - _Example_: `MainController` talking to `SubService` (e.g., formatting helper) while `MainService` also uses `SubService`.
+  - _Fix_: Use the **Facade Pattern**. The Main Service (`MainService`) must wrap the required methods of the Sub-Service (`SubService`) so the Controller has a single point of entry.
+- **Brother-Service Isolation**: Services at the same level (e.g., `ModuleAService` and `ModuleBService`) should generally NOT call each other directly. If orchestration is needed, create a higher-level "Orchestrator Service" or handle it in the Controller.
+- **Goal**: Clean, parallel execution stacks that don't "criss-cross" or braid together, ensuring ease of debugging and future scaling.
+
 ---
 
 ## 3. Data & Request Protocol
@@ -189,7 +221,7 @@ For consistency and security when handling ephemeral data:
   ```
 - **CSRF**: Every JSON response (Success, Error, or Edge Case) MUST include a fresh CSRF token to keep the client in sync.
 - **SSE (Streaming)**:
-  - **Headers**: Flush immediately (`ob_flush(); flush()`).
+  - **Headers**: Flush immediately (`ob_flush(); flush()`). Content-Type MUST be `text/event-stream`.
   - **Session**: MUST call `session_write_close()` before the loop to prevent locking.
   - **Auth**: Send a fresh CSRF token in the first data event.
 
@@ -206,7 +238,7 @@ For consistency and security when handling ephemeral data:
     - **Views**: Get key via `service('recaptchaService')->getSiteKey()`.
     - **Controllers**: Verify via `service('recaptchaService')->verify($response)`.
     - **Config**: Keys MUST be in `.env`. Custom config files are **FORBIDDEN**.
-4.  **Validation**: Strict input validation rules in Controller.
+4.  **Throttling**: The Throttler MUST be enabled on authentication and password reset routes.
 5.  **Escaping**: Double-check `esc()` in Views. Unescaped output requires explicit approval comments.
 6.  **Transactions**: Any method modifying the DB MUST use transactions.
     ```php
@@ -246,7 +278,15 @@ For consistency and security when handling ephemeral data:
 - Run `composer install --no-dev --optimize-autoloader`.
 - Run `php spark optimize`.
 - Ensure `writable/` is writable by web user.
+- **Document Root**: MUST point strictly to the `/public` directory.
 - Disable `display_errors`.
+
+### 5.4 Exception Strategy
+
+- **Services**: SHOULD return a standardized error array: `['status' => 'error', 'message' => 'Human readable message']` OR throw specific, typed Exceptions (e.g., `InsufficientFundsException`).
+- **Controllers**:
+  - MUST validate the returned `status` OR wrap Service calls in `try/catch` blocks.
+  - Catch `\Throwable` for unexpected crashes to prevent white screens, log the error, and redirect with flash data.
 
 ---
 
@@ -262,6 +302,12 @@ For consistency and security when handling ephemeral data:
 - **Theme Awareness**: Hardcoding colors is **FORBIDDEN**.
   1.  Use Theme-aware Bootstrap utilities first (e.g., `bg-body-tertiary`).
   2.  Use project CSS variables second (e.g., `var(--card-bg)`).
+- **UI Components**:
+  - **Inputs**: All text inputs MUST use Bootstrap 5 "Floating labels".
+  - **Buttons**:
+    - Primary Action: `btn-primary`
+    - Secondary Action: `btn-outline-secondary`
+    - Destructive Action: `btn-danger`
 - **SEO**:
   - **Meta Data**: Controller MUST pass `pageTitle`, `metaDescription`, `canonicalUrl`, and `robotsTag`.
   - **Images**: Pass `metaImage` for specific content (e.g., blog posts, portraits); defaults to a standard brand image in the layout.

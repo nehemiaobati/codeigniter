@@ -40,6 +40,7 @@ $routes->group('', ['namespace' => 'App\Modules\Gemini\Controllers'], static fun
         // Generative Media (Imagen/Veo)
         $routes->post('media/generate', 'MediaController::generate', ['as' => 'gemini.media.generate']);
         $routes->post('media/poll', 'MediaController::poll', ['as' => 'gemini.media.poll']);
+        $routes->post('media/active', 'MediaController::active', ['as' => 'gemini.media.active']);
         $routes->get('media/serve/(:segment)', 'MediaController::serve/$1', ['as' => 'gemini.media.serve']);
     });
 });
