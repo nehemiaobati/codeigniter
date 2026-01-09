@@ -238,7 +238,9 @@ For consistency and security when handling ephemeral data:
     - **Views**: Get key via `service('recaptchaService')->getSiteKey()`.
     - **Controllers**: Verify via `service('recaptchaService')->verify($response)`.
     - **Config**: Keys MUST be in `.env`. Custom config files are **FORBIDDEN**.
-4.  **Throttling**: The Throttler MUST be enabled on authentication and password reset routes.
+4.  **Throttling**: The Throttler MUST be enabled on:
+    - **Authentication & Reset Routes**: To prevent brute-force attacks (e.g., `throttle:5,60`).
+    - **Resource-Heavy Endpoints**: Any route invoking expensive 3rd-party APIs or local models (AI Generation, Crypto Queries) MUST be throttled to prevent resource exhaustion or quota abuse (e.g., `throttle:10,60`).
 5.  **Escaping**: Double-check `esc()` in Views. Unescaped output requires explicit approval comments.
 6.  **Transactions**: Any method modifying the DB MUST use transactions.
     ```php
