@@ -16,8 +16,8 @@ $routes->group('', ['namespace' => 'App\Modules\Gemini\Controllers'], static fun
         $routes->get('/', 'GeminiController::index', ['as' => 'gemini.index']);
 
         // Core Generation
-        $routes->post('generate', 'GeminiController::generate', ['as' => 'gemini.generate', 'filter' => 'balance|throttle:10,60']);
-        $routes->post('stream', 'GeminiController::stream', ['as' => 'gemini.stream', 'filter' => 'balance|throttle:10,60']);
+        $routes->post('generate', 'GeminiController::generate', ['as' => 'gemini.generate', 'filter' => ['balance', 'throttle:10,60']]);
+        $routes->post('stream', 'GeminiController::stream', ['as' => 'gemini.stream', 'filter' => ['balance', 'throttle:10,60']]);
 
         // Prompt Management
         $routes->post('prompts/add', 'GeminiController::addPrompt', ['as' => 'gemini.prompts.add']);

@@ -376,6 +376,38 @@ The system enforces a **Parallel Architecture** to prevent "Spaghetti Code".
 - **The "Ping Pong" Rule**: Triangular dependencies (where a Controller talks to both a Parent Service and its Child) are **FORBIDDEN**. Use the **Facade Pattern** where the Parent Service wraps the Child service's methods.
 - **Parallel Domains**: Modules (e.g., Gemini and Payments) run in parallel isolation. They do not cross-depend unless absolutely necessary, ensuring that complex logic in one domain does not break the other.
 
+#### Module Dependency Graph (Standard Parallel Flow)
+
+```mermaid
+graph TD
+    C[GeminiController]
+    MC[MediaController]
+
+    subgraph "Domain Facades"
+        GS[GeminiService]
+        MGS[MediaGenerationService]
+    end
+
+    subgraph "Sub-Services (Hidden from Controllers)"
+        MEM[MemoryService]
+        MPS[ModelPayloadService]
+        EBS[EmbeddingService]
+        FFM[FfmpegService]
+        UM[UserModel]
+    end
+
+    C --> GS
+    MC --> MGS
+
+    GS --> MEM
+    GS --> MPS
+    GS --> FFM
+    GS --> UM
+
+    MGS --> MPS
+    MGS --> UM
+```
+
 **5. Tutorial: Building Your First Feature**
 
 This tutorial demonstrates how to build a simple "Notes" feature. **Note:** According to the project's modular architecture, this feature should ideally be built inside its own module at `app/Modules/Notes/`.
@@ -718,6 +750,25 @@ This section provides an absolute reference for all environment variables requir
 - **PCM:** Pulse-Code Modulation, a raw audio format returned by Gemini API.
 
 **14.2. Changelog & Release History**
+
+**v1.9.2 - 2026-01-10**
+
+### Added
+
+- **Route Throttling (Rate Limiting):**
+  - Implemented a custom `ThrottleFilter` leveraging the native CI4 Throttler service (Token Bucket algorithm).
+  - Protected all sensitive authentication routes (Login 5/min, Register 3/min, Password Reset 2/min).
+  - Rate-limited resource-intensive AI generation routes in Gemini and Ollama modules (10/min) and media generation (5/min).
+  - Applied throttling to Crypto query and Payment initiation routes.
+
+### Changed
+
+- **Improved Throttling UX:** Throttled requests now redirect back with a flash error message for standard forms, while maintaining JSON 429 responses for AJAX/SSE streams.
+- **Architectural Standards (.clinerules):** Mandated throttling for all public POST and expensive 3rd-party API endpoints.
+
+### Fixed
+
+- **Filter Syntax Exception:** Resolved a critical `FilterException` by refactoring route configurations to use array syntax `['filter1', 'filter2']` instead of the pipe `|` separator, which CI4 misinterpreted in certain modular contexts.
 
 **v1.9.1 - 2026-01-10**
 

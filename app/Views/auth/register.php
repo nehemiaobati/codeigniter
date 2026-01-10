@@ -103,7 +103,7 @@
                         <div class="illustration-content text-center">
                             <i class="bi bi-gift-fill text-primary illustration-icon"></i>
                             <h4>Join Our Platform</h4>
-                            <p>Your free account comes with <strong>Ksh. 30</strong> in starter credits to try our AI and Crypto tools right away.</p>
+                            <p>Get <strong>Ksh. 30</strong> in starter credits when you make your first deposit to try our AI and Crypto tools right away.</p>
                         </div>
                     </div>
                 </div>
