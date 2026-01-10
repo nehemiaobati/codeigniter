@@ -21,23 +21,13 @@
     <meta name="robots" content="<?= esc($robotsTag ?? 'index, follow') ?>">
     <link rel="icon" href="<?= base_url('favicon.ico') ?>" type="image/x-icon">
 
-    <!-- Social Media Meta (Open Graph for Facebook/LinkedIn) -->
+    <!-- Social Media Meta -->
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="AFRIKENKID">
-    <meta property="og:url" content="<?= esc($canonicalUrl ?? current_url(), 'attr') ?>">
-    <meta property="og:title" content="<?= esc($pageTitle ?? 'AFRIKENKID | Generative AI & Crypto Data for Africa', 'attr') ?>">
-    <meta property="og:description" content="<?= esc($metaDescription ?? 'Access powerful Generative AI tools and real-time blockchain analytics. Pay easily via M-Pesa or Credit Card. Your all-in-one platform for AI and Crypto insights.', 'attr') ?>">
-    <meta property="og:image" content="<?= esc($metaImage ?? base_url('assets/images/afrikenkid_og_image.jpg'), 'attr') ?>">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-
-    <!-- Twitter Card (LinkedIn also uses these as fallbacks) -->
+    <meta property="og:url" content="<?= esc($canonicalUrl ?? current_url()) ?>">
+    <meta property="og:title" content="<?= esc($pageTitle ?? 'AFRIKENKID | Generative AI & Crypto Data for Africa') ?>">
+    <meta property="og:description" content="<?= esc($metaDescription ?? 'Access powerful Generative AI tools and real-time blockchain analytics. Pay easily via M-Pesa or Credit Card. Your all-in-one platform for AI and Crypto insights.') ?>">
+    <meta property="og:image" content="<?= esc($metaImage ?? base_url('assets/images/afrikenkid_og_image.jpg')) ?>">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:site" content="@afrikenkid">
-    <meta name="twitter:title" content="<?= esc($pageTitle ?? 'AFRIKENKID | Generative AI & Crypto Data for Africa', 'attr') ?>">
-    <meta name="twitter:description" content="<?= esc($metaDescription ?? 'Access powerful Generative AI tools and real-time blockchain analytics. Pay easily via M-Pesa or Credit Card. Your all-in-one platform for AI and Crypto insights.', 'attr') ?>">
-    <meta name="twitter:image" content="<?= esc($metaImage ?? base_url('assets/images/afrikenkid_og_image.jpg'), 'attr') ?>">
-    <meta name="twitter:image:alt" content="AFRIKENKID Platform Preview">
 
     <!-- Structured Data -->
     <script type="application/ld+json">
