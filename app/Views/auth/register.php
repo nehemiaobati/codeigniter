@@ -93,7 +93,7 @@
                                     <div class="g-recaptcha" data-sitekey="<?= service('recaptchaService')->getSiteKey() ?>"></div>
                                 </div>
                                 <div class="d-grid">
-                                    <button type="submit" id="submitButton" class="btn btn-primary btn-lg">Register</button>
+                                    <button type="submit" id="registerSubmit" class="btn btn-primary btn-lg">Register</button>
                                 </div>
                                 <p class="mt-4 text-center text-muted">Already have an account? <a href="<?= url_to('login') ?>">Login here</a></p>
                             </form>

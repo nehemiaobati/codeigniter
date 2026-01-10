@@ -75,7 +75,7 @@
                                     <div class="g-recaptcha" data-sitekey="<?= service('recaptchaService')->getSiteKey() ?>"></div>
                                 </div>
                                 <div class="d-grid">
-                                    <button type="submit" class="btn btn-primary btn-lg">Login</button>
+                                    <button type="submit" id="loginSubmit" class="btn btn-primary btn-lg">Login</button>
                                 </div>
                                 <p class="mt-4 text-center text-muted">Don't have an account? <a href="<?= url_to('register') ?>">Register here</a></p>
                                 <p class="mt-4 text-center text-muted"><a href="<?= url_to('auth.forgot_password') ?>">Forgot Password?</a></p>
