@@ -312,6 +312,10 @@ For consistency and security when handling ephemeral data:
     - Destructive Action: `btn-danger`
 - **SEO**:
   - **Meta Data**: Controller MUST pass `pageTitle`, `metaDescription`, `canonicalUrl`, and `robotsTag`.
+  - **Social Sharing**: Layout MUST include complete Open Graph AND Twitter Card meta tags:
+    - **Open Graph**: `og:type`, `og:url`, `og:title`, `og:description`, `og:image`
+    - **Twitter Card**: `twitter:card`, `twitter:site`, `twitter:title`, `twitter:description`, `twitter:image`, `twitter:image:alt`
+    - **Note**: LinkedIn uses Twitter Card tags for link previews, so both sets are mandatory.
   - **Images**: Pass `metaImage` for specific content (e.g., blog posts, portraits); defaults to a standard brand image in the layout.
   - **Indexing Strategy**:
     - **Public Pages**: Use `index, follow` (Marketing, informative, and public tool pages).
