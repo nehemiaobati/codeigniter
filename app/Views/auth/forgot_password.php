@@ -15,7 +15,7 @@
                     <form action="<?= url_to('auth.send_reset_link') ?>" method="post">
                         <?= csrf_field() ?>
                         <div class="form-floating mb-4">
-                            <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" value="<?= old('email') ?>" required>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" value="<?= old('email') ?>" autocomplete="email" required>
                             <label for="email">Email Address</label>
                         </div>
                         <div class="d-grid">

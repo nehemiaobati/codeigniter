@@ -64,11 +64,11 @@
                             <form action="<?= url_to('login.authenticate') ?>" method="post">
                                 <?= csrf_field() ?>
                                 <div class="form-floating mb-3">
-                                    <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" value="<?= esc(old('email')) ?>" required>
+                                    <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" value="<?= esc(old('email')) ?>" autocomplete="email" required>
                                     <label for="email">Email address</label>
                                 </div>
                                 <div class="form-floating mb-4">
-                                    <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                                    <input type="password" class="form-control" id="password" name="password" placeholder="Password" autocomplete="current-password" required>
                                     <label for="password">Password</label>
                                 </div>
                                 <div class="mb-3">

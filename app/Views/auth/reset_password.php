@@ -17,11 +17,11 @@
                         <input type="hidden" id="reset_token" name="token" value="<?= esc($token, 'attr') ?>">
 
                         <div class="form-floating mb-3">
-                            <input type="password" class="form-control" id="password" name="password" placeholder="New Password" required>
+                            <input type="password" class="form-control" id="password" name="password" placeholder="New Password" autocomplete="new-password" required>
                             <label for="password">New Password</label>
                         </div>
                         <div class="form-floating mb-4">
-                            <input type="password" class="form-control" id="confirmpassword" name="confirmpassword" placeholder="Confirm New Password" required>
+                            <input type="password" class="form-control" id="confirmpassword" name="confirmpassword" placeholder="Confirm New Password" autocomplete="new-password" required>
                             <label for="confirmpassword">Confirm New Password</label>
                         </div>
                         <div class="d-grid">
