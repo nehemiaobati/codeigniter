@@ -210,16 +210,21 @@ For consistency and security when handling ephemeral data:
 
 ### 3.5 API & AJAX
 
-- **Response Format**: standardized JSON format.
+- **Response Format**: Standardized JSON format.
   ```json
   {
       "status": "success|error",
       "message": "Human readable string",
-      "data": { ... },
-      "token": "new_csrf_hash" // MANDATORY
+      "result": { ... }, // Main payload
+      "errors": [ ... ], // Optional validation errors
+      "csrf_token": "new_csrf_hash" // MANDATORY
   }
   ```
-- **CSRF**: Every JSON response (Success, Error, or Edge Case) MUST include a fresh CSRF token to keep the client in sync.
+- **CSRF**: Every JSON response (Success, Error, or Edge Case) MUST include a fresh CSRF token (`csrf_token`) to keep the client in sync.
+- **Frontend Handler**: All AJAX calls MUST use a centralized `_handleAjaxResponse` method to:
+  1.  Extract and rotate the `csrf_token`.
+  2.  Handle `403 Forbidden` redirects seamlessly.
+  3.  Provide consistent UI feedback.
 - **SSE (Streaming)**:
   - **Headers**: Flush immediately (`ob_flush(); flush()`). Content-Type MUST be `text/event-stream`.
   - **Session**: MUST call `session_write_close()` before the loop to prevent locking.
@@ -231,8 +236,8 @@ For consistency and security when handling ephemeral data:
 
 1.  **CSRF**: Enabled globally.
     - **Forms**: Must use `csrf_field()`.
-    - **Backend Responsibility**: Every JSON response (Success/Error/Edge Case) MUST include a fresh token (`['token' => csrf_hash()]`).
-    - **Frontend**: JS MUST update its token from the response payload. Manual cookie logic is **FORBIDDEN**.
+    - **Backend Responsibility**: Every JSON response (Success/Error/Edge Case) MUST include a fresh token (`['csrf_token' => csrf_hash()]`).
+    - **Frontend**: JS MUST update its token from the response payload (`json.csrf_token`). Manual cookie logic is **FORBIDDEN**.
 2.  **Validation**: Strict input validation rules in Controller.
 3.  **reCAPTCHA**:
     - **Views**: Get key via `service('recaptchaService')->getSiteKey()`.
@@ -264,7 +269,9 @@ For consistency and security when handling ephemeral data:
   - `critical`: System unusable (DB down). Triggers immediate alert.
   - `error`: Runtime failure (Transaction rollback, Upload failed).
   - `info`: Key business events (User login, Report generated).
-- **User Feedback**: Use `session()->setFlashdata()` to communicate outcomes (Success/Error/Warning) to the user.
+- **User Feedback**:
+  - Use `session()->setFlashdata()` to communicate outcomes (Success/Error/Warning).
+  - **UI Standard**: Use persistent **Bootstrap Alerts** for operation results (Success/Error). Transient "Toasts" are reserved for system connectivity issues only.
 
 ### 5.2 Testing
 
