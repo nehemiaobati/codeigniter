@@ -1903,14 +1903,14 @@
 
         handleFiles(files) {
             if ((files.length + document.querySelectorAll('.file-chip').length) > APP_CONFIG.limits.maxFiles) {
-                return this.showStatus(`File limit reached (Max: ${APP_CONFIG.limits.maxFiles} files)`, 'warning');
+                return this.app.ui.showStatus(`File limit reached (Max: ${APP_CONFIG.limits.maxFiles} files)`, 'warning');
             }
             Array.from(files).forEach(f => {
                 if (APP_CONFIG.limits.supportedTypes.includes(f.type) && f.size <= APP_CONFIG.limits.maxFileSize) {
                     const id = Math.random().toString(36).substr(2, 9);
                     const el = document.createElement('div');
                     el.innerHTML = ViewRenderer.renderFileChip(f, id);
-                    const chip = el.firstChild;
+                    const chip = el.firstElementChild;
                     document.getElementById('upload-list-wrapper').appendChild(chip);
                     this.queue.push({
                         file: f,
@@ -1920,10 +1920,10 @@
                 } else {
                     // Specific validation error messages
                     if (!APP_CONFIG.limits.supportedTypes.includes(f.type)) {
-                        this.showStatus(`Unsupported file type: ${f.name}`, 'danger');
+                        this.app.ui.showStatus(`Unsupported file type: ${f.name}`, 'danger');
                     } else if (f.size > APP_CONFIG.limits.maxFileSize) {
                         const maxMB = (APP_CONFIG.limits.maxFileSize / (1024 * 1024)).toFixed(1);
-                        this.showStatus(`File too large: ${f.name} (Max: ${maxMB}MB)`, 'danger');
+                        this.app.ui.showStatus(`File too large: ${f.name} (Max: ${maxMB}MB)`, 'danger');
                     }
                 }
             });
@@ -1951,7 +1951,7 @@
                 }
             } catch (e) {
                 this.updateChipStatus(job.ui, 'error');
-                this.showStatus(e.message || 'Upload failed', 'danger');
+                this.app.ui.showStatus(e.message || 'Upload failed', 'danger');
             } finally {
                 this.isUploading = false;
                 this.processQueue();
