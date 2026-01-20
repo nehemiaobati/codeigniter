@@ -444,18 +444,9 @@
         }
     }
 
-    /* Floating Labels for Prompt */
-    .form-floating>#prompt-label {
-        padding: 1rem 0.75rem;
-        pointer-events: none;
-        transition: all 0.2s ease-in-out;
-        color: var(--bs-secondary-color);
-        opacity: 0.8;
-    }
-
-    .form-floating>#prompt-label.active {
-        opacity: 0.65;
-        transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+    /* Prompt Input Styles */
+    .prompt-input-wrapper {
+        position: relative;
     }
 
     /* Adjust TinyMCE for floating labels */
@@ -636,9 +627,9 @@
                     <div class="flex-grow-1">
                         <input type="hidden" name="model_id" id="selectedModelId" value="gemini-2.0-flash">
                         <input type="hidden" name="generation_type" id="generationType" value="text">
-                        <div class="form-floating">
+                        <div class="prompt-input-wrapper">
                             <textarea id="prompt" name="prompt" class="form-control border-0 bg-transparent prompt-textarea shadow-none" placeholder="Message Gemini..." rows="1" style="height: auto;"><?= old('prompt') ?></textarea>
-                            <label for="prompt" id="prompt-label">Message Gemini...</label>
+                            <!-- Label Removed: Using TinyMCE Placeholder -->
                         </div>
                     </div>
 
@@ -1282,6 +1273,7 @@
             if (typeof tinymce === 'undefined') return;
             tinymce.init({
                 selector: '#prompt',
+                placeholder: 'Message Gemini...',
                 menubar: false,
                 statusbar: false,
                 toolbar: false,
@@ -1303,12 +1295,10 @@
                         }
                     });
                     editor.on('focus', () => {
-                        document.getElementById('prompt-label')?.classList.add('active');
+                        // Focus logic
                     });
                     editor.on('blur', () => {
-                        if (!editor.getContent().trim()) {
-                            document.getElementById('prompt-label')?.classList.remove('active');
-                        }
+                        // Blur logic
                     });
                     editor.on('init', () => this.updateModelSelectionUI(document.getElementById('generationType').value));
                 }
@@ -1398,10 +1388,8 @@
                 }
             }
             if (tinymce.activeEditor) {
-                tinymce.activeEditor.getBody().setAttribute('data-mce-placeholder', placeholder);
+                tinymce.activeEditor.options.set('placeholder', placeholder);
             }
-            const label = document.getElementById('prompt-label');
-            if (label) label.textContent = placeholder;
             document.getElementById('prompt')?.setAttribute('placeholder', placeholder);
         }
 
