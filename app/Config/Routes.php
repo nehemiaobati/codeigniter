@@ -31,18 +31,19 @@ $routes->group('', static function ($routes) {
     $routes->get('sitemap.xml', 'SitemapController::index', ['as' => 'sitemap']);
 
     // Authentication Routes
-    $routes->get('register', 'AuthController::register', ['as' => 'register']);
-    $routes->post('register/store', 'AuthController::store', ['as' => 'register.store', 'filter' => 'throttle:3,60']);
-    $routes->get('verify-email/(:segment)', 'AuthController::verifyEmail/$1', ['as' => 'verify_email']);
-    $routes->get('login', 'AuthController::login', ['as' => 'login']);
-    $routes->post('login/authenticate', 'AuthController::authenticate', ['as' => 'login.authenticate', 'filter' => 'throttle:5,60']);
-    $routes->get('logout', 'AuthController::logout', ['as' => 'logout']); // Moved logout here as it's often accessible before full auth
+    // Authentication Routes
+    $routes->get('register', '\App\Modules\Auth\Controllers\AuthController::register', ['as' => 'register']);
+    $routes->post('register/store', '\App\Modules\Auth\Controllers\AuthController::store', ['as' => 'register.store', 'filter' => 'throttle:3,60']);
+    $routes->get('verify-email/(:segment)', '\App\Modules\Auth\Controllers\AuthController::verifyEmail/$1', ['as' => 'verify_email']);
+    $routes->get('login', '\App\Modules\Auth\Controllers\AuthController::login', ['as' => 'login']);
+    $routes->post('login/authenticate', '\App\Modules\Auth\Controllers\AuthController::authenticate', ['as' => 'login.authenticate', 'filter' => 'throttle:5,60']);
+    $routes->get('logout', '\App\Modules\Auth\Controllers\AuthController::logout', ['as' => 'logout']); // Moved logout here as it's often accessible before full auth
 
     // Forgot Password Routes
-    $routes->get('forgot-password', 'AuthController::forgotPasswordForm', ['as' => 'auth.forgot_password']);
-    $routes->post('forgot-password', 'AuthController::sendResetLink', ['as' => 'auth.send_reset_link', 'filter' => 'throttle:2,60']);
-    $routes->get('reset-password/(:segment)', 'AuthController::resetPasswordForm/$1', ['as' => 'auth.reset_password']);
-    $routes->post('reset-password', 'AuthController::updatePassword', ['as' => 'auth.update_password', 'filter' => 'throttle:2,60']);
+    $routes->get('forgot-password', '\App\Modules\Auth\Controllers\AuthController::forgotPasswordForm', ['as' => 'auth.forgot_password']);
+    $routes->post('forgot-password', '\App\Modules\Auth\Controllers\AuthController::sendResetLink', ['as' => 'auth.send_reset_link', 'filter' => 'throttle:2,60']);
+    $routes->get('reset-password/(:segment)', '\App\Modules\Auth\Controllers\AuthController::resetPasswordForm/$1', ['as' => 'auth.reset_password']);
+    $routes->post('reset-password', '\App\Modules\Auth\Controllers\AuthController::updatePassword', ['as' => 'auth.update_password', 'filter' => 'throttle:2,60']);
 
     // Contact Routes
     $routes->get('contact', 'ContactController::form', ['as' => 'contact.form']);
