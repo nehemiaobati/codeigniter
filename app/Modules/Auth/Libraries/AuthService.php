@@ -170,7 +170,7 @@ class AuthService
 
         $verificationLink = url_to('verify_email', $user->verification_token);
 
-        $message = view('emails/verification_email', [
+        $message = view('App\Modules\Auth\Views\emails\verification_email', [
             'name' => $user->username,
             'verificationLink' => $verificationLink
         ]);
@@ -202,7 +202,7 @@ class AuthService
 
         $resetLink = url_to('auth.reset_password', $user->reset_token);
 
-        $message = view('emails/reset_password_email', [
+        $message = view('App\Modules\Auth\Views\emails\reset_password_email', [
             'name' => $user->username,
             'resetLink' => $resetLink
         ]);
