@@ -898,8 +898,10 @@
 
         image: (url) => `
             <div class="text-center p-3">
-                <img src="${url}" class="generated-media-item img-fluid mb-3" 
-                     style="cursor: pointer;" onclick="window.open('${url}','_blank')">
+                <img src="${url}" 
+                     class="generated-media-item img-fluid mb-3 clickable-media" 
+                     data-url="${url}"
+                     style="cursor: pointer;">
                 <div>
                     <a href="${url}?download=1" download="generated-image.jpg" 
                        class="btn btn-primary">
@@ -1293,6 +1295,7 @@
             this.initTinyMCE();
             this.enableCodeFeatures();
             this.setupDownloads();
+            this.setupMediaClickHandler(); // ✅ SECURITY: Event delegation for media
         }
 
         setupResponsiveSidebar() {
@@ -1359,7 +1362,14 @@
         }
 
         setError(msg) {
+            // 1. Show flash message
             if (this.els.flashContainer) this.els.flashContainer.innerHTML = ViewRenderer.renderFlashMessage(msg);
+
+            // 2. Clear loading skeleton from response area (Phase 3 Resilience)
+            document.getElementById('ai-response-body')?.querySelector('.loading-skeleton')?.remove();
+
+            // 3. Remove orphaned "pending" history items from sidebar
+            document.querySelectorAll('.memory-item[data-id^="pending-"]').forEach(el => el.remove());
         }
 
         setLoading(isLoading) {
@@ -1542,6 +1552,21 @@
                 behavior: 'smooth',
                 block: 'nearest'
             }), 100);
+        }
+
+        setupMediaClickHandler() {
+            // ✅ SECURITY: Event delegation - no inline onclick handlers
+            // Handles clicks on generated images/videos in a centralized, secure way
+            document.addEventListener('click', (e) => {
+                const media = e.target.closest('.clickable-media');
+                if (media) {
+                    e.preventDefault();
+                    const url = media.dataset.url;
+                    // Server already validated/sanitized URL in MediaController._sanitizeMediaUrl()
+                    // Safe to open with security flags
+                    window.open(url, '_blank', 'noopener,noreferrer');
+                }
+            });
         }
 
         renderAudio(url) {
@@ -1779,18 +1804,16 @@
                     this.app.ui.els.flashContainer.innerHTML = d.flash_html;
                 }
             } catch (e) {
-                // Unified Error Handling (Flash)
-                // If 409 Conflict (Concurrency) or strict error
                 let msg = e.message || 'Media Generation Failed';
 
-                // Check if it's the 409 response text
+                // ✅ Standardized Error Handling (Phase 3)
+                this.app.ui.setError(msg);
+
+                // Special toast/alert if needed
                 if (e.message && e.message.includes('pending video')) {
-                    document.getElementById('flash-messages-container').innerHTML = ViewRenderer.renderFlashMessage(e.message, 'warning');
-                } else {
-                    document.getElementById('flash-messages-container').innerHTML = ViewRenderer.renderFlashMessage(msg, 'danger');
+                    this.app.ui.showToast(msg, 'warning');
                 }
 
-                // Clear the main card if it was stuck
                 this.app.ui.setLoading(false);
             }
             this.app.uploader.clear();
@@ -2303,6 +2326,11 @@
         }
 
         addItem(item, aiRaw) {
+            // ✅ Fix: Remove pending items when a permanent ID arrives (Phase 3)
+            if (item.id && !item.id.toString().startsWith('pending-')) {
+                document.querySelectorAll('.memory-item[data-id^="pending-"]').forEach(el => el.remove());
+            }
+
             if (this.listEl.querySelector('.text-center.text-muted')) this.listEl.innerHTML = '';
             const dateStr = this.formatDate(item.timestamp);
             let header = this.listEl.querySelector('.memory-date-header');

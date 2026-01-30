@@ -37,6 +37,14 @@ class MediaController extends BaseController
      *
      * @return \CodeIgniter\HTTP\ResponseInterface JSON response containing the result or error details.
      */
+    /**
+     * Responds with an error message in JSON or redirect format.
+     *
+     * @param string $message Error message
+     * @param int $code HTTP status code
+     * @param array $data Additional data
+     * @return \CodeIgniter\HTTP\ResponseInterface
+     */
     private function _respondError(string $message, int $code = 400, array $data = [])
     {
         if ($this->request->isAJAX()) {
@@ -49,6 +57,46 @@ class MediaController extends BaseController
 
         return redirect()->back()->withInput()->with('error', $message);
     }
+
+    /**
+     * Validates and sanitizes media URLs before sending to client.
+     * 
+     * Prevents XSS by:
+     * 1. Whitelisting protocols (http, https, data)
+     * 2. Reconstructing URL to strip malicious components
+     * 3. HTML-escaping for safe attribute injection
+     *
+     * @param string $url Raw URL from media generation service
+     * @return string Sanitized, HTML-safe URL
+     * @throws \RuntimeException If URL uses non-whitelisted protocol
+     */
+    private function _sanitizeMediaUrl(string $url): string
+    {
+        // Parse URL
+        $parsed = parse_url($url);
+
+        // Whitelist protocols (data: for inline images, http/https for external)
+        $allowedProtocols = ['http', 'https', 'data'];
+        if (!isset($parsed['scheme']) || !in_array($parsed['scheme'], $allowedProtocols, true)) {
+            log_message('warning', '[MediaController] Blocked non-whitelisted URL protocol: ' . ($parsed['scheme'] ?? 'none'));
+            throw new \RuntimeException('Invalid media URL protocol');
+        }
+
+        // For data URIs, just escape and return (already embedded)
+        if ($parsed['scheme'] === 'data') {
+            return esc($url, 'attr');
+        }
+
+        // Rebuild URL to strip potentially malicious query params or fragments
+        $sanitized = $parsed['scheme'] . '://' . $parsed['host'];
+        if (isset($parsed['port'])) $sanitized .= ':' . $parsed['port'];
+        if (isset($parsed['path'])) $sanitized .= $parsed['path'];
+        if (isset($parsed['query'])) $sanitized .= '?' . $parsed['query'];
+
+        // HTML escape for attribute safety
+        return esc($sanitized, 'attr');
+    }
+
 
     public function generate()
     {
@@ -120,7 +168,17 @@ class MediaController extends BaseController
 
             // Append CSRF token and Flash HTML to response for frontend refresh
             $result['csrf_token'] = csrf_hash();
-            $result['flash_html'] = view('App\Views\partials\flash_messages');
+            $result['flash_html'] = view('App\\Views\\partials\\flash_messages');
+
+            // ✅ SECURITY: Sanitize URL before sending to client
+            if (isset($result['url'])) {
+                try {
+                    $result['url'] = $this->_sanitizeMediaUrl($result['url']);
+                } catch (\RuntimeException $e) {
+                    log_message('error', '[MediaController] URL sanitization failed: ' . $e->getMessage());
+                    return $this->_respondError('Generated media contains invalid URL', 500);
+                }
+            }
 
             // Success Response - Handle Redirection for non-AJAX if needed, or consistent JSON
             if ($this->request->isAJAX()) {
@@ -171,6 +229,20 @@ class MediaController extends BaseController
 
         try {
             $result = $this->mediaService->pollVideoStatus($opId);
+
+            // ✅ SECURITY: Sanitize URL before sending to client
+            if (isset($result['url'])) {
+                try {
+                    $result['url'] = $this->_sanitizeMediaUrl($result['url']);
+                } catch (\RuntimeException $e) {
+                    log_message('error', '[MediaController] Poll URL sanitization failed: ' . $e->getMessage());
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => 'Video URL validation failed',
+                        'csrf_token' => csrf_hash()
+                    ], 500);
+                }
+            }
 
             // Append CSRF token
             $result['csrf_token'] = csrf_hash();
