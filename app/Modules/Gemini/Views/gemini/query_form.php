@@ -1277,7 +1277,12 @@
                 sidebar: document.getElementById('geminiSidebar'),
                 responseArea: document.getElementById('response-area-wrapper'),
                 toast: document.getElementById('liveToast'),
-                flashContainer: document.getElementById('flash-messages-container')
+                flashContainer: document.getElementById('flash-messages-container'),
+                // Cached Form Elements
+                prompt: document.getElementById('prompt'),
+                form: document.getElementById('geminiForm'),
+                genType: document.getElementById('generationType'),
+                streamCheck: document.getElementById('streamOutput')
             };
         }
 
@@ -1663,17 +1668,51 @@
 
         async handleSubmit(e) {
             e.preventDefault();
-            const type = document.getElementById('generationType').value;
+            const type = this.app.ui.els.genType.value;
             if (typeof tinymce !== 'undefined') tinymce.triggerSave();
-            const prompt = document.getElementById('prompt').value.trim();
+            const prompt = this.app.ui.els.prompt.value.trim();
             if (!prompt && type === 'text') return this.app.ui.showToast('Please enter a prompt.');
 
             this.app.ui.setLoading(true);
-            const fd = new FormData(document.getElementById('geminiForm'));
+            const fd = new FormData(this.app.ui.els.form);
+
+            // --- OPTIMISTIC UI ---
+            if (type === 'text') {
+                this.app.ui.ensureResultCard();
+
+                // 1. Show Skeleton / Thinking State
+                const bodyEl = document.getElementById('ai-response-body');
+                if (bodyEl) {
+                    bodyEl.innerHTML = `
+                        <div class="p-3 animate__animated animate__fadeIn loading-skeleton">
+                            <div class="d-flex align-items-center text-muted mb-3">
+                                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                <span class="fst-italic">Gemini is thinking...</span>
+                            </div>
+                            <div class="placeholder-glow op-50">
+                                <span class="placeholder col-7 rounded"></span>
+                                <span class="placeholder col-4 rounded"></span>
+                                <span class="placeholder col-4 rounded"></span>
+                                <span class="placeholder col-6 rounded"></span>
+                                <span class="placeholder col-8 rounded"></span>
+                            </div>
+                        </div>`;
+                }
+
+                // 2. Optimistic History Append
+                // Immediately show the interaction in the sidebar as "Pending"
+                this.app.history.addItem({
+                    id: 'pending-' + Date.now(),
+                    timestamp: new Date().toISOString(),
+                    user_input: prompt
+                }, ''); // Empty AI output intentionally
+
+                this.app.ui.scrollToBottom();
+            }
 
             try {
                 if (type === 'text') {
-                    if (document.getElementById('streamOutput')?.checked) await this.app.streamer.start(fd);
+                    if (this.app.ui.els.streamCheck?.checked) await this.app.streamer.start(fd);
                     else await this.generateText(fd);
                 } else {
                     await this.generateMedia(fd);
@@ -1783,9 +1822,12 @@
                 audio: document.getElementById('audio-player-container')
             };
 
-            els.body.innerHTML = '';
+
             els.raw.value = '';
             els.audio.innerHTML = '';
+
+            // Flag to remove skeleton on first chunk
+            this.firstChunk = true;
 
             try {
                 if (!formData.has(APP_CONFIG.csrfName)) formData.append(APP_CONFIG.csrfName, this.app.csrfHash);
@@ -1838,6 +1880,13 @@
                 if (line.startsWith('data: ')) {
                     try {
                         const d = JSON.parse(line.substring(6));
+
+                        // Remove skeleton if present
+                        if (this.firstChunk && (d.thought || d.text)) {
+                            els.body.querySelector('.loading-skeleton')?.remove();
+                            this.firstChunk = false;
+                        }
+
                         if (d.thought) {
                             this._ensureThinkingBlock(els.body);
                             this._appendToThinkingBlock(els.body, d.thought);

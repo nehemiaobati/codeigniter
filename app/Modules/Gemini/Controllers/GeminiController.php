@@ -36,201 +36,7 @@ class GeminiController extends BaseController
         $this->geminiService = $geminiService ?? service('geminiService');
     }
 
-    // --- Helper Methods ---
 
-    /**
-     * Returns success response (AJAX JSON or redirect).
-     *
-     * @param string $message Success message.
-     * @param array $data Additional data for JSON response.
-     * @return ResponseInterface|RedirectResponse
-     */
-    private function _respondSuccess(string $message, array $data = [])
-    {
-        if ($this->request->isAJAX()) {
-            return $this->response->setJSON(array_merge([
-                'status' => 'success',
-                'message' => $message,
-                'csrf_token' => csrf_hash()
-            ], $data));
-        }
-        return redirect()->back()->with('success', $message);
-    }
-
-    /**
-     * Returns error response (AJAX JSON or redirect).
-     *
-     * @param string $message Error message.
-     * @param array $errors Validation errors for JSON response.
-     * @return ResponseInterface|RedirectResponse
-     */
-    private function _respondError(string $message, array $errors = [])
-    {
-        if ($this->request->isAJAX()) {
-            return $this->response->setJSON([
-                'status' => 'error',
-                'message' => $message,
-                'errors' => $errors,
-                'csrf_token' => csrf_hash()
-            ]);
-        }
-        return redirect()->back()->withInput()->with('error', $message);
-    }
-
-    /**
-     * Configures response headers for Server-Sent Events (SSE).
-     *
-     * @return void
-     */
-    private function _setupSSEHeaders(): void
-    {
-        $this->response->setContentType('text/event-stream');
-        $this->response->setHeader('Cache-Control', 'no-cache');
-        $this->response->setHeader('Connection', 'keep-alive');
-        $this->response->setHeader('X-Accel-Buffering', 'no'); // Disable buffering for Nginx
-    }
-
-    /**
-     * Builds the final response with parsed markdown and optional audio.
-     * Refactored to support AJAX with rendered partials.
-     *
-     * @param array $result Result array from GeminiService.
-     * @param int $userId User ID for audio file path resolution.
-     * @return RedirectResponse|ResponseInterface
-     */
-    /**
-     * Builds the final response by orchestrating markdown parsing and response formatting.
-     * Use private helpers to maintain Single Responsibility Principle.
-     *
-     * @param array $result Result array from GeminiService.
-     * @param int $userId User ID for audio file path resolution.
-     * @return RedirectResponse|ResponseInterface
-     */
-    private function _buildGenerationResponse(array $result, int $userId)
-    {
-        // 1. Process Audio
-        $audioUrl = $this->_resolveAudioUrl($result, $userId);
-
-        // 2. Set Flash Message for Cost
-        if ($result['costKSH'] > 0) {
-            session()->setFlashdata('success', "KSH " . number_format($result['costKSH'], 2) . " deducted.");
-        }
-
-        // 3. Parse Markdown & Prepare Content
-        $parsedHtml = $this->_parseMarkdown($result['result']);
-        $rawResult = $result['result'];
-
-        // Inject Thinking Block if present
-        if (!empty($result['thoughts'])) {
-            $parsedHtml = $this->_buildThinkingBlockHtml($result['thoughts']) . "\n\n" . $parsedHtml;
-            $rawResult = "=== THINKING PROCESS ===\n\n" . $result['thoughts'] . "\n\n=== ANSWER ===\n\n" . $rawResult;
-        }
-
-        // 4. Return Appropriate Response Type
-        $responseData = [
-            'parsedHtml' => $parsedHtml,
-            'rawResult'  => $rawResult,
-            'audioUrl'   => $audioUrl,
-            'metadata'   => $result // Pass full result for generic metadata extraction
-        ];
-
-        return $this->request->isAJAX()
-            ? $this->_buildAJAXResponse($responseData)
-            : $this->_buildStandardResponse($responseData);
-    }
-
-    /**
-     * Resolves the Audio URL if audio data is present.
-     */
-    private function _resolveAudioUrl(array $result, int $userId): ?string
-    {
-        if (empty($result['audioData'])) return null;
-
-        $audioFilename = $this->geminiService->processAudioForServing($result['audioData'], $userId);
-        return $audioFilename ? url_to('gemini.serve_audio', $audioFilename) : null;
-    }
-
-    /**
-     * Parses markdown text safe for display.
-     */
-    private function _parseMarkdown(string $text): string
-    {
-        $parsedown = new Parsedown();
-        $parsedown->setSafeMode(true);
-        $parsedown->setBreaksEnabled(true);
-        return $parsedown->text($text);
-    }
-
-    /**
-     * Builds JSON response for AJAX requests.
-     */
-    private function _buildAJAXResponse(array $data): ResponseInterface
-    {
-        $payload = [
-            'status' => 'success',
-            'result' => $data['parsedHtml'],
-            'raw_result' => $data['rawResult'],
-            'flash_html' => view('App\Views\partials\flash_messages'),
-            'used_interaction_ids' => $data['metadata']['used_interaction_ids'] ?? [],
-            'new_interaction_id' => $data['metadata']['new_interaction_id'] ?? null,
-            'timestamp' => $data['metadata']['timestamp'] ?? null,
-            'user_input' => ($this->request->getPost('prompt') ?? ''),
-            'csrf_token' => csrf_hash()
-        ];
-
-        if ($data['audioUrl']) {
-            $payload['audio_url'] = $data['audioUrl'];
-        }
-
-        return $this->response->setJSON($payload);
-    }
-
-    /**
-     * Builds Redirect response for standard requests.
-     */
-    private function _buildStandardResponse(array $data): RedirectResponse
-    {
-        $redirect = redirect()->back()->withInput()
-            ->with('result', $data['parsedHtml'])
-            ->with('raw_result', $data['rawResult']);
-
-        if ($data['audioUrl']) {
-            $redirect->with('audio_url', $data['audioUrl']);
-        }
-
-        return $redirect;
-    }
-
-    /**
-     * Build HTML for thinking block display
-     *
-     * @param string $thoughts The thinking content to display
-     * @return string HTML string for thinking block
-     */
-    private function _buildThinkingBlockHtml(string $thoughts): string
-    {
-        return sprintf(
-            '<details class="thinking-block mb-3">' .
-                '<summary class="cursor-pointer text-muted fw-bold small">Thinking Process</summary>' .
-                '<div class="thinking-content fst-italic text-muted p-2 border-start mt-1 small">%s</div>' .
-                '</details>',
-            esc($thoughts)
-        );
-    }
-
-    /**
-     * Sends Server-Sent Events (SSE) Error.
-     *
-     * @param string $msg
-     * @return void
-     */
-    private function _sendSSEError(string $msg)
-    {
-        $this->response->setBody("data: " . json_encode([
-            'error' => $msg,
-            'csrf_token' => csrf_hash()
-        ]) . "\n\n");
-    }
 
     // --- Public API ---
 
@@ -358,43 +164,8 @@ class GeminiController extends BaseController
         return $this->response->setStatusCode(404)->setJSON(['status' => 'error', 'message' => 'File not found', 'csrf_token' => csrf_hash()]);
     }
 
-    /**
-     * Generates content using the Gemini API based on user input and context.
-     * Supports AJAX for non-blocking UI updates.
-     *
-     * @return RedirectResponse|ResponseInterface
-     */
-    /**
-     * Validates and prepares generation request data.
-     * Centralizes validation logic for both standard and stream generation.
-     * 
-     * @return array|ResponseInterface Array of inputs if valid, ResponseInterface if invalid (AJAX/SSE error).
-     */
-    private function _validateGenerationRequest()
-    {
-        // 1. Validation
-        if (!$this->validate(['prompt' => 'max_length[200000]'])) {
-            $msg = 'Prompt is too long. Maximum 200,000 characters allowed.';
-            return $this->request->getPost('stream_mode')
-                ? $this->_sendSSEError($msg) // Not directly returnable as response, but handles SSE output
-                : $this->_respondError($msg);
-        }
 
-        $inputText = (string) $this->request->getPost('prompt');
-        $uploadedFileIds = (array) $this->request->getPost('uploaded_media');
 
-        // 2. Empty Check
-        if (empty(trim($inputText)) && empty($uploadedFileIds)) {
-            $msg = 'Please provide a prompt.';
-            // If SSE, we need to handle it differently in the caller, or return a specific error structure
-            return ['error' => $msg];
-        }
-
-        return [
-            'inputText' => $inputText,
-            'uploadedFileIds' => $uploadedFileIds
-        ];
-    }
 
     /**
      * Generates content using the Gemini API based on user input and context.
@@ -765,5 +536,200 @@ class GeminiController extends BaseController
         $errorMsg = $result['message'] ?? 'Document generation failed.';
         log_message('error', "[GeminiController] Document generation failed for User ID " . session()->get('userId') . ": " . $errorMsg);
         return redirect()->back()->with('error', $errorMsg);
+    }
+
+    // --- Presentation Helpers ---
+
+    /**
+     * Validates and prepares generation request data.
+     */
+    private function _validateGenerationRequest()
+    {
+        // 1. Validation
+        if (!$this->validate(['prompt' => 'max_length[200000]'])) {
+            $msg = 'Prompt is too long. Maximum 200,000 characters allowed.';
+            return $this->request->getPost('stream_mode')
+                ? $this->_sendSSEError($msg)
+                : $this->_respondError($msg);
+        }
+
+        $inputText = (string) $this->request->getPost('prompt');
+        $uploadedFileIds = (array) $this->request->getPost('uploaded_media');
+
+        // 2. Empty Check
+        if (empty(trim($inputText)) && empty($uploadedFileIds)) {
+            $msg = 'Please provide a prompt.';
+            return ['error' => $msg];
+        }
+
+        return [
+            'inputText' => $inputText,
+            'uploadedFileIds' => $uploadedFileIds
+        ];
+    }
+
+    /**
+     * Returns success response (AJAX JSON or redirect).
+     */
+    private function _respondSuccess(string $message, array $data = [])
+    {
+        if ($this->request->isAJAX()) {
+            return $this->response->setJSON(array_merge([
+                'status' => 'success',
+                'message' => $message,
+                'csrf_token' => csrf_hash()
+            ], $data));
+        }
+        return redirect()->back()->with('success', $message);
+    }
+
+    /**
+     * Returns error response (AJAX JSON or redirect).
+     */
+    private function _respondError(string $message, array $errors = [])
+    {
+        if ($this->request->isAJAX()) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => $message,
+                'errors' => $errors,
+                'csrf_token' => csrf_hash()
+            ]);
+        }
+        return redirect()->back()->withInput()->with('error', $message);
+    }
+
+    /**
+     * Configures response headers for Server-Sent Events (SSE).
+     */
+    private function _setupSSEHeaders(): void
+    {
+        $this->response->setContentType('text/event-stream');
+        $this->response->setHeader('Cache-Control', 'no-cache');
+        $this->response->setHeader('Connection', 'keep-alive');
+        $this->response->setHeader('X-Accel-Buffering', 'no');
+    }
+
+    /**
+     * Builds the final response with parsed markdown and optional audio.
+     */
+    private function _buildGenerationResponse(array $result, int $userId)
+    {
+        // 1. Process Audio
+        $audioUrl = $this->_resolveAudioUrl($result, $userId);
+
+        // 2. Set Flash Message for Cost
+        if ($result['costKSH'] > 0) {
+            session()->setFlashdata('success', "KSH " . number_format($result['costKSH'], 2) . " deducted.");
+        }
+
+        // 3. Parse Markdown & Prepare Content
+        $parsedHtml = $this->_parseMarkdown($result['result']);
+        $rawResult = $result['result'];
+
+        // Inject Thinking Block if present
+        if (!empty($result['thoughts'])) {
+            $parsedHtml = $this->_buildThinkingBlockHtml($result['thoughts']) . "\n\n" . $parsedHtml;
+            $rawResult = "=== THINKING PROCESS ===\n\n" . $result['thoughts'] . "\n\n=== ANSWER ===\n\n" . $rawResult;
+        }
+
+        // 4. Return Appropriate Response Type
+        $responseData = [
+            'parsedHtml' => $parsedHtml,
+            'rawResult'  => $rawResult,
+            'audioUrl'   => $audioUrl,
+            'metadata'   => $result
+        ];
+
+        return $this->request->isAJAX()
+            ? $this->_buildAJAXResponse($responseData)
+            : $this->_buildStandardResponse($responseData);
+    }
+
+    /**
+     * Resolves the Audio URL if audio data is present.
+     */
+    private function _resolveAudioUrl(array $result, int $userId): ?string
+    {
+        if (empty($result['audioData'])) return null;
+
+        $audioFilename = $this->geminiService->processAudioForServing($result['audioData'], $userId);
+        return $audioFilename ? url_to('gemini.serve_audio', $audioFilename) : null;
+    }
+
+    /**
+     * Parses markdown text safe for display.
+     */
+    private function _parseMarkdown(string $text): string
+    {
+        $parsedown = new Parsedown();
+        $parsedown->setSafeMode(true);
+        $parsedown->setBreaksEnabled(true);
+        return $parsedown->text($text);
+    }
+
+    /**
+     * Builds JSON response for AJAX requests.
+     */
+    private function _buildAJAXResponse(array $data): ResponseInterface
+    {
+        $payload = [
+            'status' => 'success',
+            'result' => $data['parsedHtml'],
+            'raw_result' => $data['rawResult'],
+            'flash_html' => view('App\Views\partials\flash_messages'),
+            'used_interaction_ids' => $data['metadata']['used_interaction_ids'] ?? [],
+            'new_interaction_id' => $data['metadata']['new_interaction_id'] ?? null,
+            'timestamp' => $data['metadata']['timestamp'] ?? null,
+            'user_input' => ($this->request->getPost('prompt') ?? ''),
+            'csrf_token' => csrf_hash()
+        ];
+
+        if ($data['audioUrl']) {
+            $payload['audio_url'] = $data['audioUrl'];
+        }
+
+        return $this->response->setJSON($payload);
+    }
+
+    /**
+     * Builds Redirect response for standard requests.
+     */
+    private function _buildStandardResponse(array $data): RedirectResponse
+    {
+        $redirect = redirect()->back()->withInput()
+            ->with('result', $data['parsedHtml'])
+            ->with('raw_result', $data['rawResult']);
+
+        if ($data['audioUrl']) {
+            $redirect->with('audio_url', $data['audioUrl']);
+        }
+
+        return $redirect;
+    }
+
+    /**
+     * Build HTML for thinking block display
+     */
+    private function _buildThinkingBlockHtml(string $thoughts): string
+    {
+        return sprintf(
+            '<details class="thinking-block mb-3">' .
+                '<summary class="cursor-pointer text-muted fw-bold small">Thinking Process</summary>' .
+                '<div class="thinking-content fst-italic text-muted p-2 border-start mt-1 small">%s</div>' .
+                '</details>',
+            esc($thoughts)
+        );
+    }
+
+    /**
+     * Sends Server-Sent Events (SSE) Error.
+     */
+    private function _sendSSEError(string $msg)
+    {
+        $this->response->setBody("data: " . json_encode([
+            'error' => $msg,
+            'csrf_token' => csrf_hash()
+        ]) . "\n\n");
     }
 }

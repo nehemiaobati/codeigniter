@@ -88,14 +88,7 @@ class GeminiService
 
     // --- Helper Methods ---
 
-    /**
-     * Executes the HTTP request to the Gemini API with retries and exponential backoff.
-     *
-     * @param string $url The API endpoint.
-     * @param string $body The JSON body.
-     * @param string $model The model name (for logging).
-     * @return array The result or error array.
-     */
+
     /**
      * Executes the HTTP request to the Gemini API with retries and exponential backoff.
      *
@@ -323,23 +316,17 @@ class GeminiService
 
         // 6. Transactional Persistence
         // Atomic block: Deducts actual cost and saves conversation memory.
-        // Failure here rolls back the balance deduction.
         $this->db->transStart();
 
-        $costData = $this->calculateCost($apiResponse['usage'] ?? [], $audioResult['usage'] ?? null);
-        $this->userModel->deductBalance($userId, number_format($costData['costKSH'], 4, '.', ''), true);
-
-        // Memory Persistence
-        $memoryResult = [];
-        if (!empty($options['assistant_mode'] ?? true) && isset($contextData['memoryService'])) {
-            $newId = $contextData['memoryService']->updateMemory(
-                $prompt,
-                $apiResponse['result'],
-                $apiResponse['raw'] ?? '',
-                $contextData['usedInteractionIds'] ?? []
-            );
-            $memoryResult = ['id' => $newId, 'timestamp' => date('Y-m-d H:i:s')];
-        }
+        $costData = $this->_deductCost($userId, $apiResponse['usage'] ?? [], $audioResult['usage'] ?? null);
+        $memoryResult = $this->_persistInteraction(
+            $userId,
+            $prompt,
+            $apiResponse['result'],
+            $apiResponse['raw'] ?? '',
+            $contextData,
+            $options['assistant_mode'] ?? true
+        );
 
         $this->db->transComplete();
 
@@ -765,23 +752,20 @@ class GeminiService
         $this->db->transStart();
 
         // Calculate & Deduct Cost
+        $costData = ['costKSH' => 0];
         if ($usageMetadata) {
-            $costData = $this->calculateCost($usageMetadata, $audioUsage);
-            $deduction = number_format($costData['costKSH'], 4, '.', '');
-            $this->userModel->deductBalance($userId, $deduction, true);
+            $costData = $this->_deductCost($userId, $usageMetadata, $audioUsage);
         }
 
         // Update Memory
-        $memoryResult = [];
-        if (isset($contextData['memoryService'])) {
-            $newId = $contextData['memoryService']->updateMemory(
-                $inputText,
-                $fullText,
-                $rawChunks,
-                $contextData['usedInteractionIds'] ?? []
-            );
-            $memoryResult = ['id' => $newId, 'timestamp' => date('Y-m-d H:i:s')];
-        }
+        $memoryResult = $this->_persistInteraction(
+            $userId,
+            $inputText,
+            $fullText,
+            $rawChunks,
+            $contextData,
+            true // Stream always assumes persistence if assistant mode was on during prep
+        );
 
         $this->db->transComplete();
 
@@ -797,6 +781,36 @@ class GeminiService
             'new_interaction_id' => $memoryResult['id'] ?? null,
             'timestamp' => $memoryResult['timestamp'] ?? null,
         ];
+    }
+
+    // --- Private Interaction Helpers ---
+
+    /**
+     * Deducts the cost of the interaction from the user's balance.
+     */
+    private function _deductCost(int $userId, array $textUsage, ?array $audioUsage): array
+    {
+        $costData = $this->calculateCost($textUsage, $audioUsage);
+        $deduction = number_format($costData['costKSH'], 4, '.', '');
+        $this->userModel->deductBalance($userId, $deduction, true);
+        return $costData;
+    }
+
+    /**
+     * Persists the interaction to memory if applicable.
+     */
+    private function _persistInteraction(int $userId, string $prompt, string $result, $raw, array $contextData, bool $assistantMode): array
+    {
+        if ($assistantMode && isset($contextData['memoryService'])) {
+            $newId = $contextData['memoryService']->updateMemory(
+                $prompt,
+                $result,
+                $raw,
+                $contextData['usedInteractionIds'] ?? []
+            );
+            return ['id' => $newId, 'timestamp' => date('Y-m-d H:i:s')];
+        }
+        return [];
     }
 
     /**
