@@ -1295,7 +1295,7 @@
             this.initTinyMCE();
             this.enableCodeFeatures();
             this.setupDownloads();
-            this.setupMediaClickHandler(); // ✅ SECURITY: Event delegation for media
+            this.setupMediaClickHandler(); // Security: Event delegation for media
         }
 
         setupResponsiveSidebar() {
@@ -1555,7 +1555,7 @@
         }
 
         setupMediaClickHandler() {
-            // ✅ SECURITY: Event delegation - no inline onclick handlers
+            // Security: Event delegation - no inline onclick handlers
             // Handles clicks on generated images/videos in a centralized, secure way
             document.addEventListener('click', (e) => {
                 const media = e.target.closest('.clickable-media');
@@ -1601,7 +1601,7 @@
         }
 
         /**
-         * Checks server for any interrupted jobs on page load.
+         * Scans for interrupted asynchronous jobs upon initialization.
          */
         async checkActiveJob() {
             try {
@@ -1615,7 +1615,7 @@
         }
 
         /**
-         * Starts the polling process for a video.
+         * Initiates asynchronous polling for video generation.
          */
         startPolling(opId, startElapsed = 0) {
             this._stop(); // Clear any existing timers first
@@ -1671,16 +1671,12 @@
     }
 
     /**
-     * InteractionHandler
+     * Orchestrates user interaction flows.
      * 
-     * Orchestrates the user intent flow (Submit -> Validate -> Route -> Execute).
-     * 
-     * Logic Flow:
-     * 1. Intercepts form submission.
-     * 2. Syncs TinyMCE content to textarea.
-     * 3. Determines generation type (Text vs Media).
-     * 4. Routes Text requests to either `generateText` (Standard) or `StreamHandler` (SSE).
-     * 5. Routes Media requests to `generateMedia`.
+     * Responsibilities:
+     * - Intercepts form submissions and synchronizes rich-text editors.
+     * - Routes requests between Text (Standard/SSE) and Media generation paths.
+     * - Manages UI visibility and input validation.
      */
     class InteractionHandler {
         constructor(app) {
@@ -1806,7 +1802,7 @@
             } catch (e) {
                 let msg = e.message || 'Media Generation Failed';
 
-                // ✅ Standardized Error Handling (Phase 3)
+                // Standardized Error Handling
                 this.app.ui.setError(msg);
 
                 // Special toast/alert if needed
@@ -1849,8 +1845,7 @@
             els.raw.value = '';
             els.audio.innerHTML = '';
 
-            // Flag to remove skeleton on first chunk
-            this.firstChunk = true;
+            // Flag to purge skeleton container on initial packet arrival
 
             try {
                 if (!formData.has(APP_CONFIG.csrfName)) formData.append(APP_CONFIG.csrfName, this.app.csrfHash);
@@ -1965,14 +1960,12 @@
         }
     }
     /**
-     * MediaUploader
+     * Manages multimodal resource uploads.
      * 
-     * Manages the file upload workflow with a focus on UX availability options (Drag & Drop + Click).
-     * 
-     * Features:
-     * - Queue System: Uploads files sequentially (one-by-one) to prevent server overload.
-     * - UI Sync: Creates visual chips immediately, updates status (spinning -> success/error) asynchronously.
-     * - Form Linking: Appends hidden inputs for `file_id`s so the main form knows what to attach to the prompt.
+     * Implementation details:
+     * - Sequential queueing to prevent server resource exhaustion.
+     * - Real-time UI updates for upload progress and validation status.
+     * - Automatic hidden field injection for main form synchronization.
      */
     class MediaUploader {
         constructor(app) {
@@ -2101,12 +2094,7 @@
      * Handles loading and saving prompts.
      */
     /**
-     * PromptManager
-     * 
-     * functionality for the "Saved Prompts" CRUD system.
-     * 
-     * - Operations: Load (into TinyMCE), Save (via Modal), Delete.
-     * - UI Sync: Dynamic DOM updates (adding/removing <option> tags) without page reload.
+     * Manages saved prompt template CRUD operations.
      */
     class PromptManager {
         constructor(app) {
@@ -2177,14 +2165,12 @@
      * 7. History Manager (Memory Stream)
      */
     /**
-     * HistoryManager
+     * Handles conversational history and temporal grouping.
      * 
-     * Manages the "Memory Stream" sidebar functionality.
-     * 
-     * Logic:
-     * - Pagination: Tracks `offset`/`limit` to implementing "Load More" without duplicate fetching.
-     * - Date Grouping: Checks timestamps to insert "Today", "Yesterday", etc., headers dynamically.
-     * - Context: Highlights specific history items if the AI refers to them in a response (`used_interaction_ids`).
+     * Functional scope:
+     * - Paginated retrieval to optimize sidebar performance.
+     * - Temporal categorization (e.g., Today, Yesterday).
+     * - Visual context highlighting for referred interactions.
      */
     class HistoryManager {
         static HISTORY_PAGE_SIZE = 5;
@@ -2326,7 +2312,7 @@
         }
 
         addItem(item, aiRaw) {
-            // ✅ Fix: Remove pending items when a permanent ID arrives (Phase 3)
+            // Purge pending items upon successful persistence
             if (item.id && !item.id.toString().startsWith('pending-')) {
                 document.querySelectorAll('.memory-item[data-id^="pending-"]').forEach(el => el.remove());
             }
