@@ -74,6 +74,14 @@
 6.8.1. Configuration & Model Selection
 6.8.2. Chat & Assistant Mode
 6.8.3. Multimodal Input
+6.9. Affiliate Module
+6.9.1. Link Management
+6.9.2. Category System
+6.9.3. Click Tracking & Analytics
+6.9.4. Bulk Actions
+6.10. Account Module
+6.11. Portfolio Module
+6.12. Contact Module
 
 ---
 
@@ -154,9 +162,11 @@ The GenAI Web Platform is a comprehensive, multi-functional application built on
 - **Advanced Media Generation:** Support for generating high-quality images (Imagen 4.0) and videos (Veo 2.0) directly from text prompts.
 - **Local AI Integration (Ollama):** Support for running local LLMs (like Llama 3, DeepSeek) directly on the server, offering privacy-focused AI interactions with zero external API costs.
 - **Cryptocurrency Data Service:** Real-time balance and transaction history queries for Bitcoin (BTC) and Litecoin (LTC) addresses.
+- **Affiliate Module:** Comprehensive management of Amazon affiliate links with automated code extraction, click tracking, detailed analytics, and category organization.
 - **Blog & Content Management:** A public-facing blog with a full administrative backend for creating, editing, and managing posts.
 - **Administrative Dashboard:** Robust tools for user management, balance adjustments, financial oversight, log viewing, and sending email campaigns to all users.
 - **Self-Hosted Documentation:** The application serves its own documentation, which can be easily updated.
+- **Premium UI/UX:** A visually polished interface utilizing modern design tokens, interactive hover effects, and responsive layouts for a premium user experience.
 - **Secure & Performant:** Built with modern security best practices and optimized for production environments.
 
 **1.3. Who Is This For?**
@@ -351,6 +361,13 @@ The application uses CodeIgniter's service container to manage class instances. 
   - `Libraries/`: Contains `OllamaService`, `OllamaPayloadService`.
   - `Controllers/`: Contains `OllamaController`.
   - `Config/`: Contains `Ollama.php` configuration.
+- `app/Modules/Affiliate/`:
+  - `Controllers/`: Contains `AffiliateController`.
+  - `Libraries/`: Contains `AffiliateLinkService`.
+  - `Models/`: Contains `AffiliateLinkModel`, `AffiliateClickLogModel`, `AffiliateCategoryModel`.
+- `app/Modules/Account/`: Handles user profile and account-specific settings.
+- `app/Modules/Portfolio/`: Showcases user or project portfolios.
+- `app/Modules/Contact/`: Manages user inquiries and contact forms.
 - `app/Controllers/`: Contains core controllers like `AuthController`, `AdminController`.
 - `app/Libraries/`: Contains shared services like `RecaptchaService`, `WalletService` (Balance Management), `LogViewer` (Secure Log Reading).
 - `writable/nlp/`: Stores trained Naive Bayes models (`classifier.model`).
@@ -368,44 +385,47 @@ The application uses CodeIgniter's service container to manage class instances. 
 
 The project follows a strict frontend workflow called the "Blueprint Method" to ensure UI consistency. New features include `prompt-card` styling and progress bars for file uploads in the AI Studio.
 
+- **Visual Polish**: Interfaces prioritize high-fidelity aesthetics using smooth transitions, curated color palettes, and the `.hover-effect` utility for interactive elements.
+- **Premium Components**: Utilizes Bootstrap 5 utility classes combined with custom CSS for a state-of-the-art, responsive design.
+
 **4.7. Architectural Topology (Parallel vs. Braided)**
 
 The system enforces a **Parallel Architecture** to prevent "Spaghetti Code".
 
 - **Vertical Layering**: Dependencies flow strictly downwards: `Controller` -> `Domain Service` -> `Sub-Service`.
 - **The "Ping Pong" Rule**: Triangular dependencies (where a Controller talks to both a Parent Service and its Child) are **FORBIDDEN**. Use the **Facade Pattern** where the Parent Service wraps the Child service's methods.
-- **Parallel Domains**: Modules (e.g., Gemini and Payments) run in parallel isolation. They do not cross-depend unless absolutely necessary, ensuring that complex logic in one domain does not break the other.
+- **Parallel Domains**: Modules (e.g., Gemini, Payments, and Affiliate) run in parallel isolation. They do not cross-depend unless absolutely necessary, ensuring that complex logic in one domain does not break the other.
 
 #### Module Dependency Graph (Standard Parallel Flow)
 
 ```mermaid
 graph TD
     C[GeminiController]
-    MC[MediaController]
+    AC[AffiliateController]
+    PC[PaymentsController]
 
     subgraph "Domain Facades"
         GS[GeminiService]
-        MGS[MediaGenerationService]
+        ALS[AffiliateLinkService]
+        PS[PaystackService]
     end
 
-    subgraph "Sub-Services (Hidden from Controllers)"
+    subgraph "Infrastructure & Models"
         MEM[MemoryService]
-        MPS[ModelPayloadService]
-        EBS[EmbeddingService]
-        FFM[FfmpegService]
         UM[UserModel]
+        ALM[AffiliateLinkModel]
+        PM[PaymentModel]
     end
 
     C --> GS
-    MC --> MGS
+    AC --> ALS
+    PC --> PS
 
     GS --> MEM
-    GS --> MPS
-    GS --> FFM
     GS --> UM
-
-    MGS --> MPS
-    MGS --> UM
+    ALS --> ALM
+    PS --> PM
+    PS --> UM
 ```
 
 **5. Tutorial: Building Your First Feature**
@@ -493,8 +513,9 @@ Create `app/Modules/Notes/Views/index.php`.
   2.  **API Request**: The service sends a request to Paystack, returning a unique authorization URL.
   3.  **User Action**: The user is redirected to the payment page.
   4.  **Verification**: Upon return, `PaymentsController::verify()` uses `PaystackService::verifyTransaction()`.
-  5.  **Completion (Transactional Integrity)**: If successful, the system opens a Database Transaction (`transStart`) to:
+  5.  **Completion (Transactional Integrity)**: If successful, the system opens a Database Transaction (`transStart`) via `PaystackService::verifyAndProcessPayment()` to:
       - Log the transaction in the `payments` table via `PaymentModel`.
+      - Award a **First Deposit Bonus** (KSH 30.00) if applicable.
       - Credit the user's `account_balance` in the `users` table via `UserModel`.
       - Commit the transaction (`transComplete`).
 
@@ -569,6 +590,25 @@ This module (`App\Modules\Gemini`) is the core of the platform.
 - **6.8.1. Configuration & Model Selection**: The module connects to a local Ollama instance (default: `http://localhost:11434`). It dynamically fetches available models (e.g., `llama3`, `mistral`) and presents them in the UI for user selection.
 - **6.8.2. Chat & Assistant Mode**: Supports conversational AI with an "Assistant Mode" that maintains context. The module follows a "Fat Service, Skinny Controller" pattern, with `OllamaService` orchestrating the interaction lifecycle via modular service registration, including credit deduction and memory synchronization.
 - **6.8.3. Multimodal Input**: Users can upload images for analysis by vision-capable local models (like `llava`), handled via `OllamaPayloadService` which manages base64 encoding.
+
+**6.9. Affiliate Module**
+
+- **6.9.1. Link Management**: Administrators can create, edit, and search for Amazon affiliate links. The system automatically extracts the short code from Amazon `amzn.to` URLs.
+- **6.9.2. Category System**: Links can be organized into categories (e.g., "Electronics", "Books") to facilitate discovery and management.
+- **6.9.3. Click Tracking & Analytics**: Every click on an affiliate link is logged with metadata (IP, User Agent, Referrer). The dashboard provides detailed analytics, including click volume by date and top referrers.
+- **6.9.4. Bulk Actions**: Support for bulk deleting links or updating their status (Active/Inactive) to streamline large-scale link management.
+
+**6.10. Account Module**
+
+- Provides a unified dashboard for users to manage their profile, view transaction history, and monitor AI interaction credits.
+
+**6.11. Portfolio Module**
+
+- A modular component for showcasing projects or user profiles in a visually rich, responsive layout.
+
+**6.12. Contact Module**
+
+- A centralized handling system for user inquiries and support requests, featuring automated email notifications.
 
 ---
 
@@ -750,6 +790,26 @@ This section provides an absolute reference for all environment variables requir
 - **PCM:** Pulse-Code Modulation, a raw audio format returned by Gemini API.
 
 **14.2. Changelog & Release History**
+
+**v1.10.0 - 2026-01-30**
+
+### Added
+
+- **Affiliate Module Enhancements**:
+  - Implemented a robust category system for organizing affiliate links.
+  - Added detailed click analytics with time-series data and referrer tracking.
+  - Introduced bulk actions (bulk delete, status update) for efficient link management.
+- **Premium Visual Polish**:
+  - Standardized `.hover-effect` transitions across all public-facing pages (Gemini, Crypto, Landing).
+  - Refined typography and spacing for a more premium, enterprise-grade aesthetic.
+- **Module Expansion**: Added infrastructure for `Account`, `Portfolio`, and `Contact` modules.
+
+### Changed
+
+- **Payments Module Refactoring**:
+  - Migrated business logic from `PaymentsController` to `PaystackService` following the "Simple over Easy" standard.
+  - Centralized payment verification and balance adjustment into an atomic database transaction.
+  - Implemented first-deposit bonus logic (KSH 30.00).
 
 **v1.9.2 - 2026-01-10**
 
