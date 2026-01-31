@@ -791,6 +791,20 @@ This section provides an absolute reference for all environment variables requir
 
 **14.2. Changelog & Release History**
 
+**v1.10.1 - 2026-01-31**
+
+### Changed
+
+- **Database Migration Refactoring & Optimization**:
+  - Consolidated redundant "Update" migrations into base "Create" migrations for a cleaner fresh-install schema across all modules (Admin, Affiliate, Gemini, Ollama).
+  - Migrated all indexing from raw SQL `ALTER TABLE` queries to native CodeIgniter 4 `$this->forge->addKey()` methods for improved maintainability.
+  - Applied comprehensive performance indexing across all tables: `status`, `user_id`, `type`, `category_id`, `prompt_hash`, and timestamps (`created_at`, `published_at`, `timestamp`, `clicked_at`, `quota_hit_at`).
+  - Reorganized Affiliate migrations: moved `category_id` column and index to base `CreateAffiliateLinksTable` migration for atomic schema definition.
+- **Architectural Standards (.clinerules)**:
+  - Added strict database optimization rules mandating native `addKey()` for all indexing.
+  - Defined migration lifecycle directive: continuous migrations for production (default), compression plans required for fresh environments.
+  - Documented mandatory indexing standards for frequently queried columns with composite key patterns.
+
 **v1.10.0 - 2026-01-30**
 
 ### Added

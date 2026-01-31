@@ -139,7 +139,20 @@ The following commands are **NOT** native to CodeIgniter 4 and must be implement
 - **Mandatory**:
   - **Schema**: managed strictly via **Migrations**.
   - **Data**: Initial/Test data managed via **Seeds**.
-- **Forbidden**: Manual schema changes (SQL/GUI) outside of migrations.
+  - **Migration Lifecycle**:
+    - **Continuous Development (Default)**: In active development or production at scale, use incremental "Update" migrations. This ensures safe, fast deployments without altering the historical record of change.
+    - **Fresh Development Environments (Compression)**: Consolidating/compressing migrations is preferred ONLY for building optimized fresh environments from scratch.
+      - **Compression Plan**: A documented strategy identifying which "Update" migrations will be merged into their corresponding "Create" migrations (e.g., merging `AddCategoryToAffiliateLinks` into `CreateAffiliateLinksTable`).
+      - **Implementation Plan**: The execution roadmap detailing how the consolidation will be tested and verified (e.g., backup strategy, rollback plan, verification commands like `migrate:refresh --all`).
+    - **Directive**: If the developer specifies a "Fresh Environment", a **Compression Plan** and **Implementation Plan** are MANDATORY before merging updates into base migrations, unless explicitly declined by the user.
+  - **Performance Optimization (Indexing)**:
+    - **Mandatory**: Every table MUST be optimized for lookup.
+    - **Columns to Index**: `status`, `user_id`, `type`, `slug`, `prompt_hash`, and timestamps (`created_at`, `published_at`, `timestamp`).
+    - **Method**: Use `$this->forge->addKey('column_name')` **before** the `createTable()` call.
+    - **Composite Keys**: Use `$this->forge->addKey(['col1', 'col2'])` for frequently paired filters.
+- **Forbidden**:
+  - Manual schema changes (SQL/GUI) outside of migrations.
+  - Raw SQL `ALTER TABLE` queries for indexing within a `Create` migration (Use native `addKey()` instead).
 
 ### 2.6 Helpers (`app/Helpers/`)
 
