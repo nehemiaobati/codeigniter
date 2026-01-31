@@ -39,6 +39,10 @@ class CampaignController extends BaseController
         helper('form');
         $campaignModel = new CampaignModel();
 
+        // Handle editing context
+        $id = $this->request->getGet('id');
+        $editingCampaign = $id ? $campaignModel->find($id) : null;
+
         // Check for cooldown (last quota hit across ANY campaign)
         $lastQuotaHit = $campaignModel->where('quota_hit_at IS NOT NULL')
             ->orderBy('quota_hit_at', 'DESC')
@@ -47,15 +51,31 @@ class CampaignController extends BaseController
         $userModel = new UserModel();
         $totalUserCount = $userModel->countAllResults();
 
+        // Data for loading templates (All campaigns, alphabetical)
+        $allCampaigns = $campaignModel->orderBy('subject', 'ASC')->findAll();
+
+        // Data for "Saved Drafts / Templates" (Recent drafts)
+        $drafts = $campaignModel->where('status', 'draft')
+            ->orderBy('updated_at', 'DESC')
+            ->findAll();
+
+        // Data for "Campaign History" (Sent activity, paginated)
+        $history = $campaignModel->where('status !=', 'draft')
+            ->orderBy('created_at', 'DESC')
+            ->paginate(10);
+
         $data = [
             'pageTitle'       => 'Create Email Campaign | Admin',
             'metaDescription' => 'Compose and send a new email campaign to all registered users.',
             'canonicalUrl'    => url_to('admin.campaign.create'),
             'robotsTag'       => 'noindex, nofollow',
-            'campaigns'       => $campaignModel->orderBy('created_at', 'DESC')->paginate(10), // Limit to 10 per page
+            'allCampaigns'    => $allCampaigns,
+            'drafts'          => $drafts,
+            'campaigns'       => $history, // Keeping name for compatibility with view foreach
             'pager'           => $campaignModel->pager,
             'lastQuotaHit'    => $lastQuotaHit ? $lastQuotaHit->quota_hit_at : null,
-            'totalUserCount'  => $totalUserCount
+            'totalUserCount'  => $totalUserCount,
+            'editingCampaign' => $editingCampaign
         ];
 
         return view('App\Modules\Admin\Views\campaign\create', $data);
@@ -75,27 +95,34 @@ class CampaignController extends BaseController
 
         // Validation rules
         $rules = [
-            'subject' => 'required|min_length[5]|max_length[255]',
-            'message' => 'required|min_length[20]',
+            'subject'       => 'required|min_length[5]|max_length[255]',
+            'message'       => 'required|min_length[20]',
+            'stop_at_count' => 'permit_empty|integer',
         ];
 
         if (!$this->validate($rules)) {
-            // Redirect back with input and errors if validation fails
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
         $campaignModel = new CampaignModel();
+        $id = $this->request->getPost('id');
+
         $data = [
-            'subject' => $this->request->getPost('subject'),
-            'body'    => $this->request->getPost('message'),
+            'subject'       => $this->request->getPost('subject'),
+            'body'          => $this->request->getPost('message'),
+            'stop_at_count' => (int)$this->request->getPost('stop_at_count') ?: 1000,
+            'status'        => 'draft',
         ];
 
-        if ($campaignModel->save($data)) {
-            // Redirect to the create page with a success message
-            return redirect()->to(url_to('admin.campaign.create'))->with('success', 'Campaign template saved successfully.');
+        if ($id) {
+            $data['id'] = $id;
         }
 
-        // Redirect back with input and an error message if saving fails
+        if ($campaignModel->save($data)) {
+            $campaignId = $id ?: $campaignModel->getInsertID();
+            return redirect()->to(url_to('admin.campaign.create') . '?id=' . $campaignId)->with('success', 'Campaign template saved successfully.');
+        }
+
         return redirect()->back()->withInput()->with('error', 'Failed to save the campaign template.');
     }
 
@@ -142,16 +169,16 @@ class CampaignController extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
+        $id          = $this->request->getPost('id');
         $subject     = $this->request->getPost('subject');
         $messageBody = $this->request->getPost('message');
-        $stopAtCount = (int)$this->request->getPost('stop_at_count') ?: 1000; // Default 1000
+        $stopAtCount = (int)$this->request->getPost('stop_at_count') ?: 1000;
 
         // Sanitize
         $allowed_tags = '<p><a><strong><em><ul><ol><li><br><h1><h2><h3><h4><h5><h6>';
         $messageBody  = str_replace('[your_base_url]', rtrim(base_url(), '/'), $messageBody);
         $sanitizedMessageBody = strip_tags($messageBody, $allowed_tags);
 
-        // Save Campaign to get ID
         $campaignModel = new CampaignModel();
         $campaignData = [
             'subject'       => $subject,
@@ -160,22 +187,34 @@ class CampaignController extends BaseController
             'stop_at_count' => $stopAtCount
         ];
 
-        $campaignId = $campaignModel->insert($campaignData);
+        // Promotion logic: reuse draft ID if we are currently editing one
+        $finalCampaignId = null;
+        if ($id) {
+            $existing = $campaignModel->find($id);
+            if ($existing && $existing->status === 'draft') {
+                $campaignData['id'] = $id;
+                $campaignModel->save($campaignData);
+                $finalCampaignId = (int)$id;
+            } else {
+                $finalCampaignId = (int)$campaignModel->insert($campaignData);
+            }
+        } else {
+            $finalCampaignId = (int)$campaignModel->insert($campaignData);
+        }
 
-        if (!$campaignId) {
+        if (!$finalCampaignId) {
             return redirect()->back()->withInput()->with('error', 'Failed to create campaign record.');
         }
 
         // Initiate via Service
         $campaignService = new CampaignService();
-        $result = $campaignService->initiateCampaign((int)$campaignId);
+        $result = $campaignService->initiateCampaign($finalCampaignId);
 
         if (!$result['success']) {
             return redirect()->back()->withInput()->with('error', $result['message']);
         }
 
-        // Redirect to Monitor
-        return redirect()->to(url_to('admin.campaign.monitor', $campaignId));
+        return redirect()->to(url_to('admin.campaign.monitor', $finalCampaignId));
     }
 
     /**
