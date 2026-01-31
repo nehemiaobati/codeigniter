@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Database\Migrations;
+namespace App\Modules\Admin\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 use CodeIgniter\Database\Forge;
