@@ -51,8 +51,6 @@ class CampaignController extends BaseController
         $userModel = new UserModel();
         $totalUserCount = $userModel->countAllResults();
 
-        // Data for loading templates (All campaigns, alphabetical)
-        $allCampaigns = $campaignModel->orderBy('subject', 'ASC')->findAll();
 
         // Data for "Saved Drafts / Templates" (Recent drafts)
         $drafts = $campaignModel->where('status', 'draft')
@@ -62,14 +60,13 @@ class CampaignController extends BaseController
         // Data for "Campaign History" (Sent activity, paginated)
         $history = $campaignModel->where('status !=', 'draft')
             ->orderBy('created_at', 'DESC')
-            ->paginate(10);
+            ->paginate(5);
 
         $data = [
             'pageTitle'       => 'Create Email Campaign | Admin',
             'metaDescription' => 'Compose and send a new email campaign to all registered users.',
             'canonicalUrl'    => url_to('admin.campaign.create'),
             'robotsTag'       => 'noindex, nofollow',
-            'allCampaigns'    => $allCampaigns,
             'drafts'          => $drafts,
             'campaigns'       => $history, // Keeping name for compatibility with view foreach
             'pager'           => $campaignModel->pager,
@@ -169,7 +166,6 @@ class CampaignController extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        $id          = $this->request->getPost('id');
         $subject     = $this->request->getPost('subject');
         $messageBody = $this->request->getPost('message');
         $stopAtCount = (int)$this->request->getPost('stop_at_count') ?: 1000;
@@ -187,34 +183,25 @@ class CampaignController extends BaseController
             'stop_at_count' => $stopAtCount
         ];
 
-        // Promotion logic: reuse draft ID if we are currently editing one
-        $finalCampaignId = null;
-        if ($id) {
-            $existing = $campaignModel->find($id);
-            if ($existing && $existing->status === 'draft') {
-                $campaignData['id'] = $id;
-                $campaignModel->save($campaignData);
-                $finalCampaignId = (int)$id;
-            } else {
-                $finalCampaignId = (int)$campaignModel->insert($campaignData);
-            }
-        } else {
-            $finalCampaignId = (int)$campaignModel->insert($campaignData);
-        }
+        // Save new campaign record for this execution
+        // We always CREATE a new record for sending to ensure the original template/draft remains reusable
+        $campaignData['status'] = 'draft'; // Will be updated to 'pending' immediately by initiateCampaign
+        $executionId = $campaignModel->insert($campaignData);
 
-        if (!$finalCampaignId) {
+        if (!$executionId) {
             return redirect()->back()->withInput()->with('error', 'Failed to create campaign record.');
         }
 
-        // Initiate via Service
+        // Initiate the NEW campaign record
         $campaignService = new CampaignService();
-        $result = $campaignService->initiateCampaign($finalCampaignId);
+        $result = $campaignService->initiateCampaign((int)$executionId);
 
         if (!$result['success']) {
             return redirect()->back()->withInput()->with('error', $result['message']);
         }
 
-        return redirect()->to(url_to('admin.campaign.monitor', $finalCampaignId));
+        // Redirect to Monitor of the NEW execution
+        return redirect()->to(url_to('admin.campaign.monitor', $executionId));
     }
 
     /**
