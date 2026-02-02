@@ -8,9 +8,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 
     <!-- SEO Meta Tags -->
-    <title><?= esc($pageTitle ?? 'AFRIKENKID | Generative AI & Crypto Data for Africa') ?></title>
+    <title><?= esc($pageTitle ?? 'AFRIKENKID | Generative AI & Crypto Wallet Balance and Transaction') ?></title>
     <meta name="description" content="<?= esc($metaDescription ?? 'Access powerful Generative AI tools and real-time blockchain analytics. Pay easily via M-Pesa or Credit Card. Your all-in-one platform for AI and Crypto insights.') ?>">
-    <meta name="keywords" content="Generative AI, Google Gemini, Crypto Data, Bitcoin Wallet, Litecoin Wallet, Blockchain Query, AI Tools, Kenya, M-Pesa, Lipa na Mpesa, Mobile Money Africa, CodeIgniter Development">
+    <meta name="keywords" content="Generative AI, Google Gemini, Crypto Data, Bitcoin Wallet, Litecoin Wallet, Blockchain Query, AI Tools, Kenya, M-Pesa, Lipa na Mpesa, Mobile Money, CodeIgniter Development">
 
     <!-- Geo-targeting -->
     <meta name="geo.region" content="KE">
@@ -24,14 +24,14 @@
     <!-- Social Media Meta (Open Graph for Facebook/LinkedIn) -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="<?= esc($canonicalUrl ?? current_url()) ?>">
-    <meta property="og:title" content="<?= esc($pageTitle ?? 'AFRIKENKID | Generative AI & Crypto Data for Africa') ?>">
+    <meta property="og:title" content="<?= esc($pageTitle ?? 'AFRIKENKID | Generative AI & Crypto Wallet Balance and Transaction') ?>">
     <meta property="og:description" content="<?= esc($metaDescription ?? 'Access powerful Generative AI tools and real-time blockchain analytics. Pay easily via M-Pesa or Credit Card. Your all-in-one platform for AI and Crypto insights.') ?>">
     <meta property="og:image" content="<?= esc($metaImage ?? base_url('public/assets/images/afrikenkid_og_image.jpg')) ?>">
 
     <!-- Twitter Card (LinkedIn also uses these) -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@afrikenkid">
-    <meta name="twitter:title" content="<?= esc($pageTitle ?? 'AFRIKENKID | Generative AI & Crypto Data for Africa') ?>">
+    <meta name="twitter:title" content="<?= esc($pageTitle ?? 'AFRIKENKID | Generative AI & Crypto Wallet Balance and Transaction') ?>">
     <meta name="twitter:description" content="<?= esc($metaDescription ?? 'Access powerful Generative AI tools and real-time blockchain analytics. Pay easily via M-Pesa or Credit Card. Your all-in-one platform for AI and Crypto insights.') ?>">
     <meta name="twitter:image" content="<?= esc($metaImage ?? base_url('public/assets/images/afrikenkid_og_image.jpg')) ?>">
     <meta name="twitter:image:alt" content="AFRIKENKID Platform Preview">
@@ -42,15 +42,35 @@
             "@context": "https://schema.org",
             "@type": "SoftwareApplication",
             "name": "AFRIKENKID",
-            "applicationCategory": "DeveloperApplication",
+            "applicationCategory": "MultimediaApplication",
             "operatingSystem": "Web",
             "description": "<?= esc($metaDescription ?? 'Access powerful Generative AI tools and real-time blockchain analytics. Pay easily via M-Pesa or Credit Card. Your all-in-one platform for AI and Crypto insights.') ?>",
             "url": "<?= esc($canonicalUrl ?? current_url()) ?>",
+            "featureList": [
+                "Gemini AI",
+                "Video Synthesis",
+                "Image Generation (Imagen and Gemini)",
+                "Document Analysis & Auditing",
+                "Real-Time Blockchain Verification (BTC & LTC)",
+                "Secure M-Pesa & Airtel Money Payments"
+            ],
             "offers": {
                 "@type": "Offer",
                 "price": "0",
-                "priceCurrency": "KES"
-            }
+                "priceCurrency": "KES",
+                "description": "Credit-based pricing with secure M-Pesa top-ups."
+            },
+            "brand": {
+                "@type": "Brand",
+                "name": "Afrikenkid",
+                "logo": "<?= base_url('public/assets/images/afrikenkid_og_image.jpg') ?>"
+            },
+            "author": {
+                "@type": "Organization",
+                "name": "Afrikenkid AI Studio",
+                "url": "<?= base_url() ?>"
+            },
+            "keywords": "AI Video Generation Kenya, Gemini AI, M-Pesa Statement Analysis, Blockchain Data Verification, AI Studio Nairobi"
         }
     </script>
 
@@ -319,7 +339,7 @@
             <div class="row">
                 <div class="col-lg-4 col-md-6 mb-4">
                     <h5>AFRIKENKID</h5>
-                    <p class="small">Build smarter with a pay-as-you-go platform. Leverage Generative AI, query real-time BTC & LTC wallet data, and securely top up with M-Pesa. Built for creators, businesses, and developers in Kenya and Africa.</p>
+                    <p class="small">Build smarter with a pay-as-you-go platform. Leverage Generative AI, query real-time BTC & LTC wallet data, and securely top up with M-Pesa. Built for creators, businesses, and developers in Kenya, Africa & Beyond.</p>
                 </div>
                 <div class="col-lg-2 col-6">
                     <h5>Services</h5>
