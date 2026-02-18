@@ -24,6 +24,7 @@ readonly PROJECT_PATH="/var/www/${PROJECT_DIR_NAME}"
 
 readonly DB_NAME="server_codeigniter"
 readonly DB_USER="ci4_user"
+readonly DOMAIN="afrikenkid.com"
 
 # Global Vars
 DB_PASSWORD=""
@@ -259,12 +260,18 @@ EOF
 configure_apache() {
     log_step 9 "Configuring Apache vHost"
     local vhost_file="/etc/apache2/sites-available/${PROJECT_DIR_NAME}.conf"
+    local ssl_vhost_file="/etc/apache2/sites-available/${PROJECT_DIR_NAME}-ssl.conf"
+    
+    # Domain handling: If DOMAIN is empty, use PROJECT_DIR_NAME
+    local domain_name="${DOMAIN:-${PROJECT_DIR_NAME}}"
+    local log_prefix="${domain_name%%.*}" # Extract brand name for logs (e.g. 'afrikenkid' from 'afrikenkid.com')
 
+    # Port 80 Configuration
     cat <<EOF > "${vhost_file}"
 <VirtualHost *:80>
-    ServerAdmin webmaster@localhost
+    ServerAdmin webmaster@${domain_name}
     DocumentRoot ${PROJECT_PATH}/public
-    ServerName localhost
+    ServerName www.${domain_name}
 
     <Directory ${PROJECT_PATH}/public>
         Options Indexes FollowSymLinks
@@ -272,14 +279,42 @@ configure_apache() {
         Require all granted
     </Directory>
 
-    ErrorLog \${APACHE_LOG_DIR}/error.log
-    CustomLog \${APACHE_LOG_DIR}/access.log combined
+    ErrorLog \${APACHE_LOG_DIR}/${log_prefix}_error.log
+    CustomLog \${APACHE_LOG_DIR}/${log_prefix}_access.log combined
 </VirtualHost>
 EOF
 
-    a2ensite "${PROJECT_DIR_NAME}.conf"
+    # Port 443 (SSL) Configuration
+    cat <<EOF > "${ssl_vhost_file}"
+<VirtualHost *:443>
+    ServerAdmin webmaster@${domain_name}
+    DocumentRoot "${PROJECT_PATH}/public"
+    ServerName www.${domain_name}
+
+    #DirectoryIndex index.php index.html
+    <Directory "${PROJECT_PATH}/public">
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog \${APACHE_LOG_DIR}/${log_prefix}_ssl_error.log
+    CustomLog \${APACHE_LOG_DIR}/${log_prefix}_ssl_access.log common
+
+    SSLEngine on
+    SSLCertificateFile "${PROJECT_PATH}/ssl/certificate.crt"
+    SSLCertificateKeyFile "${PROJECT_PATH}/ssl/private.key"
+    SSLCertificateChainFile "${PROJECT_PATH}/ssl/ca_bundle.crt"
+</VirtualHost>
+EOF
+
+    # Enable Modules and Sites
     a2enmod rewrite
+    a2enmod ssl
     a2dissite 000-default.conf
+    a2ensite "${PROJECT_DIR_NAME}.conf"
+    a2ensite "${PROJECT_DIR_NAME}-ssl.conf"
+    
     service apache2 restart
 }
 
