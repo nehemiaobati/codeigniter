@@ -288,7 +288,7 @@ configure_apache() {
 <VirtualHost *:80>
     ServerAdmin webmaster@${domain_name}
     DocumentRoot ${PROJECT_PATH}/public
-    ServerName http://www.${domain_name}
+    ServerName http://${domain_name}
 
     <Directory ${PROJECT_PATH}/public>
         Options Indexes FollowSymLinks
@@ -306,7 +306,7 @@ EOF
 <VirtualHost *:443>
     ServerAdmin webmaster@${domain_name}
     DocumentRoot "${PROJECT_PATH}/public"
-    ServerName https://www.${domain_name}
+    ServerName https://${domain_name}
 
     #DirectoryIndex index.php index.html
     <Directory "${PROJECT_PATH}/public">
