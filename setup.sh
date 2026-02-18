@@ -5,7 +5,7 @@
 #==============================================================================
 # DESCRIPTION:
 # Automates the stack installation for the AI Studio application.
-# Includes requirements for: Apache, MySQL, PHP 8.2, FFMpeg, Pandoc + LaTeX.
+# Includes requirements for: Apache, MySQL, PHP, FFMpeg, Pandoc + LaTeX.
 #
 # HOW TO USE:
 # 1. Save as setup.sh:   nano setup.sh
@@ -80,11 +80,28 @@ install_apache() {
 
 #==============================================================================
 install_php() {
-    log_step 3 "Installing PHP 8.2 and Extensions"
-    # Added specific extensions used in your provided code (intl, gd, curl, mbstring)
-    apt-get install -y php8.2 php8.2-mysql php8.2-intl php8.2-mbstring \
-                       php8.2-bcmath php8.2-curl php8.2-xml php8.2-zip php8.2-gd \
-                       php8.2-imagick
+    log_step 3 "Installing PHP and Extensions"
+    
+    # 1. Get the version first
+    apt-get install -y php
+    # We do this before installing anything to ensure we target the right version
+    PHP_V=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
+    echo "Detected PHP Version: $PHP_V"
+
+    # 2. Install everything version-specific
+    # This ensures mysqli, gd, and zip are matched exactly to your running PHP
+    apt-get update
+    apt-get install -y \
+        "php${PHP_V}-mysql" \
+        "php${PHP_V}-intl" \
+        "php${PHP_V}-curl" \
+        "php${PHP_V}-xml" \
+        "php${PHP_V}-bcmath" \
+        "php${PHP_V}-mbstring" \
+        "php${PHP_V}-gd" \
+        "php${PHP_V}-zip" \
+        "php${PHP_V}-imagick" \
+        "php${PHP_V}-sqlite3"
 }
 
 #==============================================================================
@@ -271,7 +288,7 @@ configure_apache() {
 <VirtualHost *:80>
     ServerAdmin webmaster@${domain_name}
     DocumentRoot ${PROJECT_PATH}/public
-    ServerName www.${domain_name}
+    ServerName http://www.${domain_name}
 
     <Directory ${PROJECT_PATH}/public>
         Options Indexes FollowSymLinks
@@ -289,7 +306,7 @@ EOF
 <VirtualHost *:443>
     ServerAdmin webmaster@${domain_name}
     DocumentRoot "${PROJECT_PATH}/public"
-    ServerName www.${domain_name}
+    ServerName https://www.${domain_name}
 
     #DirectoryIndex index.php index.html
     <Directory "${PROJECT_PATH}/public">
