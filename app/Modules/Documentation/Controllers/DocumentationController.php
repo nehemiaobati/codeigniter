@@ -23,7 +23,7 @@ class DocumentationController extends BaseController
         $data = [
             'pageTitle'       => 'Web Platform Guide |  Architecture',
             'metaDescription' => 'Detailed overview of the platform architecture and features for users and administrators.',
-            'canonicalUrl'    => url_to('web'),
+            'canonicalUrl'    => url_to('documentation.web'),
             'robotsTag'       => 'index, follow', // CHANGED
         ];
         return view('App\Modules\Documentation\Views\web_documentation', $data);
@@ -34,7 +34,7 @@ class DocumentationController extends BaseController
         $data = [
             'pageTitle'       => 'AI Tools Guide | Architecture',
             'metaDescription' => 'How to leverage our Gemini-powered AI tools for text generation, document analysis, and TTS solutions.',
-            'canonicalUrl'    => url_to('agi'),
+            'canonicalUrl'    => url_to('documentation.agi'),
             'robotsTag'       => 'index, follow', // CHANGED
         ];
         return view('App\Modules\Documentation\Views\agi_documentation', $data);
