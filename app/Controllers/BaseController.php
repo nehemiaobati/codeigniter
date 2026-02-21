@@ -1,40 +1,46 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Controllers;
 
 use CodeIgniter\Controller;
-use CodeIgniter\HTTP\CLIRequest;
-use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Psr\Log\LoggerInterface;
 
+/**
+ * BaseController provides a convenient place for loading components
+ * and performing functions that are needed by all your controllers.
+ *
+ * Extend this class in any new controllers:
+ * ```
+ *     class Home extends BaseController
+ * ```
+ *
+ * For security, be sure to declare any new methods as protected or private.
+ */
 abstract class BaseController extends Controller
 {
     /**
-     * The request object.
-     * @var IncomingRequest|CLIRequest|RequestInterface
+     * Be sure to declare properties for any property fetch you initialized.
+     * The creation of dynamic property is deprecated in PHP 8.2.
      */
-    protected $request;
+
+    // protected $session;
 
     /**
-     * An array of helpers to be loaded automatically.
-     * @var array
+     * @return void
      */
-    protected $helpers = [];
-
-    /**
-     * The CodeIgniter session service.
-     * @var \CodeIgniter\Session\Session
-     */
-    protected \CodeIgniter\Session\Session $session;
-
-    public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
+    public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger)
     {
+        // Load here all helpers you want to be available in your controllers that extend BaseController.
+        // Caution: Do not put the this below the parent::initController() call below.
+        // $this->helpers = ['form', 'url'];
+
+        // Caution: Do not edit this line.
         parent::initController($request, $response, $logger);
-        $this->session = service('session');
+
+        // Preload any models, libraries, etc, here.
+        // $this->session = service('session');
     }
 
     public function acceptCookie()
