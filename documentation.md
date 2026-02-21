@@ -583,7 +583,7 @@ This module (`App\Modules\Gemini`) is the core of the platform.
 
 **6.7. Self-Hosted Documentation**
 
-- **6.7.1. Serving Documentation Pages**: `DocumentationController.php` serves documentation pages. It includes methods to display the main documentation index and separate pages for different aspects of the project, such as web architecture and the AI system.
+- **6.7.1. Serving Documentation Pages**: `DocumentationController.php` serves documentation pages. It includes methods to display the main documentation index and separate pages for different aspects of the project, such as web architecture (`documentation.web`) and the AI system (`documentation.agi`).
 
 **6.8. Local AI Service (Ollama)**
 
@@ -663,9 +663,18 @@ Located at `app/Config/App.php`, this file contains the base configuration for t
 
 Located at `app/Config/Database.php`, this file defines the database connection parameters.
 
-**8.3. Module & Service Configurations**
+- **8.3. Module & Service Configurations**
+  ...
+- **8.4. SEO Consistency Standards**
 
-Module-specific configurations are located within their respective module directories (e.g., `app/Modules/Gemini/Config/AGI.php`).
+The platform enforces a mandatory SEO data contract across all controllers. Every public/private view-returning method MUST provide:
+
+- `pageTitle`: Descriptive title, usually suffixed with `| Afrikenkid`.
+- `metaDescription`: Concise summary for search snippets.
+- `canonicalUrl`: Generated via `url_to()` to ensure path robustness.
+- `robotsTag`: `index, follow` for public; `noindex, follow` for private.
+
+This standard is baked into the "logical DNA" of the project and is rendered securely via `esc()` in `layouts/default.php`.
 
 - `AGI.php` (`app/Modules/Gemini/Config/`): Contains settings for the AI service, including:
   - **Memory Logic:** `rewardScore`, `decayScore`, `pruningThreshold`.
@@ -790,6 +799,14 @@ This section provides an absolute reference for all environment variables requir
 - **PCM:** Pulse-Code Modulation, a raw audio format returned by Gemini API.
 
 **14.2. Changelog & Release History**
+
+**v1.10.2 - 2026-02-20**
+
+### Changed
+
+- **Documentation Route Refactoring**: Renamed documentation sub-routes to `documentation.web` and `documentation.agi` for architectural consistency.
+- **SEO Standards Enforcement**: Standardized SEO metadata preparation across all controllers and updated `documentation.md` to reflect these mandatory patterns.
+- **Layout Consistency**: Updated global footer with explicit links to documentation guides.
 
 **v1.10.1 - 2026-01-31**
 

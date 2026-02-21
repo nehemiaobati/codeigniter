@@ -1,12 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules\Documentation\Controllers;
 
 use App\Controllers\BaseController;
-use CodeIgniter\HTTP\ResponseInterface;
 
+/**
+ * DocumentationController
+ * 
+ * Handles the display of platform documentation, user guides, and architecture overviews.
+ */
 class DocumentationController extends BaseController
 {
+    /**
+     * Renders the main documentation landing page.
+     *
+     * @return string The rendered HTML view.
+     */
     public function index(): string
     {
         $data = [
@@ -18,6 +29,11 @@ class DocumentationController extends BaseController
         return view('App\Modules\Documentation\Views\index', $data);
     }
 
+    /**
+     * Renders the web platform architecture and guide.
+     *
+     * @return string The rendered HTML view.
+     */
     public function web(): string
     {
         $data = [
@@ -29,6 +45,11 @@ class DocumentationController extends BaseController
         return view('App\Modules\Documentation\Views\web_documentation', $data);
     }
 
+    /**
+     * Renders the AI tools and Gemini architecture guide.
+     *
+     * @return string The rendered HTML view.
+     */
     public function agi(): string
     {
         $data = [
