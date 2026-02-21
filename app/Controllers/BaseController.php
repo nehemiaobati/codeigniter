@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers;
 
 use CodeIgniter\Controller;
+use CodeIgniter\HTTP\CLIRequest;
+use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Psr\Log\LoggerInterface;
@@ -25,7 +29,23 @@ abstract class BaseController extends Controller
      * The creation of dynamic property is deprecated in PHP 8.2.
      */
 
-    // protected $session;
+    /**
+     * The request object.
+     * @var IncomingRequest|CLIRequest|RequestInterface
+     */
+    protected $request;
+
+    /**
+     * An array of helpers to be loaded automatically.
+     * @var array
+     */
+    protected $helpers = [];
+
+    /**
+     * The CodeIgniter session service.
+     * @var \CodeIgniter\Session\Session
+     */
+    protected $session;
 
     /**
      * @return void
@@ -40,7 +60,7 @@ abstract class BaseController extends Controller
         parent::initController($request, $response, $logger);
 
         // Preload any models, libraries, etc, here.
-        // $this->session = service('session');
+        $this->session = service('session');
     }
 
     public function acceptCookie()
