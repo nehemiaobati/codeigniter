@@ -107,19 +107,23 @@ class AuthService
         $user->password = password_hash($data['password'], PASSWORD_DEFAULT);
         $user->verification_token = bin2hex(random_bytes(50));
 
+        $optIn = !empty($data['marketing']);
+        $user->marketing_opt_in = $optIn ? 1 : 0;
+        $user->unsubscribe_token = $optIn ? bin2hex(random_bytes(32)) : null;
+
         // 2. Send Verification Email
 
 
         // Temporarily bypassing email sending due to production SMTP block.
         // To revert: uncomment the block below and remove '$user->is_verified = true;'
-        $user->is_verified = true;
+        ///$user->is_verified = true;
 
-        /*
+        ////*
         if (! $this->_sendVerificationEmail($user)) {
             $this->userModel->db->transRollback();
             return ['success' => false, 'message' => 'Registration failed. Could not send verification email.'];
         }
-        */
+        ///*/
 
         // 3. Save User
         if (! $this->userModel->save($user)) {
