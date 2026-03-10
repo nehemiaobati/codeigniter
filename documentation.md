@@ -365,6 +365,9 @@ The application uses CodeIgniter's service container to manage class instances. 
   - `Controllers/`: Contains `AffiliateController`.
   - `Libraries/`: Contains `AffiliateLinkService`.
   - `Models/`: Contains `AffiliateLinkModel`, `AffiliateClickLogModel`, `AffiliateCategoryModel`.
+- `app/Modules/OpenRouter/`:
+  - `Libraries/`: Contains `OpenRouterService` (The 'Fat Service'), `OpenRouterMemoryService`, `OpenRouterDocumentService`, `OpenRouterPandocService`.
+  - `Models/`: Contains `OpenRouterInteractionModel`, `OpenRouterPromptModel`, `OpenRouterUserSettingsModel`.
 - `app/Modules/Account/`: Handles user profile and account-specific settings.
 - `app/Modules/Portfolio/`: Showcases user or project portfolios.
 - `app/Modules/Contact/`: Manages user inquiries and contact forms.
@@ -799,6 +802,33 @@ This section provides an absolute reference for all environment variables requir
 - **PCM:** Pulse-Code Modulation, a raw audio format returned by Gemini API.
 
 **14.2. Changelog & Release History**
+
+**v1.10.3 - 2026-03-09**
+
+### Added
+
+- **OpenRouter Module Expansion**:
+  - Implemented Gemini-parity UI, including TinyMCE rich text integration and floating configuration panels.
+  - Added robust Multimodal capabilities (Image/PDF parsing) via OpenRouter's `file-parser` plugins.
+  - Introduced dynamic Model Selection dropdown, allowing users to toggle between Anthropic, OpenAI, Meta, and Gemini pipelines on the fly.
+  - Added native Document Export capabilities (PDF/DOCX) using isolated `OpenRouterDocumentService`.
+- **OpenRouter Architectural Refactor (senior dev focus)**:
+  - Applied **Constructor Property Promotion** across the entire module (`OpenRouterController`, `OpenRouterService`, `OpenRouterMemoryService`, `OpenRouterDocumentService`).
+  - Centralized interaction context orchestration in `OpenRouterController::_prepareInteractionContext()`, deduplicating generation and streaming pipelines.
+  - Modernized conditional mapping with PHP 8.2+ **match expressions** (MIME parsing, Settings handling).
+  - Standardized private helper methods with underscore prefixing following `.clinerules.md`.
+
+### Fixed
+
+- **OpenRouter Setting Persistence**:
+  - Unified Javascript toggle handlers in `UIManager` to send binary-string boolean mapping ('true'/'false').
+  - Implemented flexible boolean parsing in `OpenRouterController` via `filter_var` to support multiple input formats.
+  - Resolved `PandocService` type-hinting lint error in `OpenRouterController`.
+- **OpenRouter Streaming Resilience**:
+  - Completely rewrote the SSE (Server-Sent Events) parser to strictly adhere to `.clinerules.md` standards.
+  - Mitigated streaming deadlocks by implementing `session_write_close()` before generative loops.
+  - Ensured CSRF safety by enforcing token rotation on every single stream chunk.
+  - Ripped out legacy hardcoded model constants, replacing them with a secure, decoupled configuration architecture.
 
 **v1.10.2 - 2026-02-20**
 
