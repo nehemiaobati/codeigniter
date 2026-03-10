@@ -14,6 +14,7 @@ app/Views/documentation/web_documentation.php
 changed_files.txt
 code_changes.txt
 render_pdf.php
+notes.txt
 
 # --- macOS ---
 .DS_Store

@@ -101,14 +101,17 @@ class OllamaService
 
     /**
      * Extract Thinking Process from content (e.g., <think>...</think>)
+     * Falls back to parsing <think> tags if reasoning content was not provided natively by the API.
      */
-    private function _extractThinking(string $content): array
+    private function _extractThinking(string $content, ?string $nativeReasoning = null): array
     {
-        $thoughts = '';
+        $thoughts = $nativeReasoning ?: '';
         $result = $content;
 
         if (preg_match('/<think>(.*?)<\/think>/s', $content, $matches)) {
-            $thoughts = trim($matches[1]);
+            if (empty($thoughts)) {
+                $thoughts = trim($matches[1]);
+            }
             $result = trim(str_replace($matches[0], '', $content));
         }
 
@@ -123,6 +126,13 @@ class OllamaService
      */
     private function _handleStreamData(array $data, string &$fullText, &$usage, bool &$inThinkingBlock, callable $chunkCallback): void
     {
+        // Handle official reasoning content (added in newer Ollama versions for DeepSeek R1 etc.)
+        // Checked fields: reasoning_content, reasoning, or thinking (documented for DeepSeek R1)
+        $reasoningData = $data['message']['reasoning_content'] ?? ($data['message']['reasoning'] ?? ($data['message']['thinking'] ?? null));
+        if ($reasoningData !== null && $reasoningData !== '') {
+            $chunkCallback(['thought' => $reasoningData]);
+        }
+
         if (isset($data['message']['content'])) {
             $text = $data['message']['content'];
             $fullText .= $text;
@@ -422,7 +432,9 @@ class OllamaService
 
             if (isset($data['message']['content'])) {
                 $content = $data['message']['content'];
-                $extracted = $this->_extractThinking($content);
+                $nativeReasoning = $data['message']['reasoning_content'] ?? ($data['message']['reasoning'] ?? ($data['message']['thinking'] ?? null));
+                
+                $extracted = $this->_extractThinking($content, $nativeReasoning);
 
                 return [
                     'status' => 'success',

@@ -37,6 +37,7 @@
     @media (max-width: 991.98px) {
         body {
             overflow: auto;
+            /* Allow scroll on mobile for keyboard */
         }
     }
 
@@ -1259,12 +1260,17 @@
                     this.app.ui.enableCodeFeatures();
                     this.app.ui.scrollToBottom();
                     if (d.flash_html) this.app.ui.showServerFlash(d.flash_html);
-                    if (d.new_interaction_id) this.app.history.addItem({
-                        id: d.new_interaction_id,
-                        timestamp: d.timestamp,
-                        user_input: d.user_input,
-                        context_files: this.currentContextFiles
-                    }, (d.thought ? `<thought>\n${d.thought}\n</thought>\n\n` : '') + d.raw_result);
+                    if (d.new_interaction_id) {
+                        this.app.history.addItem({
+                            id: d.new_interaction_id,
+                            timestamp: d.timestamp,
+                            user_input: d.user_input,
+                            context_files: this.currentContextFiles
+                        }, (d.thought ? `<thought>\n${d.thought}\n</thought>\n\n` : '') + d.raw_result);
+                        
+                        // Switch to history tab and highlight (Gemini Parity)
+                        this.app.history.highlightContext([d.new_interaction_id]);
+                    }
                 } else this.app.ui.setError(d.message || 'Generation failed.');
             } catch (e) {
                 this.app.ui.setError(e.message || 'Error occurred.');
@@ -1384,13 +1390,14 @@
                     if (d.csrf_token) this.app.refreshCsrf(d.csrf_token);
                     if (d.flash_html) this.app.ui.showServerFlash(d.flash_html);
 
-                    if (d.new_interaction_id || d.used_interaction_ids) {
+                    if (d.new_interaction_id) {
                         this.app.history.addItem({
                             id: d.new_interaction_id,
                             timestamp: d.timestamp,
                             user_input: d.user_input,
                             context_files: this.contextFiles
                         }, (this.thoughtAccum ? `<thought>\n${this.thoughtAccum}\n</thought>\n\n` : '') + accum);
+                        this.app.history.highlightContext([d.new_interaction_id]);
                     }
                 } catch (e) {
                     console.error("Stream parse error", e, line);
@@ -1750,6 +1757,20 @@
             if (header.nextSibling) this.listEl.insertBefore(el, header.nextSibling);
             else this.listEl.appendChild(el);
             this.isEmpty = false;
+        }
+        highlightContext(ids) {
+            if (!ids || !ids.length) return;
+            const id = ids[0]; // Highlight the primary/first item
+            const memTab = new bootstrap.Tab(document.getElementById('memory-tab'));
+            memTab.show();
+            setTimeout(() => {
+                const newItem = this.listEl.querySelector(`.memory-item[data-id="${id}"]`);
+                if (newItem) {
+                    newItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    newItem.classList.add('bg-warning', 'bg-opacity-10');
+                    setTimeout(() => newItem.classList.remove('bg-warning', 'bg-opacity-10'), 2000);
+                }
+            }, 300);
         }
         async loadMore() {
             await this.fetchHistory(true);
