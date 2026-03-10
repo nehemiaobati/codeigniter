@@ -18,6 +18,7 @@
         --gemini-z-header: 1020;
         --gemini-z-sidebar: 1050;
         --gemini-z-overlay: 1040;
+        --gemini-timing: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     /* =========================================
@@ -137,6 +138,45 @@
     /* =========================================
        6. Components
        ========================================= */
+
+    /* Custom Toggles */
+    .form-switch .form-check-input {
+        transition: background-color var(--gemini-timing), border-color var(--gemini-timing), transform 0.2s ease-in-out;
+    }
+
+    .form-switch .form-check-input:active {
+        transform: scale(0.9);
+    }
+
+    /* Custom Tabs */
+    .nav-pills.gemini-tabs .nav-link {
+        transition: all var(--gemini-timing);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .nav-pills.gemini-tabs .nav-link::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 0;
+        height: 2px;
+        background-color: var(--bs-primary);
+        transition: width var(--gemini-timing), left var(--gemini-timing);
+    }
+
+    .nav-pills.gemini-tabs .nav-link.active {
+        background-color: transparent !important;
+        color: var(--bs-primary) !important;
+        font-weight: 600;
+    }
+
+    .nav-pills.gemini-tabs .nav-link.active::after {
+        width: 100%;
+        left: 0;
+    }
+
     /* Textarea */
     .prompt-textarea {
         resize: none;
@@ -294,23 +334,43 @@
     }
 
     .polling-pulse {
-        animation: pulse-border 2s infinite;
+        animation: pulse-border 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
 
     @keyframes pulse-border {
-        0% {
+
+        0%,
+        100% {
             border-color: var(--bs-primary);
-            box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.4);
+            box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.5);
         }
 
-        70% {
-            border-color: var(--bs-primary);
-            box-shadow: 0 0 0 10px rgba(13, 110, 253, 0);
+        50% {
+            border-color: var(--bs-info);
+            box-shadow: 0 0 0 8px rgba(13, 110, 253, 0);
+        }
+    }
+
+    /* Thinking State Skeletons */
+    .thinking-skeleton-pulse {
+        animation: thinking-shimmer 2s infinite linear;
+        background: linear-gradient(90deg,
+                var(--bs-tertiary-bg) 0%,
+                var(--bs-secondary-bg) 50%,
+                var(--bs-tertiary-bg) 100%);
+        background-size: 200% 100%;
+        border-radius: 4px;
+        height: 1.2em;
+        margin-bottom: 0.5rem;
+    }
+
+    @keyframes thinking-shimmer {
+        0% {
+            background-position: -200% 0;
         }
 
         100% {
-            border-color: var(--bs-primary);
-            box-shadow: 0 0 0 0 rgba(13, 110, 253, 0);
+            background-position: 200% 0;
         }
     }
 
@@ -392,16 +452,6 @@
     #results-card .card-footer {
         border-bottom-left-radius: calc(var(--bs-border-radius) - 1px);
         border-bottom-right-radius: calc(var(--bs-border-radius) - 1px);
-    }
-
-    /* Code Blocks */
-    pre {
-        background: var(--gemini-code-bg);
-        color: #fff;
-        padding: 1rem;
-        border-radius: 5px;
-        position: relative;
-        margin-top: 1rem;
     }
 
     .thinking-content {
@@ -567,7 +617,7 @@
                 <div class="text-center text-muted mt-5 pt-5" id="empty-state">
                     <div class="display-1 text-body-tertiary mb-3"><i class="bi bi-lightbulb"></i></div>
                     <h5>Start Creating</h5>
-                    <p>Enter your prompt below to generate text, images, or code.</p>
+                    <p>Enter your prompt below to generate text, images, videos, or code.</p>
                 </div>
             <?php endif; ?>
         </div>
@@ -578,7 +628,7 @@
                 <?= csrf_field() ?>
 
                 <!-- Mode Tabs -->
-                <ul class="nav nav-pills nav-sm mb-2" id="generationTabs" role="tablist">
+                <ul class="nav nav-pills gemini-tabs nav-sm mb-2" id="generationTabs" role="tablist">
                     <li class="nav-item">
                         <button type="button" class="nav-link active py-2 px-3" data-bs-toggle="tab" data-type="text" data-model="gemini-2.5-flash">
                             <i class="bi bi-chat-text me-2"></i>Text
@@ -601,7 +651,7 @@
                     <!-- Image Models -->
                     <div id="image-models-grid" class="d-flex gap-2 d-none overflow-auto py-2">
                         <?php foreach ($mediaConfigs as $modelId => $config): ?>
-                            <?php if (strpos($config['type'], 'image') !== false): ?>
+                            <?php if (str_contains($config['type'], 'image')): ?>
                                 <div class="model-card card p-2" style="min-width: 120px;" data-model="<?= esc($modelId) ?>" data-type="image">
                                     <div class="text-center small">
                                         <i class="bi bi-image fs-5 text-primary"></i>
@@ -667,7 +717,7 @@
     <aside class="gemini-sidebar collapse collapse-horizontal show" id="geminiSidebar">
         <!-- Header with Tabs -->
         <div class="d-flex align-items-center mb-3">
-            <ul class="nav nav-pills nav-fill flex-grow-1 p-1 bg-body rounded" id="sidebarTabs" role="tablist" style="font-size: 0.9rem;">
+            <ul class="nav nav-pills gemini-tabs nav-fill flex-grow-1 p-1 bg-body rounded" id="sidebarTabs" role="tablist" style="font-size: 0.9rem;">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active py-1" id="config-tab" data-bs-toggle="tab" data-bs-target="#config-pane" type="button" role="tab"><i class="bi bi-sliders me-1"></i> Config</button>
                 </li>
@@ -722,13 +772,13 @@
                 <hr>
 
                 <!-- Danger Zone -->
-                <form action="<?= url_to('gemini.memory.clear') ?>" method="post" onsubmit="return confirm('Clear all history?');">
+                <form id="clearHistoryForm" action="<?= url_to('gemini.memory.clear') ?>" method="post">
                     <?= csrf_field() ?>
                     <button type="submit" id="clearHistorySubmit" class="btn btn-outline-danger w-100 btn-sm"><i class="bi bi-trash me-2"></i> Clear History</button>
                 </form>
 
                 <div class="mt-4 pt-4 text-center">
-                    <small class="text-muted">AFRIKENKID AI Studio v2</small>
+                    <small class="text-muted">AFRIKENKID AI Studio</small>
                 </div>
             </div>
 
@@ -804,7 +854,6 @@
      */
 
     // Configuration Constants
-    // Configuration Constants
     const APP_CONFIG = {
         csrfName: '<?= csrf_token() ?>',
         csrfHash: '<?= csrf_hash() ?>', // Initial hash
@@ -835,7 +884,8 @@
      * ViewTemplates
      * Central repository for HTML strings to keep JS logic clean.
      */
-    const ViewTemplates = {
+    // Internal implementation detail — only ViewRenderer may call this.
+    const _ViewTemplates = {
         resultCard: (title, toolbar, bodyContent, processingClass) => `
             <div class="card blueprint-card shadow-sm border-primary ${processingClass}" id="results-card">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
@@ -945,7 +995,23 @@
                    class="btn btn-primary">
                     <i class="bi bi-download"></i> Download Video
                 </a>
-            </div>`
+            </div>`,
+
+        textSkeleton: `
+            <div class="p-3 animate__animated animate__fadeIn loading-skeleton">
+                <div class="d-flex align-items-center text-primary mb-3">
+                    <div class="spinner-grow spinner-grow-sm me-2" role="status"></div>
+                    <span class="fst-italic fw-medium">Synthesizing response...</span>
+                </div>
+                <div class="placeholder-glow">
+                    <div class="thinking-skeleton-pulse w-75"></div>
+                    <div class="thinking-skeleton-pulse w-50"></div>
+                    <div class="thinking-skeleton-pulse w-100"></div>
+                </div>
+            </div>`,
+
+        emptyHistory: `<div class="text-center text-muted mt-5 small">No interaction history yet.</div>`,
+        errorHistory: `<div class="text-center text-danger mt-4"><small>Failed to load history.</small></div>`
     };
 
     /**
@@ -972,18 +1038,18 @@
 
         static renderResultCard(isMedia = false, title = 'Studio Output', processing = false) {
             const processingClass = processing ? 'polling-pulse' : '';
-            const bodyContent = isMedia ? ViewTemplates.mediaBody : ViewTemplates.textBody;
-            const toolbar = isMedia ? '' : ViewTemplates.toolbar;
+            const bodyContent = isMedia ? _ViewTemplates.mediaBody : _ViewTemplates.textBody;
+            const toolbar = isMedia ? '' : _ViewTemplates.toolbar;
 
-            return ViewTemplates.resultCard(title, toolbar, bodyContent, processingClass);
+            return _ViewTemplates.resultCard(title, toolbar, bodyContent, processingClass);
         }
 
         static renderAudioPlayer(url) {
-            return ViewTemplates.audioPlayer(url);
+            return _ViewTemplates.audioPlayer(url);
         }
 
         static renderFileChip(file, id) {
-            return ViewTemplates.fileChip(file, id);
+            return _ViewTemplates.fileChip(file, id);
         }
 
         static renderHistoryHeader(date) {
@@ -995,8 +1061,18 @@
 
         static renderHistoryItem(item) {
             const el = document.createElement('div');
-            el.className = 'memory-item p-3 mb-2 rounded border shadow-sm position-relative';
+            el.className = 'memory-item p-3 mb-2 rounded border shadow-sm position-relative cursor-pointer';
             el.dataset.id = item.unique_id || item.id;
+
+            let contextBadges = '';
+            if (item.context_files && item.context_files.length > 0) {
+                contextBadges = `<div class="mb-2 mt-1 d-flex flex-wrap gap-1">` + item.context_files.map(file =>
+                    `<span class="badge bg-secondary-subtle border text-secondary text-truncate d-inline-block" style="font-size: 0.7em; max-width: 100%;">
+                        <i class="bi bi-paperclip"></i> <span title="${this.escapeHtml(file)}">${this.escapeHtml(file)}</span>
+                     </span>`
+                ).join('') + `</div>`;
+            }
+
             el.innerHTML = `
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="text-truncate fw-medium" style="max-width: 85%; font-size: 0.85rem;" title="${this.escapeHtml(item.user_input || item.user_input_raw)}">
@@ -1006,6 +1082,7 @@
                         <i class="bi bi-trash"></i>
                     </button>
                 </div>
+                ${contextBadges}
                 <div class="text-muted text-truncate small" style="opacity: 0.7;">
                     ${this.escapeHtml(item.ai_output || item.ai_output_raw)}
                 </div>`;
@@ -1023,19 +1100,31 @@
         }
 
         static renderFlashMessage(msg, type = 'danger') {
-            return ViewTemplates.flashMessage(msg, type);
+            return _ViewTemplates.flashMessage(msg, type);
         }
 
         static renderVideoProcessing(elapsed = 0) {
-            return ViewTemplates.videoProcessing(elapsed);
+            return _ViewTemplates.videoProcessing(elapsed);
         }
 
         static renderVideoPlayer(url) {
-            return ViewTemplates.videoPlayer(url);
+            return _ViewTemplates.videoPlayer(url);
         }
 
         static renderImage(url) {
-            return ViewTemplates.image(url);
+            return _ViewTemplates.image(url);
+        }
+
+        static renderTextSkeleton() {
+            return _ViewTemplates.textSkeleton;
+        }
+
+        static renderEmptyHistory() {
+            return _ViewTemplates.emptyHistory;
+        }
+
+        static renderErrorHistory() {
+            return _ViewTemplates.errorHistory;
         }
     }
 
@@ -1299,6 +1388,7 @@
             this.enableCodeFeatures();
             this.setupDownloads();
             this.setupMediaClickHandler(); // Security: Event delegation for media
+            this.setupClearHistoryConfirm();
         }
 
         setupResponsiveSidebar() {
@@ -1577,6 +1667,21 @@
             // Rule 5.1: Standardized feedback
             document.getElementById('audio-player-container').innerHTML = ViewRenderer.renderAudioPlayer(url);
         }
+
+        /**
+         * RC-4: UIManager is the sole owner of all flash container writes.
+         * Handles server-rendered HTML fragments (as opposed to showStatus which wraps renderFlashMessage).
+         * @param {string} html - Server-rendered HTML string
+         */
+        showServerFlash(html) {
+            if (this.els.flashContainer) this.els.flashContainer.innerHTML = html;
+        }
+
+        setupClearHistoryConfirm() {
+            document.getElementById('clearHistoryForm')?.addEventListener('submit', (e) => {
+                if (!confirm('Clear all history?')) e.preventDefault();
+            });
+        }
     }
 
     /**
@@ -1589,6 +1694,7 @@
         constructor(app) {
             this.app = app;
             this.activeVideoOp = null;
+            this._polling = false; // RC-1: Guard against poll queue buildup
             this.timers = {
                 poller: null,
                 ticker: null
@@ -1629,10 +1735,13 @@
             this.app.ui.renderMediaCard(ViewRenderer.renderVideoProcessing(elapsed), true);
 
             // 1. Ticker (Visual)
+            let cachedContainer = null;
             this.timers.ticker = setInterval(() => {
                 elapsed++;
-                const container = document.querySelector('.media-output-container');
-                if (container) container.innerHTML = ViewRenderer.renderVideoProcessing(elapsed);
+                if (!cachedContainer || !cachedContainer.isConnected) {
+                    cachedContainer = document.querySelector('.media-output-container');
+                }
+                if (cachedContainer) cachedContainer.innerHTML = ViewRenderer.renderVideoProcessing(elapsed);
             }, 1000);
 
             // 2. Poller (Network)
@@ -1640,6 +1749,10 @@
         }
 
         async _poll(opId) {
+            // RC-1: Skip if a poll is already in-flight (prevents queue buildup when polls take >5s)
+            if (this._polling) return;
+            this._polling = true;
+
             const fd = new FormData();
             fd.append('op_id', opId);
 
@@ -1651,18 +1764,18 @@
                     this.app.ui.setLoading(false);
 
                     // Show cost feedback
-                    if (d.cost_deducted && this.app.ui.els.flashContainer) {
-                        this.app.ui.els.flashContainer.innerHTML = ViewRenderer.renderFlashMessage(APP_CONFIG.localization.currency + " " + parseFloat(d.cost_deducted).toFixed(2) + " deducted.", 'success');
+                    if (d.cost_deducted) {
+                        this.app.ui.showStatus(`${APP_CONFIG.localization.currency} ${parseFloat(d.cost_deducted).toFixed(2)} deducted.`, 'success');
                     }
                 } else if (d.status === 'failed' || d.status === 'error') {
                     throw new Error(d.message);
                 }
             } catch (e) {
                 this._stop();
-                if (this.app.ui.els.flashContainer) {
-                    this.app.ui.els.flashContainer.innerHTML = ViewRenderer.renderFlashMessage(e.message || 'Video processing failed.', 'danger');
-                }
+                this.app.ui.showStatus(e.message || 'Video processing failed.', 'danger');
                 this.app.ui.setLoading(false);
+            } finally {
+                this._polling = false;
             }
         }
 
@@ -1670,6 +1783,7 @@
             if (this.timers.ticker) clearInterval(this.timers.ticker);
             if (this.timers.poller) clearInterval(this.timers.poller);
             this.activeVideoOp = null;
+            this._polling = false; // RC-1: Reset on explicit stop
         }
     }
 
@@ -1684,6 +1798,7 @@
     class InteractionHandler {
         constructor(app) {
             this.app = app;
+            this.isSubmitting = false; // RC-3: Guard against double-submit (e.g. rapid Enter in TinyMCE)
         }
         init() {
             document.getElementById('geminiForm')?.addEventListener('submit', e => this.handleSubmit(e));
@@ -1691,10 +1806,20 @@
 
         async handleSubmit(e) {
             e.preventDefault();
+            // RC-3: Prevent double-submit (form.requestSubmit() bypasses disabled button state)
+            if (this.isSubmitting) return;
+            this.isSubmitting = true;
+
             const type = this.app.ui.els.genType.value;
             if (typeof tinymce !== 'undefined') tinymce.triggerSave();
             const prompt = this.app.ui.els.prompt.value.trim();
-            if (!prompt && type === 'text') return this.app.ui.showToast('Please enter a prompt.');
+            if (!prompt && type === 'text') {
+                this.isSubmitting = false;
+                return this.app.ui.showToast('Please enter a prompt.');
+            }
+
+            // Capture currently attached files for Context Visibility
+            this.currentContextFiles = Array.from(document.querySelectorAll('.file-chip .file-name')).map(el => el.textContent);
 
             this.app.ui.setLoading(true);
             const fd = new FormData(this.app.ui.els.form);
@@ -1706,20 +1831,7 @@
                 // 1. Show Skeleton / Thinking State
                 const bodyEl = document.getElementById('ai-response-body');
                 if (bodyEl) {
-                    bodyEl.innerHTML = `
-                        <div class="p-3 animate__animated animate__fadeIn loading-skeleton">
-                            <div class="d-flex align-items-center text-muted mb-3">
-                                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                                <span class="fst-italic">Gemini is thinking...</span>
-                            </div>
-                            <div class="placeholder-glow op-50">
-                                <span class="placeholder col-7 rounded"></span>
-                                <span class="placeholder col-4 rounded"></span>
-                                <span class="placeholder col-4 rounded"></span>
-                                <span class="placeholder col-6 rounded"></span>
-                                <span class="placeholder col-8 rounded"></span>
-                            </div>
-                        </div>`;
+                    bodyEl.innerHTML = ViewRenderer.renderTextSkeleton();
                 }
 
                 // 2. Optimistic History Append
@@ -1727,7 +1839,8 @@
                 this.app.history.addItem({
                     id: 'pending-' + Date.now(),
                     timestamp: new Date().toISOString(),
-                    user_input: prompt
+                    user_input: prompt,
+                    context_files: this.currentContextFiles
                 }, ''); // Empty AI output intentionally
 
                 this.app.ui.scrollToBottom();
@@ -1735,19 +1848,28 @@
 
             try {
                 if (type === 'text') {
-                    if (this.app.ui.els.streamCheck?.checked) await this.app.streamer.start(fd);
-                    else await this.generateText(fd);
+                    if (this.app.ui.els.streamCheck?.checked) {
+                        await this.app.streamer.start(fd, this.currentContextFiles);
+                    } else {
+                        await this.generateText(fd);
+                    }
                 } else {
                     await this.generateMedia(fd);
                 }
             } catch (e) {
-                // UI error handled in calls
+                // UI error is shown inside the handlers themselves
             } finally {
-                // Only set loading to false if not a video generation, as JobManager handles it for video.
-                if (type !== 'video') this.app.ui.setLoading(false);
+                // Video processing handles its own loading state removal (via JobManager polling completion)
+                if (type !== 'video') {
+                    this.app.ui.setLoading(false);
+                }
+                this.isSubmitting = false; // RC-3: Release guard
             }
         }
 
+        /**
+         * Orchestrates standard (non-streaming) text generation.
+         */
         async generateText(fd) {
             this.app.ui.ensureResultCard();
             try {
@@ -1757,15 +1879,14 @@
                     document.getElementById('raw-response').value = d.raw_result;
                     this.app.ui.enableCodeFeatures();
                     this.app.ui.scrollToBottom();
-                    if (d.flash_html && this.app.ui.els.flashContainer) {
-                        this.app.ui.els.flashContainer.innerHTML = d.flash_html;
-                    }
+                    if (d.flash_html) this.app.ui.showServerFlash(d.flash_html);
                     this.app.ui.renderAudio(d.audio_url);
 
                     if (d.new_interaction_id) this.app.history.addItem({
                         id: d.new_interaction_id,
                         timestamp: d.timestamp,
-                        user_input: d.user_input
+                        user_input: d.user_input,
+                        context_files: this.currentContextFiles
                     }, d.raw_result);
 
                     if (d.used_interaction_ids) this.app.history.highlightContext(d.used_interaction_ids);
@@ -1778,10 +1899,12 @@
             this.app.uploader.clear();
         }
 
+        /**
+         * Orchestrates media (Image/Video) generation.
+         */
         async generateMedia(fd) {
-            // Frontend Gatekeeper via JobManager
             if (this.app.jobs.isActive()) {
-                document.getElementById('flash-messages-container').innerHTML = ViewRenderer.renderFlashMessage('You have a pending video generation. Please wait.', 'warning');
+                this.app.ui.showStatus('You have a pending video generation. Please wait.', 'warning');
                 this.app.ui.setLoading(false);
                 return;
             }
@@ -1793,25 +1916,12 @@
                 if (d.type === 'image') {
                     this.app.ui.renderMediaCard(ViewRenderer.renderImage(d.url));
                 } else if (d.type === 'video') {
-                    // Hand off to JobManager
                     this.app.jobs.startPolling(d.op_id);
                 }
 
-                // Show cost feedback
-                if (d.flash_html && this.app.ui.els.flashContainer) {
-                    this.app.ui.els.flashContainer.innerHTML = d.flash_html;
-                }
+                if (d.flash_html) this.app.ui.showServerFlash(d.flash_html);
             } catch (e) {
-                let msg = e.message || 'Media Generation Failed';
-
-                // Standardized Error Handling
-                this.app.ui.setError(msg);
-
-                // Special toast/alert if needed
-                if (e.message && e.message.includes('pending video')) {
-                    this.app.ui.showToast(msg, 'warning');
-                }
-
+                this.app.ui.setError(e.message || 'Media Generation Failed');
                 this.app.ui.setLoading(false);
             }
             this.app.uploader.clear();
@@ -1835,9 +1945,11 @@
             this.app = app;
             this.buffer = '';
             this.firstChunk = true;
+            this.contextFiles = [];
         }
 
-        async start(formData) {
+        async start(formData, contextFiles = []) {
+            this.contextFiles = contextFiles;
             this.app.ui.ensureResultCard();
             const els = {
                 body: document.getElementById('ai-response-body'),
@@ -1866,7 +1978,9 @@
                             window.location.href = d.redirect;
                             return;
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        console.warn('SSE 403: Could not parse redirect body.', e);
+                    }
 
                     this.app.ui.showToast('Session updated or expired. Reloading...', 'warning');
                     setTimeout(() => window.location.reload(), 2000);
@@ -1876,7 +1990,6 @@
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let accum = '';
-                this.currentFullText = '';
 
                 while (true) {
                     const {
@@ -1902,7 +2015,7 @@
                     accum = this.processLines([this.buffer], accum, els);
                 }
 
-                this.currentFullText = accum; // For history
+                // accum holds the final full text; history sync handled inline via d.new_interaction_id events
                 this.app.ui.enableCodeFeatures();
             } catch (e) {
                 this.app.ui.setError('Stream Connection Lost.');
@@ -1912,48 +2025,73 @@
 
         processLines(lines, accum, els) {
             lines.forEach(line => {
-                if (line.startsWith('data: ')) {
-                    try {
-                        const d = JSON.parse(line.substring(6));
+                if (!line.startsWith('data: ')) return;
 
-                        // Remove skeleton if present
-                        if (this.firstChunk && (d.thought || d.text)) {
-                            els.body.querySelector('.loading-skeleton')?.remove();
-                            this.firstChunk = false;
-                        }
+                try {
+                    const d = JSON.parse(line.substring(6));
 
-                        if (d.thought) {
-                            this._ensureThinkingBlock(els.body);
-                            this._appendToThinkingBlock(els.body, d.thought);
-                            if (!els.raw.value.includes('=== THINKING PROCESS ===')) els.raw.value = '=== THINKING PROCESS ===\n\n' + els.raw.value;
-                            els.raw.value += d.thought;
-                        } else if (d.text) {
-                            accum += d.text;
-                            if (els.raw.value.includes('=== THINKING PROCESS ===') && !els.raw.value.includes('=== ANSWER ===')) els.raw.value += '\n\n=== ANSWER ===\n\n';
-                            this._preserveThinkingBlockWhileUpdating(els.body, () => {
-                                els.body.innerHTML = marked.parse(accum);
-                                els.raw.value += d.text;
-                            });
-                        }
-                        if (d.error) this.app.ui.setError(d.error);
-                        if (d.cost) this.app.ui.els.flashContainer.innerHTML = ViewRenderer.renderFlashMessage(`${APP_CONFIG.localization.currency} ${parseFloat(d.cost).toFixed(2)} deducted.`, 'success');
-                        if (d.audio_url) this.app.ui.renderAudio(d.audio_url);
-                        if (d.csrf_token) this.app.refreshCsrf(d.csrf_token);
-
-                        // History sync handled here if needed, or at end
-                        if (d.new_interaction_id) {
-                            this.app.history.addItem({
-                                id: d.new_interaction_id,
-                                timestamp: d.timestamp,
-                                user_input: d.user_input
-                            }, accum); // Use current accumulated text
-                        }
-                        if (d.used_interaction_ids) this.app.history.highlightContext(d.used_interaction_ids);
-                    } catch (e) {
-                        console.error("Parse error", e);
+                    // First data chunk removes the skeleton
+                    if (this.firstChunk && (d.thought || d.text)) {
+                        els.body.querySelector('.loading-skeleton')?.remove();
+                        this.firstChunk = false;
                     }
+
+                    if (d.thought) {
+                        this._handleThoughtChunk(els, d.thought);
+                    } else if (d.text) {
+                        accum = this._handleTextChunk(els, accum, d.text);
+                    }
+
+                    if (d.error) this.app.ui.setError(d.error);
+                    if (d.cost) this.app.ui.els.flashContainer.innerHTML = ViewRenderer.renderFlashMessage(`${APP_CONFIG.localization.currency} ${parseFloat(d.cost).toFixed(2)} deducted.`, 'success');
+                    if (d.audio_url) this.app.ui.renderAudio(d.audio_url);
+                    if (d.csrf_token) this.app.refreshCsrf(d.csrf_token);
+
+                    if (d.new_interaction_id) {
+                        this.app.history.addItem({
+                            id: d.new_interaction_id,
+                            timestamp: d.timestamp,
+                            user_input: d.user_input,
+                            context_files: this.contextFiles
+                        }, accum);
+                    }
+                    if (d.used_interaction_ids) {
+                        this.app.history.highlightContext(d.used_interaction_ids);
+                    }
+                } catch (e) {
+                    console.error("Stream parse error", e, line);
                 }
             });
+            return accum;
+        }
+
+        _handleThoughtChunk(els, thoughtText) {
+            this._ensureThinkingBlock(els.body);
+            const content = els.body.querySelector('.thinking-block .thinking-content');
+            if (content) content.textContent += thoughtText;
+
+            if (!els.raw.value.includes('=== THINKING PROCESS ===')) {
+                els.raw.value = '=== THINKING PROCESS ===\n\n' + els.raw.value;
+            }
+            els.raw.value += thoughtText;
+        }
+
+        _handleTextChunk(els, accum, textChunk) {
+            accum += textChunk;
+            if (els.raw.value.includes('=== THINKING PROCESS ===') && !els.raw.value.includes('=== ANSWER ===')) {
+                els.raw.value += '\n\n=== ANSWER ===\n\n';
+            }
+
+            const block = els.body.querySelector('.thinking-block');
+            const wasOpen = block ? block.open : false;
+
+            els.body.innerHTML = marked.parse(accum);
+            els.raw.value += textChunk;
+
+            if (block) {
+                block.open = wasOpen;
+                els.body.insertBefore(block, els.body.firstChild);
+            }
             return accum;
         }
 
@@ -1964,22 +2102,8 @@
             details.innerHTML = '<summary class="cursor-pointer text-muted fw-bold small">Thinking Process</summary><div class="thinking-content fst-italic text-muted p-2 border-start mt-1 small"></div>';
             bodyEl.insertBefore(details, bodyEl.firstChild);
         }
-
-        _appendToThinkingBlock(bodyEl, text) {
-            const content = bodyEl.querySelector('.thinking-block .thinking-content');
-            if (content) content.textContent += text;
-        }
-
-        _preserveThinkingBlockWhileUpdating(bodyEl, updateFn) {
-            const block = bodyEl.querySelector('.thinking-block');
-            const wasOpen = block ? block.open : false; // Preserve open state
-            updateFn();
-            if (block) {
-                block.open = wasOpen; // Restore open state
-                bodyEl.insertBefore(block, bodyEl.firstChild);
-            }
-        }
     }
+
     /**
      * Manages multimodal resource uploads.
      * 
@@ -2058,6 +2182,10 @@
 
             try {
                 const r = await this.app.sendAjax(APP_CONFIG.endpoints.upload, fd);
+                // RC-2: User may have removed the chip while this upload was in-flight.
+                // If cancelled, do not update UI or inject the hidden input for this file.
+                if (job.cancelled) return;
+
                 if (r.status === 'success') {
                     this.updateChipStatus(job.ui, 'success');
                     job.ui.querySelector('.remove-btn').dataset.serverFileId = r.file_id;
@@ -2066,8 +2194,10 @@
                     throw new Error(r.message || 'Upload failed');
                 }
             } catch (e) {
-                this.updateChipStatus(job.ui, 'error');
-                this.app.ui.showStatus(e.message || 'Upload failed', 'danger');
+                if (!job.cancelled) {
+                    this.updateChipStatus(job.ui, 'error');
+                    this.app.ui.showStatus(e.message || 'Upload failed', 'danger');
+                }
             } finally {
                 this.isUploading = false;
                 this.processQueue();
@@ -2094,8 +2224,15 @@
 
         async removeFile(btn) {
             const fid = btn.dataset.serverFileId;
+            const jobId = btn.dataset.id;
             btn.closest('.file-chip').remove();
-            document.getElementById(`input-${btn.dataset.id}`)?.remove();
+            document.getElementById(`input-${jobId}`)?.remove();
+
+            // RC-2: Mark any queued (not-yet-started) job as cancelled so the upload
+            // path won't inject an orphaned hidden input after the chip is gone.
+            const queued = this.queue.find(j => j.id === jobId);
+            if (queued) queued.cancelled = true;
+
             if (fid) {
                 const fd = new FormData();
                 fd.append('file_id', fid);
@@ -2110,10 +2247,6 @@
         }
     }
 
-    /**
-     * 6. Prompt Manager
-     * Handles loading and saving prompts.
-     */
     /**
      * Manages saved prompt template CRUD operations.
      */
@@ -2137,8 +2270,8 @@
             const form = document.querySelector('#savePromptModal form');
             if (form) {
                 document.getElementById('savePromptModal').addEventListener('show.bs.modal', () => {
-                    const val = tinymce.get('prompt') ? tinymce.get('prompt').getContent() : document.getElementById('prompt').value;
-                    document.getElementById('modalPromptText').value = val;
+                    const editor = tinymce.get('prompt');
+                    document.getElementById('modalPromptText').value = editor ? editor.getContent() : document.getElementById('prompt').value;
                 });
                 form.onsubmit = async (e) => {
                     e.preventDefault();
@@ -2183,9 +2316,6 @@
     }
 
     /**
-     * 7. History Manager (Memory Stream)
-     */
-    /**
      * Handles conversational history and temporal grouping.
      * 
      * Functional scope:
@@ -2200,6 +2330,7 @@
             this.listEl = document.getElementById('history-list');
             this.loadingEl = document.getElementById('memory-loading');
             this.isLoaded = false;
+            this.isEmpty = true; // Tracks whether list has real items; avoids fragile DOM class inspection
             this.offset = 0;
             this.limit = HistoryManager.HISTORY_PAGE_SIZE;
             this.hasMore = true;
@@ -2221,6 +2352,25 @@
                 if (loadBtn) {
                     e.preventDefault();
                     this.loadMore();
+                    return;
+                }
+
+                // Allow tap to full display of content
+                const item = e.target.closest('.memory-item');
+                if (item) {
+                    const truncates = item.querySelectorAll('.text-truncate');
+                    if (truncates.length > 0) {
+                        truncates.forEach(el => {
+                            el.classList.remove('text-truncate');
+                            el.style.whiteSpace = 'normal';
+                        });
+                    } else {
+                        const expanded = item.querySelectorAll('[style*="white-space: normal"]');
+                        expanded.forEach(el => {
+                            el.classList.add('text-truncate');
+                            el.style.whiteSpace = '';
+                        });
+                    }
                 }
             });
         }
@@ -2243,12 +2393,13 @@
                 if (d.status === 'success') {
                     this.renderList(d.history, append);
                     this.isLoaded = true;
+                    if (d.history.length > 0) this.isEmpty = false; // Sync flag after fetch
                     this.offset += d.history.length;
                     this.hasMore = d.history.length === this.limit;
                     this.updateLoadMoreButton();
                 }
             } catch (e) {
-                if (!append) this.listEl.innerHTML = '<div class="text-center text-danger mt-4"><small>Failed to load history.</small></div>';
+                if (!append) this.listEl.innerHTML = ViewRenderer.renderErrorHistory();
             } finally {
                 if (!append) {
                     this.loadingEl.classList.add('d-none');
@@ -2259,7 +2410,7 @@
 
         renderList(items, append = false) {
             if (!items || items.length === 0) {
-                if (!append) this.listEl.innerHTML = '<div class="text-center text-muted mt-5 small">No interaction history yet.</div>';
+                if (!append) this.listEl.innerHTML = ViewRenderer.renderEmptyHistory();
                 return;
             }
             if (!append) {
@@ -2338,7 +2489,8 @@
                 document.querySelectorAll('.memory-item[data-id^="pending-"]').forEach(el => el.remove());
             }
 
-            if (this.listEl.querySelector('.text-center.text-muted')) this.listEl.innerHTML = '';
+            // Clear the placeholder stub using the reliable isEmpty flag
+            if (this.isEmpty) this.listEl.innerHTML = '';
             const dateStr = this.formatDate(item.timestamp);
             let header = this.listEl.querySelector('.memory-date-header');
             if (!header || header.textContent !== dateStr) {
@@ -2349,11 +2501,13 @@
             const newItem = {
                 unique_id: item.id,
                 user_input: item.user_input,
-                ai_output: aiRaw
+                ai_output: aiRaw,
+                context_files: item.context_files
             };
             const el = ViewRenderer.renderHistoryItem(newItem);
             if (header.nextSibling) this.listEl.insertBefore(el, header.nextSibling);
             else this.listEl.appendChild(el);
+            this.isEmpty = false; // Mark list as populated
         }
 
         async loadMore() {

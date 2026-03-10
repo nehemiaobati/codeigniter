@@ -15,7 +15,7 @@ class ContactController extends BaseController
     {
         $data = [
             'pageTitle' => 'Contact Us | Afrikenkid',
-            'metaDescription' => 'Get in touch with the team for support, inquiries, or custom development projects. We serve Kenya, Africa, and global clients.',
+            'metaDescription' => 'Get in touch with our team for support, enterprise inquiries, or custom AI development projects.',
             'canonicalUrl' => url_to('contact.form'),
             'robotsTag'    => 'index, follow',
         ];
@@ -48,10 +48,10 @@ class ContactController extends BaseController
         }
 
         // Get raw POST data. Sanitization will happen at the point of output.
-        $name    = $this->request->getPost('name', FILTER_SANITIZE_SPECIAL_CHARS);
-        $email   = $this->request->getPost('email', FILTER_SANITIZE_EMAIL);
-        $subject = $this->request->getPost('subject', FILTER_SANITIZE_SPECIAL_CHARS);
-        $message = $this->request->getPost('message', FILTER_SANITIZE_SPECIAL_CHARS);
+        $name    = (string) ($this->request->getPost('name', FILTER_SANITIZE_SPECIAL_CHARS) ?? '');
+        $email   = (string) ($this->request->getPost('email', FILTER_SANITIZE_EMAIL) ?? '');
+        $subject = (string) ($this->request->getPost('subject', FILTER_SANITIZE_SPECIAL_CHARS) ?? '');
+        $message = (string) ($this->request->getPost('message', FILTER_SANITIZE_SPECIAL_CHARS) ?? '');
 
         $emailService = service('email');
 
@@ -70,11 +70,11 @@ class ContactController extends BaseController
         $emailContent = "
         <html>
         <body>
-            <p><strong>Name:</strong> " . esc($name) . "</p>
-            <p><strong>Email:</strong> " . esc($email) . "</p>
-            <p><strong>Subject:</strong> " . esc($subject) . "</p>
+            <p><strong>Name:</strong> " . (string) esc($name) . "</p>
+            <p><strong>Email:</strong> " . (string) esc($email) . "</p>
+            <p><strong>Subject:</strong> " . (string) esc($subject) . "</p>
             <p><strong>Message:</strong></p>
-            <p>" . nl2br(esc($message)) . "</p>
+            <p>" . nl2br((string) esc($message)) . "</p>
         </body>
         </html>";
 

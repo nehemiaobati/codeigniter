@@ -107,11 +107,23 @@ class AuthService
         $user->password = password_hash($data['password'], PASSWORD_DEFAULT);
         $user->verification_token = bin2hex(random_bytes(50));
 
+        $optIn = !empty($data['marketing']);
+        $user->marketing_opt_in = $optIn ? 1 : 0;
+        $user->unsubscribe_token = $optIn ? bin2hex(random_bytes(32)) : null;
+
         // 2. Send Verification Email
+
+
+        // Temporarily bypassing email sending due to production SMTP block.
+        // To revert: uncomment the block below and remove '$user->is_verified = true;'
+        ///$user->is_verified = true;
+
+        ////*
         if (! $this->_sendVerificationEmail($user)) {
             $this->userModel->db->transRollback();
             return ['success' => false, 'message' => 'Registration failed. Could not send verification email.'];
         }
+        ///*/
 
         // 3. Save User
         if (! $this->userModel->save($user)) {
@@ -138,6 +150,7 @@ class AuthService
     {
         $this->userModel->db->transStart();
 
+        /** @var \App\Entities\User|null $user */
         $user = $this->userModel->where('verification_token', $token)->first();
 
         if ($user) {
@@ -159,6 +172,7 @@ class AuthService
      */
     public function authenticate(string $email, string $password): array
     {
+        /** @var \App\Entities\User|null $user */
         $user = $this->userModel->where('email', $email)->first();
 
         // 1. Check User & Password
@@ -184,6 +198,7 @@ class AuthService
     {
         $this->userModel->db->transStart();
 
+        /** @var \App\Entities\User|null $user */
         $user = $this->userModel->where('email', $email)->first();
 
         if ($user) {
@@ -211,6 +226,7 @@ class AuthService
      */
     public function validateResetToken(string $token): bool
     {
+        /** @var \App\Entities\User|null $user */
         $user = $this->userModel->where('reset_token', $token)->first();
         return $user && Time::parse($user->reset_expires)->isAfter(Time::now());
     }
@@ -226,6 +242,7 @@ class AuthService
     {
         $this->userModel->db->transStart();
 
+        /** @var \App\Entities\User|null $user */
         $user = $this->userModel->where('reset_token', $token)->first();
 
         if (! $user || Time::parse($user->reset_expires)->isBefore(Time::now())) {

@@ -57,10 +57,15 @@ class CampaignService
             $emailService->setTo($user->email);
             $emailService->setSubject($campaign->subject);
 
+            // Add List-Unsubscribe header (RFC 2369)
+            $unsubscribeUrl = url_to('campaign.unsubscribe', $user->unsubscribe_token);
+            $emailService->setHeader('List-Unsubscribe', '<' . $unsubscribeUrl . '>');
+
             $emailData = [
-                'subject'      => $campaign->subject,
-                'body_content' => $campaign->body,
-                'username'     => $user->username,
+                'subject'           => $campaign->subject,
+                'body_content'      => $campaign->body,
+                'username'          => $user->username,
+                'unsubscribe_token' => $user->unsubscribe_token,
             ];
 
             $emailService->setMessage(view('App\Modules\Admin\Views\emails\campaign_email', $emailData));
@@ -145,13 +150,14 @@ class CampaignService
      */
     public function getDashboardData(?int $editingId = null): array
     {
+        /** @var \App\Modules\Admin\Entities\Campaign|null $editingCampaign */
         $editingCampaign = $editingId ? $this->campaignModel->find($editingId) : null;
 
         $lastQuotaHit = $this->campaignModel->where('quota_hit_at IS NOT NULL')
             ->orderBy('quota_hit_at', 'DESC')
             ->first();
 
-        $totalUserCount = $this->userModel->countAllResults();
+        $totalUserCount = $this->userModel->where('marketing_opt_in', 1)->countAllResults();
 
         $drafts = $this->campaignModel->where('status', 'draft')
             ->orderBy('updated_at', 'DESC')
@@ -218,7 +224,9 @@ class CampaignService
     {
         $this->db->transStart();
 
-        if (!$this->campaignModel->find($id)) {
+        /** @var \App\Modules\Admin\Entities\Campaign|null $campaign */
+        $campaign = $this->campaignModel->find($id);
+        if (!$campaign) {
             return ['success' => false, 'message' => 'Campaign template not found.'];
         }
 
@@ -281,6 +289,7 @@ class CampaignService
      */
     public function initiateCampaign(int $campaignId): array
     {
+        /** @var \App\Modules\Admin\Entities\Campaign|null $campaign */
         $campaign = $this->campaignModel->find($campaignId);
 
         if (!$campaign) {
@@ -291,12 +300,14 @@ class CampaignService
             return ['success' => false, 'message' => 'Campaign is already completed.'];
         }
 
-        // Snapshot the current max user ID
+        /** @var \App\Entities\User|null $maxUser */
         $maxUser = $this->userModel->selectMax('id')->first();
         $maxUserId = $maxUser ? (int)$maxUser->id : 0;
 
-        // Count total recipients up to that snapshot
-        $totalRecipients = $this->userModel->where('id <=', $maxUserId)->countAllResults();
+        // Count total recipients up to that snapshot who have opted in
+        $totalRecipients = $this->userModel->where('id <=', $maxUserId)
+            ->where('marketing_opt_in', 1)
+            ->countAllResults();
 
         // Update campaign status
         $this->campaignModel->update($campaignId, [
@@ -324,6 +335,7 @@ class CampaignService
      */
     public function processBatch(int $campaignId, int $batchSize = 50): array
     {
+        /** @var \App\Modules\Admin\Entities\Campaign|null $campaign */
         $campaign = $this->campaignModel->find($campaignId);
 
         if (!$campaign) {
@@ -348,8 +360,10 @@ class CampaignService
             ];
         }
 
+        /** @var \App\Entities\User[] $users */
         $users = $this->userModel->where('id >', $campaign->last_processed_id)
             ->where('id <=', (int)$campaign->max_user_id)
+            ->where('marketing_opt_in', 1)
             ->orderBy('id', 'ASC')
             ->findAll($actualBatchSize);
 
@@ -406,6 +420,7 @@ class CampaignService
      */
     public function processRetryBatch(int $campaignId, int $batchSize = 50): array
     {
+        /** @var \App\Modules\Admin\Entities\Campaign|null $campaign */
         $campaign = $this->campaignModel->find($campaignId);
 
         if (!$campaign) {
@@ -434,6 +449,7 @@ class CampaignService
         }
 
         $userids = array_column($failures, 'user_id');
+        /** @var \App\Entities\User[] $users */
         $users = $this->userModel->whereIn('id', $userids)->findAll();
 
         $emailResults = $this->_sendBatch($campaign, $users);
@@ -495,6 +511,7 @@ class CampaignService
      */
     public function resumeCampaign(int $campaignId): array
     {
+        /** @var \App\Modules\Admin\Entities\Campaign|null $campaign */
         $campaign = $this->campaignModel->find($campaignId);
 
         if (!$campaign) {

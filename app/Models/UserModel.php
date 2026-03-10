@@ -15,7 +15,7 @@ class UserModel extends Model
     protected $returnType       = User::class;
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['email', 'password', 'username', 'balance', 'verification_token', 'is_verified', 'reset_token', 'reset_expires'];
+    protected $allowedFields    = ['email', 'password', 'username', 'balance', 'verification_token', 'is_verified', 'reset_token', 'reset_expires', 'marketing_opt_in', 'unsubscribe_token'];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
@@ -73,7 +73,7 @@ class UserModel extends Model
     {
         $this->db->transStart();
 
-        /** @var User|null $user */
+        /** @var \App\Entities\User|null $user */
         $user = $this->find($userId);
 
         if (! $user) {
@@ -116,7 +116,7 @@ class UserModel extends Model
     {
         $this->db->transStart();
 
-        /** @var User|null $user */
+        /** @var \App\Entities\User|null $user */
         $user = $this->find($userId);
 
         if (! $user) {

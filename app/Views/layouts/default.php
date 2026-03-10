@@ -8,9 +8,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 
     <!-- SEO Meta Tags -->
-    <title><?= esc($pageTitle ?? 'AFRIKENKID | Generative AI & Crypto Wallet Balance and Transaction') ?></title>
-    <meta name="description" content="<?= esc($metaDescription ?? 'Access powerful Generative AI tools and real-time blockchain analytics. Pay easily via M-Pesa or Credit Card. Your all-in-one platform for AI and Crypto insights.') ?>">
-    <meta name="keywords" content="Generative AI, Google Gemini, Crypto Data, Bitcoin Wallet, Litecoin Wallet, Blockchain Query, AI Tools, Kenya, M-Pesa, Lipa na Mpesa, Mobile Money, CodeIgniter Development">
+    <title><?= esc($pageTitle ?? 'AFRIKENKID | Industry-Leading Generative AI & Crypto Analytics') ?></title>
+    <meta name="description" content="<?= esc($metaDescription ?? 'Unlock enterprise-grade Generative AI tools for video, image, and text creation, complemented by real-time blockchain analytics.') ?>">
+    <meta name="keywords" content="Generative AI, Google Gemini, Crypto Data, Bitcoin Wallet, Litecoin Wallet, Blockchain Query, AI Tools, M-Pesa, Lipa na Mpesa, Mobile Money, CodeIgniter Development">
 
     <!-- Geo-targeting -->
     <meta name="geo.region" content="KE">
@@ -24,15 +24,15 @@
     <!-- Social Media Meta (Open Graph for Facebook/LinkedIn) -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="<?= esc($canonicalUrl ?? current_url()) ?>">
-    <meta property="og:title" content="<?= esc($pageTitle ?? 'AFRIKENKID | Generative AI & Crypto Wallet Balance and Transaction') ?>">
-    <meta property="og:description" content="<?= esc($metaDescription ?? 'Access powerful Generative AI tools and real-time blockchain analytics. Pay easily via M-Pesa or Credit Card. Your all-in-one platform for AI and Crypto insights.') ?>">
+    <meta property="og:title" content="<?= esc($pageTitle ?? 'AFRIKENKID | Industry-Leading Generative AI & Crypto Analytics') ?>">
+    <meta property="og:description" content="<?= esc($metaDescription ?? 'Unlock enterprise-grade Generative AI tools for video, image, and text creation, complemented by real-time blockchain analytics.') ?>">
     <meta property="og:image" content="<?= esc($metaImage ?? base_url('assets/images/afrikenkid_og_image.jpg')) ?>">
 
     <!-- Twitter Card (LinkedIn also uses these) -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@afrikenkid">
-    <meta name="twitter:title" content="<?= esc($pageTitle ?? 'AFRIKENKID | Generative AI & Crypto Wallet Balance and Transaction') ?>">
-    <meta name="twitter:description" content="<?= esc($metaDescription ?? 'Access powerful Generative AI tools and real-time blockchain analytics. Pay easily via M-Pesa or Credit Card. Your all-in-one platform for AI and Crypto insights.') ?>">
+    <meta name="twitter:title" content="<?= esc($pageTitle ?? 'AFRIKENKID | Industry-Leading Generative AI & Crypto Analytics') ?>">
+    <meta name="twitter:description" content="<?= esc($metaDescription ?? 'Unlock enterprise-grade Generative AI tools for video, image, and text creation, complemented by real-time blockchain analytics.') ?>">
     <meta name="twitter:image" content="<?= esc($metaImage ?? base_url('assets/images/afrikenkid_og_image.jpg')) ?>">
     <meta name="twitter:image:alt" content="AFRIKENKID Platform Preview">
 
@@ -44,15 +44,14 @@
             "name": "AFRIKENKID",
             "applicationCategory": "MultimediaApplication",
             "operatingSystem": "Web",
-            "description": "<?= esc($metaDescription ?? 'Access powerful Generative AI tools and real-time blockchain analytics. Pay easily via M-Pesa or Credit Card. Your all-in-one platform for AI and Crypto insights.') ?>",
+            "description": "<?= esc($metaDescription ?? 'Unlock enterprise-grade Generative AI tools for video, image, and text creation, complemented by real-time blockchain analytics.') ?>",
             "url": "<?= esc($canonicalUrl ?? current_url()) ?>",
             "featureList": [
-                "Gemini AI",
+                "Enterprise Generative AI",
                 "Video Synthesis",
-                "Image Generation (Imagen and Gemini)",
-                "Document Analysis & Auditing",
-                "Real-Time Blockchain Verification (BTC & LTC)",
-                "Secure M-Pesa & Airtel Money Payments"
+                "Image Generation",
+                "Document Analysis",
+                "Real-Time Blockchain Analytics"
             ],
             "offers": {
                 "@type": "Offer",
@@ -70,7 +69,7 @@
                 "name": "Afrikenkid AI Studio",
                 "url": "<?= base_url() ?>"
             },
-            "keywords": "AI Video Generation Kenya, Gemini AI, M-Pesa Statement Analysis, Blockchain Data Verification, AI Studio Nairobi"
+            "keywords": "AI Video Generation, Gemini AI, M-Pesa Statement Analysis, Blockchain Data Verification, AI Studio"
         }
     </script>
 
@@ -78,7 +77,7 @@
     <link href="<?= base_url('assets/bootstrap/css/bootstrap.min.css') ?>" rel="stylesheet">
     <link rel="stylesheet" href="<?= base_url('assets/bootstrap-icons/font/bootstrap-icons.css') ?>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
@@ -241,9 +240,9 @@
     <nav id="mainNavbar" class="navbar navbar-expand-lg sticky-top py-3">
         <div class="container">
             <!-- EDIT: Added .fw-bold utility class -->
-            <a class="navbar-brand fs-4 fw-bold" href="<?= url_to('landing') ?>"><i class="bi bi-box"></i> AFRIKENKID</a>
+            <a class="navbar-brand fs-4 fw-bold" href="<?= url_to('landing') ?>"><i class="bi bi-box" aria-hidden="true"></i> AFRIKENKID</a>
 
-            <button class="navbar-toggler border-0 p-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNav" aria-controls="mobileNav">
+            <button class="navbar-toggler border-0 p-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNav" aria-controls="mobileNav" aria-label="Toggle Navigation Menu">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
@@ -339,7 +338,7 @@
             <div class="row">
                 <div class="col-lg-4 col-md-6 mb-4">
                     <h5>AFRIKENKID</h5>
-                    <p class="small">Build smarter with a pay-as-you-go platform. <br> Leverage Generative AI and query real-time BTC & LTC wallet data. Securely top up with Mobile Money (M-Pesa, Airtel Money, etc.). Built for creators, businesses, and developers in Kenya, Africa & Beyond.</p>
+                    <p class="small">Empowering creators and businesses with industry-leading Generative AI and advanced crypto analytics.</p>
                 </div>
                 <div class="col-lg-2 col-6">
                     <h5>Services</h5>
@@ -382,8 +381,8 @@
         <?= $this->include('partials/cookie_banner') ?>
     <?php endif; ?>
 
-    <script src="<?= base_url('assets/bootstrap/js/bootstrap.bundle.min.js') ?>"></script>
-    <script>
+    <script src="<?= base_url('assets/bootstrap/js/bootstrap.bundle.min.js') ?>" defer></script>
+    <script defer>
         document.addEventListener("DOMContentLoaded", function() {
             // JavaScript remains unchanged as it is already well-structured.
             const themeManager = {

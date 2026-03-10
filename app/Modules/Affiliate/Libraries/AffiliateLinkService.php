@@ -48,10 +48,18 @@ class AffiliateLinkService
      */
     private function _extractCodeFromUrl(string $url): ?string
     {
-        // Match Amazon short URLs like https://amzn.to/3NCQfcG
-        if (preg_match('#amzn\.to/([a-zA-Z0-9]+)#i', $url, $matches)) {
-            return $matches[1];
+        // Extract the path from the URL using native parse_url
+        $path = parse_url($url, PHP_URL_PATH);
+
+        if ($path) {
+            // Remove leading slashes and trailing parameters
+            $code = trim($path, '/');
+
+            // In case of multiple segments, the code is typically the last one
+            $segments = explode('/', $code);
+            return end($segments) ?: null;
         }
+
         return null;
     }
 
@@ -67,7 +75,7 @@ class AffiliateLinkService
             'short_url'   => $data['short_url'] ?? null,
             'full_url'    => $data['full_url'] ?? null,
             'title'       => $data['title'] ?? null,
-            'category_id' => $data['category_id'] ?? null,
+            'category_id' => !empty($data['category_id']) ? (int) $data['category_id'] : null,
             'status'      => $data['status'] ?? 'active',
         ];
 
@@ -197,6 +205,7 @@ class AffiliateLinkService
      */
     public function findByCode(string $code): ?AffiliateLink
     {
+        /** @var \App\Modules\Affiliate\Entities\AffiliateLink|null $link */
         return $this->model->where('code', $code)
             ->where('status', 'active')
             ->first();
@@ -246,12 +255,14 @@ class AffiliateLinkService
      */
     public function logClick(int $linkId, array $clickData): bool
     {
+        $now = \CodeIgniter\I18n\Time::now();
+
         $logEntry = [
             'affiliate_link_id' => $linkId,
             'ip_address'        => $clickData['ip_address'] ?? null,
             'user_agent'        => $clickData['user_agent'] ?? null,
             'referrer'          => $clickData['referrer'] ?? null,
-            'clicked_at'        => date('Y-m-d H:i:s'),
+            'clicked_at'        => $now->toDateTimeString(),
         ];
 
         // Increment total count
@@ -269,13 +280,14 @@ class AffiliateLinkService
      */
     public function getAnalytics(int $linkId, string $period = '30days'): array
     {
-        // Calculate date range
-        $endDate = date('Y-m-d');
+        $now = \CodeIgniter\I18n\Time::now();
+        $endDate = $now->toDateString();
+
         $startDate = match ($period) {
-            '7days'  => date('Y-m-d', strtotime('-7 days')),
-            '90days' => date('Y-m-d', strtotime('-90 days')),
+            '7days'  => $now->subDays(7)->toDateString(),
+            '90days' => $now->subDays(90)->toDateString(),
             'all'    => '2000-01-01',
-            default  => date('Y-m-d', strtotime('-30 days')),
+            default  => $now->subDays(30)->toDateString(),
         };
 
         return [
@@ -344,6 +356,7 @@ class AffiliateLinkService
      */
     public function getAllCategories(): array
     {
+        /** @var \App\Modules\Affiliate\Entities\AffiliateCategory[] $categories */
         return $this->categoryModel->orderBy('name', 'ASC')->findAll();
     }
 
@@ -363,9 +376,11 @@ class AffiliateLinkService
      * @param int $id Category ID
      * @return object|null
      */
-    public function getCategory(int $id): ?object
+    public function getCategory(int $id): ?\App\Modules\Affiliate\Entities\AffiliateCategory
     {
-        return $this->categoryModel->find($id);
+        /** @var \App\Modules\Affiliate\Entities\AffiliateCategory|null $category */
+        $category = $this->categoryModel->find($id);
+        return $category;
     }
 
     /**

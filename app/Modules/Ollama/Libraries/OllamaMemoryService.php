@@ -144,6 +144,7 @@ class OllamaMemoryService
         $inputVector = ($embedResponse['status'] === 'success') ? $embedResponse['data'] : [];
 
         if (!empty($inputVector)) {
+            /** @var \App\Modules\Ollama\Entities\OllamaInteraction[] $candidates */
             $candidates = $this->interactionModel
                 ->where('user_id', $this->userId)
                 ->where('embedding IS NOT NULL')
@@ -229,6 +230,7 @@ class OllamaMemoryService
                 continue;
             }
 
+            /** @var \App\Modules\Ollama\Entities\OllamaInteraction|null $memory */
             $memory = $this->interactionModel->find($id);
             if (!$memory) continue;
 

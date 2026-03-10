@@ -34,7 +34,7 @@ class BlogController extends BaseController
             // SEO: Strong title focusing on value proposition
             'pageTitle'       => 'Tech Insights & Tutorials | Afrikenkid Blog',
             // SEO: Clear description with keywords for the target market
-            'metaDescription' => 'Explore articles on fintech, software development, AI, and consumer tech tailored for the Kenyan and African market.',
+            'metaDescription' => 'Explore expert articles on Generative AI, software development, fintech, and consumer tech tailored for industry professionals.',
             'canonicalUrl'    => url_to('blog.index'),
             'posts'           => $this->postModel->where('status', 'published')->orderBy('published_at', 'DESC')->paginate(6),
             'pager'           => $this->postModel->pager,
@@ -46,7 +46,7 @@ class BlogController extends BaseController
 
     public function show(string $slug): string
     {
-        // Allow admins to preview drafts, otherwise only find published posts
+        /** @var \App\Modules\Blog\Entities\Post|null $post */
         $post = $this->postModel->where('slug', $slug)->first();
 
         // SEO/UX: If not found, or if it's a draft and user isn't admin, 404
@@ -60,8 +60,8 @@ class BlogController extends BaseController
             "@type"           => "BlogPosting",
             "headline"        => $post->title,
             "image"           => $post->featured_image_url ? [$post->featured_image_url] : [], // Handle missing images gracefully
-            "datePublished"   => $post->published_at ? $post->published_at->toDateTimeString() : null,
-            "dateModified"    => $post->updated_at ? $post->updated_at->toDateTimeString() : null,
+            "datePublished"   => ($post->published_at instanceof \CodeIgniter\I18n\Time) ? $post->published_at->toDateTimeString() : null,
+            "dateModified"    => ($post->updated_at instanceof \CodeIgniter\I18n\Time) ? $post->updated_at->toDateTimeString() : null,
             "author"          => ["@type" => "Person", "name"  => $post->author_name],
             "publisher"       => [
                 "@type" => "Organization",
@@ -111,6 +111,7 @@ class BlogController extends BaseController
 
     public function edit(int $id)
     {
+        /** @var \App\Modules\Blog\Entities\Post|null $post */
         $post = $this->postModel->find($id);
         if (!$post) {
             throw PageNotFoundException::forPageNotFound();
@@ -151,6 +152,7 @@ class BlogController extends BaseController
             return redirect()->to(url_to('home'));
         }
 
+        /** @var \App\Modules\Blog\Entities\Post|null $post */
         $post = $this->postModel->find($id);
         if (!$post) {
             throw PageNotFoundException::forPageNotFound('Cannot delete a post that does not exist.');
