@@ -34,7 +34,7 @@ $routes->group('', ['namespace' => 'App\Modules\OpenRouter\Controllers'], static
         $routes->post('delete-media', 'OpenRouterController::deleteMedia', ['as' => 'openrouter.delete_media']);
 
         // Document Export
-        $routes->post('download-document', 'OpenRouterController::downloadDocument', ['as' => 'openrouter.download_document']);
+        $routes->post('download-document', 'OpenRouterController::downloadDocument', ['as' => 'openrouter.download_document', 'filter' => 'csrf:except']);
 
         // Settings
         $routes->post('settings/update', 'OpenRouterController::updateSetting', ['as' => 'openrouter.update_setting']);

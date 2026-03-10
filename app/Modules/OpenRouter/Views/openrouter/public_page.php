@@ -27,14 +27,13 @@
     <!-- Hero -->
     <section class="py-5 bg-body-tertiary">
         <div class="container py-5 text-center">
-            <span class="badge or-badge text-white mb-3 rounded-pill px-3 py-2 fw-bold fs-6 shadow-sm">Powered by OpenRouter</span>
-            <h1 class="display-3 fw-bold mb-4">Multi-Model AI, Unified.</h1>
+            <span class="badge or-badge text-white mb-3 rounded-pill px-3 py-2 fw-bold fs-6 shadow-sm"><i class="bi bi-stars"></i> Includes Free High-Speed Models. Zero Friction to Start.</span>
+            <h1 class="display-3 fw-bold mb-4"><?= esc($heroTitle ?? 'Multi-Model AI, Unified.') ?></h1>
             <p class="lead mb-5 mx-auto text-muted font-monospace" style="max-width: 760px; font-size: 1.1rem;">
-                Access the world's best open-source and proprietary AI models through one seamless interface.
-                Intelligent conversations, fast responses, zero friction.
+                <?= esc($heroSubtitle ?? 'Access the world\'s best open-source and proprietary AI models through one seamless interface. Intelligent conversations, fast responses, zero friction.') ?>
             </p>
             <div class="d-flex flex-row gap-3 justify-content-center">
-                <a href="<?= url_to('register') ?>" class="btn btn-primary btn-lg px-4 fw-bold rounded-pill shadow-sm">Start for Free</a>
+                <a href="<?= url_to('register') ?>" class="btn btn-primary btn-lg px-4 fw-bold rounded-pill shadow-sm">Start Prompting for Free</a>
                 <a href="#capabilities" class="btn btn-outline-secondary btn-lg px-4 rounded-pill">Explore</a>
             </div>
         </div>

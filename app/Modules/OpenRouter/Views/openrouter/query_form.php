@@ -789,8 +789,8 @@
         errorHistory: `<div class="text-center text-danger mt-4"><small>Failed to load history.</small></div>`,
         thinkingBlock: (content) => `
             <details class="thinking-block mb-3 p-2 rounded" open>
-                <summary class="text-secondary small fw-bold cursor-pointer" style="list-style: none;">
-                    <i class="bi bi-cpu me-1"></i> Thought Process
+                <summary class="cursor-pointer text-muted fw-bold small">
+                    Thinking Process
                 </summary>
                 <div class="mt-2 text-secondary small fst-italic thinking-content">
                     ${content}
@@ -1253,11 +1253,8 @@
             try {
                 const d = await this.app.sendAjax(APP_CONFIG.endpoints.generate, fd);
                 if (d.status === 'success') {
-                    let finalHtml = '';
-                    if (d.thought) finalHtml += _ViewTemplates.thinkingBlock(marked.parse(d.thought));
-                    finalHtml += d.result;
-
-                    document.getElementById('ai-response-body').innerHTML = finalHtml;
+                    // Result already contains formatted thinking block from the controller
+                    document.getElementById('ai-response-body').innerHTML = d.result;
                     document.getElementById('raw-response').value = (d.thought ? `<thought>\n${d.thought}\n</thought>\n\n` : '') + d.raw_result;
                     this.app.ui.enableCodeFeatures();
                     this.app.ui.scrollToBottom();
@@ -1336,36 +1333,44 @@
         processLines(lines, accum, els) {
             lines.forEach(line => {
                 if (line === 'event: close') return;
-                if (!line.startsWith('data: ')) return;
+                if (!line.trim() || !line.startsWith('data: ')) return;
 
                 try {
-                    const d = JSON.parse(line.substring(6));
+                    const jsonStr = line.substring(6).trim();
+                    if (jsonStr === '[DONE]') return;
+
+                    const d = JSON.parse(jsonStr);
 
                     if (this.firstChunk && (d.text || d.thought || d.error)) {
                         els.body.querySelector('.loading-skeleton')?.remove();
                         this.firstChunk = false;
                     }
 
+                    // 1. Thinking Blocks
                     if (d.thought) {
                         this.thoughtAccum += d.thought;
                         if (!this.thoughtEl) {
-                            const temp = document.createElement('div');
-                            temp.innerHTML = _ViewTemplates.thinkingBlock('');
-                            this.thoughtEl = temp.firstElementChild;
+                            this.thoughtEl = document.createElement('div');
+                            this.thoughtEl.innerHTML = _ViewTemplates.thinkingBlock('');
+                            this.thoughtEl = this.thoughtEl.firstElementChild;
                             els.body.insertBefore(this.thoughtEl, els.body.firstChild);
                         }
                         this.thoughtEl.querySelector('.thinking-content').innerHTML = marked.parse(this.thoughtAccum);
                     }
 
+                    // 2. Text Content
                     if (d.text) {
                         accum += d.text;
-                        // Prevent overwriting thinking block
-                        if (this.thoughtEl) {
-                            // Find or create result content div if not present
-                            let resDiv = els.body.querySelector('.stream-result-content');
+                        let resDiv = els.body.querySelector('.stream-result-content');
+
+                        if (this.thoughtEl || resDiv) {
                             if (!resDiv) {
                                 resDiv = document.createElement('div');
                                 resDiv.className = 'stream-result-content';
+                                // Move existing non-thought content into resDiv if any
+                                Array.from(els.body.childNodes).forEach(node => {
+                                    if (node !== this.thoughtEl) resDiv.appendChild(node);
+                                });
                                 els.body.appendChild(resDiv);
                             }
                             resDiv.innerHTML = marked.parse(accum);
@@ -1377,6 +1382,7 @@
 
                     if (d.error) this.app.ui.setError(d.error);
                     if (d.csrf_token) this.app.refreshCsrf(d.csrf_token);
+                    if (d.flash_html) this.app.ui.showServerFlash(d.flash_html);
 
                     if (d.new_interaction_id || d.used_interaction_ids) {
                         this.app.history.addItem({
@@ -1384,10 +1390,10 @@
                             timestamp: d.timestamp,
                             user_input: d.user_input,
                             context_files: this.contextFiles
-                        }, accum);
+                        }, (this.thoughtAccum ? `<thought>\n${this.thoughtAccum}\n</thought>\n\n` : '') + accum);
                     }
                 } catch (e) {
-                    // Ignore parsing errors for empty/malformed chunks
+                    console.error("Stream parse error", e, line);
                 }
             });
             return accum;

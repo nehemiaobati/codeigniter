@@ -155,6 +155,20 @@ class OpenRouterController extends BaseController
     }
 
     /**
+     * Builds a standardized thinking block HTML (Gemini Parity).
+     */
+    private function _buildThinkingBlockHtml(string $thoughts): string
+    {
+        return sprintf(
+            '<details class="thinking-block mb-3">' .
+                '<summary class="cursor-pointer text-muted fw-bold small">Thinking Process</summary>' .
+                '<div class="thinking-content fst-italic text-muted p-2 border-start mt-1 small">%s</div>' .
+                '</details>',
+            esc($thoughts)
+        );
+    }
+
+    /**
      * Parses markdown safely.
      *
      * @param string $text
@@ -178,10 +192,12 @@ class OpenRouterController extends BaseController
     public function publicPage(): string
     {
         $data = [
-            'pageTitle'       => 'OpenRouter AI | Multi-Model Chat',
-            'metaDescription' => 'Access 100+ AI models through a unified interface. OpenRouter AI integration for intelligent, context-aware conversations.',
+            'pageTitle'       => 'OpenRouter AI | Access 100+ Models & Free LLMs | Afrikenkid',
+            'metaDescription' => 'Access the world\'s best open-source and proprietary AI models through one seamless interface. Includes free high-speed models to start prompting immediately.',
             'canonicalUrl'    => url_to('openrouter.public'),
             'robotsTag'       => 'index, follow',
+            'heroTitle'       => 'Multi-Model AI, Unified.',
+            'heroSubtitle'    => 'Access the world\'s best open-source and proprietary AI models through one seamless interface. Intelligent conversations, fast responses, zero friction.'
         ];
         return view('App\Modules\OpenRouter\Views\openrouter\public_page', $data);
     }
@@ -246,9 +262,16 @@ class OpenRouterController extends BaseController
         }
 
         // Set success flash message for UI feedback (Gemini parity)
-        session()->setFlashdata('success', 'Response generated successfully.');
+        if (isset($result['cost'])) {
+            session()->setFlashdata('success', number_format($result['cost'], 6) . " credits deducted.");
+        }
 
         $parsedHtml = $this->_parseMarkdown($result['result']);
+
+        // Gemini Parity: Prepend thinking block if present
+        if (!empty($result['thought'])) {
+            $parsedHtml = $this->_buildThinkingBlockHtml($result['thought']) . "\n\n" . $parsedHtml;
+        }
 
         if ($this->request->isAJAX()) {
             return $this->response->setJSON([
@@ -322,6 +345,8 @@ class OpenRouterController extends BaseController
                     echo 'data: ' . json_encode(['error' => $chunk['error'], 'csrf_token' => csrf_hash()]) . "\n\n";
                 } elseif (is_array($chunk) && isset($chunk['thought'])) {
                     echo 'data: ' . json_encode(['thought' => $chunk['thought'], 'csrf_token' => csrf_hash()]) . "\n\n";
+                } elseif (is_array($chunk) && isset($chunk['usage'])) {
+                    echo 'data: ' . json_encode(['usage' => $chunk['usage'], 'csrf_token' => csrf_hash()]) . "\n\n";
                 } else {
                     echo 'data: ' . json_encode(['text' => $chunk]) . "\n\n";
                 }
@@ -329,8 +354,8 @@ class OpenRouterController extends BaseController
                 flush();
             },
             // Complete callback
-            function ($fullText) use ($ctx, $prep) {
-                $result = $this->openRouterService->finalizeStreamInteraction($ctx['userId'], $ctx['inputText'], $fullText, $prep['contextData']);
+            function ($fullText, $usage = []) use ($ctx, $prep) {
+                $result = $this->openRouterService->finalizeStreamInteraction($ctx['userId'], $ctx['inputText'], $fullText, $prep['contextData'], $usage);
 
                 // Cleanup temp files
                 $this->openRouterService->cleanupTempFiles($ctx['uploadedFileIds'], $ctx['userId']);
@@ -342,6 +367,11 @@ class OpenRouterController extends BaseController
                     'timestamp'            => $result['timestamp'] ?? null,
                     'user_input'           => $ctx['inputText'],
                 ];
+
+                if (isset($result['cost'])) {
+                    session()->setFlashdata('success', number_format($result['cost'], 6) . " credits deducted.");
+                    $finalPayload['flash_html'] = view('App\Views\partials\flash_messages');
+                }
 
                 echo "event: close\n";
                 echo 'data: ' . json_encode($finalPayload) . "\n\n";

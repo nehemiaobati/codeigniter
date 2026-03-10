@@ -29,7 +29,6 @@ class OpenRouterService
 
     /** Recommended models for the selector */
     public const RECOMMENDED_MODELS = [
-        'google/gemini-2.0-flash-exp:free' => 'Gemini 2.0 Flash (Free)',
         'anthropic/claude-3.5-sonnet'      => 'Claude 3.5 Sonnet',
         'anthropic/claude-3-opus'          => 'Claude 3 Opus',
         'openai/gpt-4o'                    => 'GPT-4o',
@@ -191,17 +190,29 @@ class OpenRouterService
                 $data = json_decode($json, true);
 
                 if (json_last_error() === JSON_ERROR_NONE) {
-                    $delta = $data['choices'][0]['delta'] ?? [];
-                    if (isset($delta['content'])) {
-                        $chunks[] = $delta['content'];
-                    } elseif (isset($delta['reasoning_content'])) {
-                        $chunks[] = ['thought' => $delta['reasoning_content']];
-                    } elseif (isset($delta['reasoning'])) {
-                        $chunks[] = ['thought' => $delta['reasoning']];
-                    } elseif (isset($data['error']['message'])) {
+                    // Check for usage (usually in the final chunk)
+                    if (isset($data['usage'])) {
+                        $chunks[] = ['usage' => $data['usage']];
+                    }
+
+                    // Check for deltas in choices
+                    $delta = $data['choices'][0]['delta'] ?? null;
+                    if ($delta) {
+                        // Prioritize Reasoning (Thinking Blocks)
+                        if (isset($delta['reasoning_content'])) {
+                            $chunks[] = ['thought' => $delta['reasoning_content']];
+                        } elseif (isset($delta['reasoning'])) {
+                            $chunks[] = ['thought' => $delta['reasoning']];
+                        }
+
+                        // Then standard content
+                        if (isset($delta['content']) && $delta['content'] !== '') {
+                            $chunks[] = $delta['content'];
+                        }
+                    }
+
+                    if (isset($data['error']['message'])) {
                         $chunks[] = ['error' => $data['error']['message']];
-                    } else {
-                        log_message('debug', "[OpenRouterService] Stream JSON no content/error. JSON: " . $json);
                     }
                 } else {
                     log_message('debug', "[OpenRouterService] Stream JSON parse skipped. JSON: " . $json . " Error: " . json_last_error_msg());
@@ -312,9 +323,10 @@ class OpenRouterService
         }
 
         // Atomic billing + persistence
-        $cost = 0.0; // Free model
+        $cost = (float) ($apiResponse['usage']['cost'] ?? 0.0);
         $this->db->transStart();
         if ($cost > 0) {
+            log_message('info', "[OpenRouterService] Deducting cost: {$cost} for User: {$userId}");
             $this->_deductCost($userId, $cost);
         }
 
@@ -330,6 +342,8 @@ class OpenRouterService
 
         return [
             'result'               => $apiResponse['result'],
+            'thought'              => $apiResponse['thought'] ?? null,
+            'cost'                 => $cost,
             'used_interaction_ids' => $contextData['usedInteractionIds'],
             'new_interaction_id'   => $memoryResult['id'] ?? null,
             'timestamp'            => $memoryResult['timestamp'] ?? null,
@@ -369,6 +383,7 @@ class OpenRouterService
 
         $payload = json_encode($payloadData);
         $fullText = '';
+        $usage    = [];
         $buffer   = '';
 
         $ch = curl_init();
@@ -377,12 +392,18 @@ class OpenRouterService
             CURLOPT_POST      => true,
             CURLOPT_POSTFIELDS => $payload,
             CURLOPT_HTTPHEADER => $this->_getHeaders(),
-            CURLOPT_WRITEFUNCTION => function ($ch, $chunk) use (&$buffer, &$fullText, $chunkCallback) {
+            CURLOPT_WRITEFUNCTION => function ($ch, $chunk) use (&$buffer, &$fullText, &$usage, $chunkCallback) {
                 $buffer .= $chunk;
                 $parsedChunks = $this->_processStreamBuffer($buffer);
                 foreach ($parsedChunks as $result) {
                     if (is_array($result) && isset($result['error'])) {
                         $chunkCallback($result); // Pass error array through
+                    } elseif (is_array($result) && isset($result['thought'])) {
+                        // Pass along thought chunks without adding to fullText
+                        $chunkCallback($result);
+                    } elseif (is_array($result) && isset($result['usage'])) {
+                        $usage = $result['usage'];
+                        $chunkCallback($result);
                     } else {
                         $fullText .= $result;
                         $chunkCallback($result);
@@ -397,7 +418,7 @@ class OpenRouterService
         $err  = curl_error($ch);
 
         if ($code === 200) {
-            $completeCallback($fullText);
+            $completeCallback($fullText, $usage);
             return;
         }
 
@@ -427,22 +448,34 @@ class OpenRouterService
      * @param array  $contextData
      * @return array Result metadata.
      */
-    public function finalizeStreamInteraction(int $userId, string $inputText, string $fullText, array $contextData): array
+    public function finalizeStreamInteraction(int $userId, string $inputText, string $fullText, array $contextData, array $usage = []): array
     {
         $memoryResult = [];
         $isAssistantMode = isset($contextData['memoryService']) && $contextData['memoryService'] !== null;
 
-        if ($isAssistantMode) {
+        $cost = (float) ($usage['cost'] ?? 0.0);
+
+        if ($isAssistantMode || $cost > 0) {
             $this->db->transStart();
-            $memoryResult = $contextData['memoryService']->saveInteraction(
-                $inputText,
-                $fullText,
-                $contextData['usedInteractionIds'] ?? []
-            );
+
+            if ($cost > 0) {
+                log_message('info', "[OpenRouterService] Deducting stream cost: {$cost} for User: {$userId}");
+                $this->_deductCost($userId, $cost);
+            }
+
+            if ($isAssistantMode) {
+                $memoryResult = $contextData['memoryService']->saveInteraction(
+                    $inputText,
+                    $fullText,
+                    $contextData['usedInteractionIds'] ?? []
+                );
+            }
+
             $this->db->transComplete();
         }
 
         return [
+            'cost'                 => $cost,
             'used_interaction_ids' => $contextData['usedInteractionIds'] ?? [],
             'new_interaction_id'   => $memoryResult['id'] ?? null,
             'timestamp'            => $memoryResult['timestamp'] ?? null,

@@ -262,6 +262,9 @@ email.mailType = 'html'
 GEMINI_API_KEY="" 
 # ^^^ ENTER YOUR GOOGLE GEMINI API KEY ABOVE ^^^
 
+OPENROUTER_API_KEY=""
+# ^^^ ENTER YOUR OPENROUTER API KEY ABOVE ^^^
+
 OLLAMA_BASE_URL = "http://localhost:11434"
 
 #--------------------------------------------------------------------
@@ -346,7 +349,7 @@ final_summary() {
     echo "DB Pass: ${DB_PASSWORD}"
     echo ""
     echo "!!! IMPORTANT NEXT STEPS !!!"
-    echo "1. Edit the .env file and add your GEMINI_API_KEY:"
+    echo "1. Edit the .env file and add AI API KEYs (GEMINI_API_KEY, OPENROUTER_API_KEY):"
     echo "   nano ${PROJECT_PATH}/.env"
     echo "2. Optional: Install Ollama (for local AI):"
     echo "   curl -fsSL https://ollama.com/install.sh | sh"
