@@ -1,3 +1,8 @@
+# ARCHIVE / DEPRECATED: CodeIgniter 4 Handbook (Legacy)
+
+> [!WARNING]
+> This file contains deprecated rules and legacy architectural patterns. It is preserved for reference only. For current project standards, please refer to `.clinerules/clinerules.md`.
+
 ### **Guiding Principles**
 
 ## Meta-Rules: Managing This Handbook

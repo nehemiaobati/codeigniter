@@ -32,10 +32,12 @@
                         </a>
                     </td>
                     <td>
-                        <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-right: 5px;">
-                            <?= esc($order->item_type) ?>
-                        </span>
-                        <span style="font-weight: 500;"><?= esc($order->item_title) ?></span>
+                        <div style="display: flex; gap: 10px; align-items: flex-start;">
+                            <span style="font-size: 0.65rem; text-transform: uppercase; color: var(--text-muted); background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; flex-shrink: 0; margin-top: 2px; letter-spacing: 0.05em;">
+                                <?= esc($order->item_type) ?>
+                            </span>
+                            <span style="font-weight: 500; line-height: 1.4;"><?= esc($order->item_title) ?></span>
+                        </div>
                     </td>
                     <td style="font-weight: 500;">KES <?= number_format($order->amount, 2) ?></td>
                     <td>

@@ -325,6 +325,8 @@ For consistency and security when handling ephemeral data:
 
 ---
 
+---
+
 ## 6. Frontend Blueprints
 
 - **Framework**: Bootstrap 5 (Utility-first approach).
@@ -353,12 +355,6 @@ For consistency and security when handling ephemeral data:
   - **Indexing Strategy**:
     - **Public Pages**: Use `index, follow` (Marketing, informative, and public tool pages).
     - **Private/Auth Pages**: Use `noindex, follow` (Auth forms, User dashboards, Admin panels).
-
-```
-
-```
-
-N/B
 
 # Simple vs. Easy: Summary
 

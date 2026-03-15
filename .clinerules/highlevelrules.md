@@ -117,21 +117,21 @@ app/Modules/Feature/
 - **PRG Pattern**: POST → Validate → Service → Redirect (`back()->with()`).
 - **Forbidden**: Returning Views from POST methods.
 
-### 3.2 Stateless & Files (Unlink Pattern)
+### 3.2 Stateless & Files (The Unlink Pattern)
 
-- **Principle**: Filesystem is ephemeral.
-- **Action**: Upload → Process → **Delete** (@unlink).
-- **Tempfile**: Random naming (`getRandomName`), auto-cleanup method in Service.
+- **Principle**: Filesystem is ephemeral. Treat disk as temp space only.
+- **Action**: Upload → Process → **Delete** (`@unlink`). No persistence.
+- **Tempfile**: Randomized naming (`getRandomName`). Service MUST handle cleanup.
 - **Session**: IDs only. No binary data. `DatabaseHandler` with `MEDIUMBLOB`.
 
 ### 3.3 API & AJAX
 
 - **Format**: Standard JSON (`status`, `message`, `result`, `errors`, `csrf_token`).
-- **CSRF**: **MANDATORY** rotation in every JSON response.
+- **CSRF**: **MANDATORY** rotation in every JSON response (Success/Error/Edge Case).
 - **SSE (Streaming)**:
   - `Content-Type: text/event-stream`.
   - Immediate flush (`ob_flush(); flush()`).
-  - `session_write_close()` before loop.
+  - `session_write_close()` before loop (unblocks parallel requests).
   - Fresh CSRF in initial packet.
 
 ---
@@ -140,18 +140,18 @@ app/Modules/Feature/
 
 ### 4.1 Security Mandates
 
-1.  **CSRF**: Global. `csrf_field()` in forms, token update in JS.
+1.  **CSRF**: Global. `csrf_field()` in forms, token update in JS from response.
 2.  **Validation**: Strict Controller-level validation.
-3.  **reCAPTCHA**: Verify via Service. Keys in `.env`.
+3.  **reCAPTCHA**: Verify via Service. Keys in `.env` only.
 4.  **Throttling**: MANDATORY for Auth & Resource-heavy (AI/Crypto) routes.
 5.  **Transactions**: MANDATORY for **ANY** DB modification.
 
 ### 4.2 Observability & Deployment
 
 1.  **Logging**: `writable/logs/` with context arrays. `critical`, `error`, `info`.
-2.  **Testing**: Default to No test unless requested. PHPUnit required if tested.
-3.  **Exceptions**: Catch `\Throwable` in Controllers to prevent white screens.
-4.  **Deployment**: `CI_ENVIRONMENT = production`, `display_errors = 0`. Doc root strictly `/public`.
+2.  **Testing**: Default to NO test unless requested. PHPUnit required if tested.
+3.  **Exceptions**: Catch `\Throwable` in Controllers to prevent white screens/leaks.
+4.  **Deployment**: `CI_ENVIRONMENT = production`. Doc root strictly `/public`.
 
 ---
 
@@ -160,7 +160,7 @@ app/Modules/Feature/
 - **Stack**: Bootstrap 5 (Utility-first). Views extend `layouts/default`.
 - **Structure**: Container > Blueprint Header > Blueprint Card.
 - **Theme**: No hardcoded colors. Theme-aware utilities or CSS vars only.
-- **UI Components**: Floating labels for inputs, standard button hierarchy.
-- **SEO & Social**: OpenGraph & Twitter Cards **MANDATORY**. Meta tags for type, title, desc, image, alt.
-- **Feedback**: Bootstrap Alerts for results. Toasts for connectivity only.
+- **SEO & Social**: OpenGraph & Twitter Cards **MANDATORY** for link previews.
+  - Indexing: `index, follow` for public; `noindex, follow` for auth/dashboards.
+- **Feedback**: Bootstrap Alerts for results. Toasts for connectivity/system only.
 - **Partials**: Located in `app/Views/partials/` (e.g., `flash_messages.php`).
