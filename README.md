@@ -1,36 +1,68 @@
 # CodeIgniter 4 Web Platform
 
-## Project Overview
+A versatile, production‑ready CodeIgniter 4 application providing user authentication, AI integration, cryptocurrency analytics, and payment processing. Ideal for launching a SaaS product, personal brand, or developer portfolio.
 
-This project is a comprehensive, multi-functional application built on the CodeIgniter 4 framework. It serves as a portal for registered users to access a suite of powerful digital services, including AI-driven tools and cryptocurrency data analysis.
+## 🎯 What’s Inside
 
-For complete setup instructions, architectural details, and technical specifications, please refer to the **[Comprehensive Documentation](documentation.md)**.
+- **Authentication**: Registration, login, email verification, password reset, role‑based access
+- **AI Service**: Google Gemini chat with conversation memory
+- **Crypto Tools**: Real-time Bitcoin & Litecoin address balance & transactions
+- **Payments**: Paystack integration supporting M‑Pesa, Airtel, and card payments
+- **Admin Panel**: User management, financial overview, email campaign tools
+- **Blog & Affiliates**: Content publishing and referral tracking
 
-## Key Features
+## 🏗️ Technical Highlights
 
-*   **User Authentication:** Secure registration, login, and account management.
-*   **Payment Gateway Integration:** Seamless payments via Paystack (M-Pesa, Airtel, Card).
-*   **AI Service Integration:** Advanced text and multimedia interaction with Google's Gemini API, featuring conversational memory.
-*   **Cryptocurrency Data Service:** Real-time balance and transaction queries for Bitcoin (BTC) and Litecoin (LTC) addresses.
-*   **Administrative Dashboard:** Robust tools for user management, financial oversight, and email campaigns.
+- Framework: CodeIgniter 4 (latest)
+- PHP: 7.4+ (8.2 recommended)
+- Database: MySQL/MariaDB (via standard CI4 model)
+- Frontend: Bootstrap 5, responsive design
+- Security: CSRF, XSS filtering, securepassword hashing, environment config
+- Deployment: Includes `setup.sh` for Ubuntu servers; also works with any LAMP stack
 
-## Quick Start
+## ⚡ Quick Start
 
-An automated setup script (`setup.sh`) is provided to configure the entire server environment on Ubuntu.
+### One‑line setup (Ubuntu)
 
 ```bash
-# Make the script executable
-chmod +x setup.sh
-
-# Run with sudo to install and configure all dependencies
+git clone https://github.com/nehemiaobati/codeigniter.git
+cd codeigniter
 sudo ./setup.sh
 ```
 
-After the script completes, you must edit the `.env` file to add your API keys and other sensitive credentials. For detailed manual setup and configuration, see the [full documentation](documentation.md).
+Then configure your `.env` file with API keys and database credentials.
 
-## License
+### Development mode
 
-This project is open-source software licensed under the [MIT license](LICENSE).
+```bash
+composer install
+cp env .env
+./spark serve
+```
 
+Open `http://localhost:8000` in your browser.
 
+## 📚 Documentation
 
+See `documentation.md` for:
+
+- Complete installation guide
+- Architectural overview
+- Feature walkthroughs
+- Configuration reference
+- Maintenance & troubleshooting
+
+## 🔒 Security Notes
+
+- Keep your `.env` file out of version control.
+- Use HTTPS in production.
+- Regularly update dependencies (`composer update`).
+- Change default admin credentials after installation.
+
+## 📄 License
+
+MIT
+
+---
+
+*A solid foundation for your next web project.*
